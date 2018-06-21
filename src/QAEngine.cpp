@@ -31,29 +31,46 @@ void QAEngine::initialize()
             delay = newDelay;
         }
     }
-    QTimer::singleShot(delay, qApp, [this](){
-        for (QObject *object : m_objects) {
-            QQuickView *view = qobject_cast<QQuickView*>(object);
-            if (view) {
-                m_rootItem = view->rootObject();
-            }
-            QQmlApplicationEngine *engine = qobject_cast<QQmlApplicationEngine*>(object);
-            if (engine) {
-                QQuickWindow *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
-                if (window) {
-                    m_rootItem = window->contentItem();
-                }
-            }
-            if (m_rootItem) {
-                qDebug() << Q_FUNC_INFO << "Root item:" << m_rootItem;
-                QAHooks::removeHooks();
-                m_objects.clear();
-                break;
-            }
-        }
+    QTimer::singleShot(delay, this, &QAEngine::postInit);
+}
 
-        QAService::instance()->initialize(QStringLiteral("ru.omprussia.qaservice.%1").arg(qApp->applicationFilePath().section(QChar('/'), -1)));
-    });
+void QAEngine::postInit()
+{
+    m_rootItem = findRootItem();
+    qDebug() << Q_FUNC_INFO << "Root item:" << m_rootItem;
+    if (m_rootItem) {
+        QAHooks::removeHooks();
+        m_objects.clear();
+    }
+    QAService::instance()->initialize(QStringLiteral("ru.omprussia.qaservice.%1").arg(qApp->applicationFilePath().section(QLatin1Char('/'), -1)));
+}
+
+QQuickItem *QAEngine::findRootItem() const
+{
+    for (QObject *object : m_objects) {
+        QQuickItem *root = findRootHelper(object);
+        if (!root) {
+            continue;
+        }
+        return root;
+    }
+    return nullptr;
+}
+
+QQuickItem *QAEngine::findRootHelper(QObject *object)
+{
+    QQuickView *view = qobject_cast<QQuickView*>(object);
+    if (view) {
+        return view->rootObject();
+    }
+    QQmlApplicationEngine *engine = qobject_cast<QQmlApplicationEngine*>(object);
+    if (engine && !engine->rootObjects().isEmpty()) {
+        QQuickWindow *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        if (window) {
+            return window->contentItem();
+        }
+    }
+    return nullptr;
 }
 
 void QAEngine::addObject(QObject *o)

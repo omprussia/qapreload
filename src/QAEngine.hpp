@@ -15,12 +15,17 @@ public:
 
     virtual ~QAEngine();
 
+private slots:
+    void postInit();
+    QQuickItem *findRootItem() const;
+
 private:
     explicit QAEngine(QObject *parent = nullptr);
     friend class QAHooks;
     void initialize();
     void addObject(QObject *o);
     void removeObject(QObject *o);
+    static QQuickItem *findRootHelper(QObject *object);
 
     QQuickItem *m_rootItem = nullptr;
     QList<QObject*> m_objects;
