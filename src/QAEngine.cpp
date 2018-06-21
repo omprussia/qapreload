@@ -19,9 +19,7 @@ static QAEngine *s_instance = nullptr;
 
 void QAEngine::initialize()
 {
-    connect(qApp, &QCoreApplication::destroyed, this, [this](){
-        deleteLater();
-    });
+    setParent(qApp);
 
     QTimer::singleShot(5000, qApp, [this](){
         for (QObject *object : m_objects) {
