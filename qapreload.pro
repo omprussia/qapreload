@@ -3,8 +3,6 @@ QT = core dbus qml
 CONFIG += plugin
 CONFIG += c++11
 
-LIBS = -ldl
-
 SOURCES += \
     src/qapreload.cpp \
     src/QAHooks.cpp \
