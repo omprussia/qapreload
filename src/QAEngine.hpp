@@ -13,10 +13,10 @@ public:
 
     static QAEngine *instance();
 
-    explicit QAEngine(QObject *parent = nullptr);
     virtual ~QAEngine();
 
 private:
+    explicit QAEngine(QObject *parent = nullptr);
     friend class QAHooks;
     void initialize();
     void addObject(QObject *o);
