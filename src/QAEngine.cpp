@@ -2,8 +2,6 @@
 #include "QAHooks.hpp"
 #include "QAService.hpp"
 
-#include <stdio.h>
-
 #include <QDebug>
 
 #include <QCoreApplication>
@@ -74,8 +72,6 @@ QQuickItem *QAEngine::findRootHelper(QObject *object)
 
 void QAEngine::addObject(QObject *o)
 {
-//    printf("QAEngine::addObject: %p\n", o);
-
     if (!m_rootItem && o != this) {
         m_objects.append(o);
     }
@@ -83,8 +79,6 @@ void QAEngine::addObject(QObject *o)
 
 void QAEngine::removeObject(QObject *o)
 {
-//    printf("QAEngine::removeObject: %p\n", o);
-
     m_objects.removeAll(o);
 }
 
@@ -97,11 +91,7 @@ QAEngine *QAEngine::instance()
 {
     if (!s_instance) {
         QScopedValueRollback<quintptr> rb(qtHookData[QAHooks::AddQObject], reinterpret_cast<quintptr>(nullptr));
-//        auto hook = qtHookData[QAHooks::AddQObject];
-//        qtHookData[QAHooks::AddQObject] = reinterpret_cast<quintptr>(nullptr);
         s_instance = new QAEngine;
-//        printf("QAEngine::instance: %p\n", s_instance);
-//        qtHookData[QAHooks::AddQObject] = hook;
     }
     return s_instance;
 }
@@ -109,10 +99,8 @@ QAEngine *QAEngine::instance()
 QAEngine::QAEngine(QObject *parent)
     : QObject(parent)
 {
-//    printf("QAEngine::QAEngine: %p\n", this);
 }
 
 QAEngine::~QAEngine()
 {
-//    printf("QAEngine::~QAEngine\n");
 }
