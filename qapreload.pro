@@ -1,7 +1,7 @@
 TEMPLATE = lib
 QT = core dbus qml
 CONFIG += plugin
-QMAKE_CFLAGS += -std=c11
+CONFIG += c++11
 
 LIBS = -ldl
 
