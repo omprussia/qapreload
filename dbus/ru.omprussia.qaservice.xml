@@ -1,0 +1,20 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+    <interface name="ru.omprussia.qaservice">
+        <method name="dumpTree">
+            <arg name="tree" type="s" direction="out" />
+        </method>
+        <method name="findObjectByProperty">
+            <arg name="parentObject" type="s" direction="in" />
+            <arg name="property" type="s" direction="in" />
+            <arg name="value" type="s" direction="in" />
+            <arg name="object" type="s" direction="out" />
+        </method>
+        <method name="sendMouseEvent">
+            <arg name="object" type="s" direction="in" />
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+            <arg name="event" type="a{sv}" direction="in" />
+            <arg name="success" type="b" direction="out" />
+        </method>
+    </interface>
+</node>
