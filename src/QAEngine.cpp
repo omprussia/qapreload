@@ -16,12 +16,22 @@
 #include <QtQuick/QQuickItem>
 
 static QAEngine *s_instance = nullptr;
+static const char *c_initDelayValue = "QA_INSPECTOR_DELAY";
 
 void QAEngine::initialize()
 {
     setParent(qApp);
-
-    QTimer::singleShot(5000, qApp, [this](){
+    int delay = 5000;
+    if (Q_UNLIKELY(qEnvironmentVariableIsSet(c_initDelayValue))) {
+        bool ok = false;
+        const int newDelay = qEnvironmentVariableIntValue(c_initDelayValue, &ok);
+        if (!ok || newDelay < 0) {
+            qWarning("The delay environment variable is not valid");
+        } else {
+            delay = newDelay;
+        }
+    }
+    QTimer::singleShot(delay, qApp, [this](){
         for (QObject *object : m_objects) {
             QQuickView *view = qobject_cast<QQuickView*>(object);
             if (view) {
