@@ -11,9 +11,8 @@
 #include <QTimer>
 
 #include <QQmlApplicationEngine>
-#include <QtQuick/QQuickView>
-
-#include <QtQuick/QQuickItem>
+#include <QQuickItem>
+#include <QQuickView>
 
 static QAEngine *s_instance = nullptr;
 static const char *c_initDelayValue = "QA_INSPECTOR_DELAY";

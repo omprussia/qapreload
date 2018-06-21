@@ -1,5 +1,5 @@
 TEMPLATE = lib
-QT = core dbus qml
+QT = core dbus qml quick
 CONFIG += plugin
 CONFIG += c++11
 
