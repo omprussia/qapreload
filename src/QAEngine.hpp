@@ -9,7 +9,7 @@ class QAEngine : public QObject
 {
     Q_OBJECT
 public:
-    QQuickItem *rootItem();
+    QQuickItem *rootItem() const;
 
     static QAEngine *instance();
 

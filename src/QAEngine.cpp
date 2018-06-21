@@ -72,7 +72,7 @@ void QAEngine::removeObject(QObject *o)
     m_objects.removeAll(o);
 }
 
-QQuickItem *QAEngine::rootItem()
+QQuickItem *QAEngine::rootItem() const
 {
     return m_rootItem;
 }
