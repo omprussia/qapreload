@@ -4,17 +4,37 @@
         <method name="dumpTree">
             <arg name="tree" type="s" direction="out" />
         </method>
-        <method name="findObjectByProperty">
+        <method name="dumpCurrentPage">
+            <arg name="tree" type="s" direction="out" />
+        </method>
+        <method name="findObjectsByProperty">
             <arg name="parentObject" type="s" direction="in" />
             <arg name="property" type="s" direction="in" />
             <arg name="value" type="s" direction="in" />
-            <arg name="object" type="s" direction="out" />
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QStringList"/>
+            <arg name="objects" type="a(s)" direction="out" />
         </method>
-        <method name="sendMouseEvent">
+        <method name="findObjectsByClassname">
+            <arg name="parentObject" type="s" direction="in" />
+            <arg name="className" type="s" direction="in" />
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QStringList"/>
+            <arg name="objects" type="a(s)" direction="out" />
+        </method>
+        <method name="clickPoint">
+            <arg name="posx" type="i" direction="in" />
+            <arg name="posy" type="i" direction="in" />
+            <arg name="succss" type="b" direction="out" />
+        </method>
+        <method name="mouseSwipe">
+            <arg name="startx" type="i" direction="in" />
+            <arg name="starty" type="i" direction="in" />
+            <arg name="stopx" type="i" direction="in" />
+            <arg name="stopy" type="i" direction="in" />
+            <arg name="succss" type="b" direction="out" />
+        </method>
+        <method name="clickObject">
             <arg name="object" type="s" direction="in" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
-            <arg name="event" type="a{sv}" direction="in" />
-            <arg name="success" type="b" direction="out" />
+            <arg name="succss" type="b" direction="out" />
         </method>
     </interface>
 </node>

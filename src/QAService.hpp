@@ -5,7 +5,9 @@
 #include <QtDBus>
 #include <QDBusContext>
 
+class QQuickItem;
 class QAAdaptor;
+class QJsonObject;
 class QAService : public QObject, public QDBusContext
 {
     Q_OBJECT
@@ -14,22 +16,25 @@ public:
     bool initialize(const QString &serviceName);
 
     static QAService *instance();
-    explicit QAService(QObject *parent = nullptr);
+    static void sendMessageReply(const QDBusMessage &message, const QVariant &result);
 
 private slots:
     QString dumpTree();
-    void doDumpTree(const QDBusMessage &message);
+    QString dumpCurrentPage();
 
-    QString findObjectByProperty(const QString &parentObject, const QString &property, const QString &value);
-    void doFindObjectByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message);
+    QStringList findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value);
+    QStringList findObjectsByClassname(const QString &parentObject, const QString &className);
 
-    bool sendMouseEvent(const QString &object, const QVariantMap &event);
-    void doSendMouseEvent(const QString &object, const QVariantMap &event, const QDBusMessage &message);
+    bool clickPoint(int posx, int posy);
+    bool clickObject(const QString &object);
+
+    bool mouseSwipe(int startx, int starty, int stopx, int stopy);
 
 private:
-    void sendMessageReply(const QDBusMessage &message, const QVariant &result);
-
+    explicit QAService(QObject *parent = nullptr);
     QAAdaptor *m_adaptor = nullptr;
+
+    QHash<QString, QQuickItem*> m_objects;
 };
 
 #endif // QASERVICE_HPP

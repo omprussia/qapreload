@@ -12,6 +12,10 @@
 #include <QQuickItem>
 #include <QQuickView>
 
+#include <QDBusMessage>
+
+#include <private/qquickwindow_p.h>
+
 static QAEngine *s_instance = nullptr;
 static const char *c_initDelayValue = "QA_INSPECTOR_DELAY";
 
@@ -37,14 +41,14 @@ void QAEngine::postInit()
     qDebug() << Q_FUNC_INFO << "Root item:" << m_rootItem;
     if (m_rootItem) {
         QAHooks::removeHooks();
-        m_objects.clear();
+        m_rawObjects.clear();
     }
     QAService::instance()->initialize(QStringLiteral("ru.omprussia.qaservice.%1").arg(qApp->applicationFilePath().section(QLatin1Char('/'), -1)));
 }
 
 QQuickItem *QAEngine::findRootItem() const
 {
-    for (QObject *object : m_objects) {
+    for (QObject *object : m_rawObjects) {
         QQuickItem *root = findRootHelper(object);
         if (!root) {
             continue;
@@ -62,7 +66,7 @@ QQuickItem *QAEngine::findRootHelper(QObject *object)
     }
     QQmlApplicationEngine *engine = qobject_cast<QQmlApplicationEngine*>(object);
     if (engine && !engine->rootObjects().isEmpty()) {
-        QQuickWindow *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QQuickWindow *window = qobject_cast<QQuickWindow*>(engine->rootObjects().first());
         if (window) {
             return window->contentItem();
         }
@@ -70,21 +74,166 @@ QQuickItem *QAEngine::findRootHelper(QObject *object)
     return nullptr;
 }
 
+QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
+{
+    QJsonObject object = dumpObject(rootItem);
+
+    QJsonArray childArray;
+
+    for (QQuickItem *child : rootItem->childItems()) {
+        QJsonObject childObject = recursiveDumpTree(child, depth + 1);
+        childArray.append(QJsonValue(childObject));
+    }
+
+    object.insert(QStringLiteral("children"), QJsonValue(childArray));
+
+    return object;
+}
+
+QJsonObject QAEngine::dumpObject(QQuickItem *item)
+{
+    QJsonObject object;
+
+    const QString id = QStringLiteral("%1_0x%2").arg(item->metaObject()->className())
+                       .arg(reinterpret_cast<quintptr>(item),
+                       QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
+
+    m_idToObject.insert(id, item);
+    m_objectToId.insert(item, id);
+
+    object.insert(QStringLiteral("id"), QJsonValue(id));
+
+    object.insert(QStringLiteral("width"), QJsonValue(item->width()));
+    object.insert(QStringLiteral("height"), QJsonValue(item->height()));
+    object.insert(QStringLiteral("x"), QJsonValue(item->x()));
+    object.insert(QStringLiteral("y"), QJsonValue(item->y()));
+
+    QPointF position(item->x(), item->y());
+    QPoint abs = item->mapToItem(m_rootItem, position).toPoint();
+
+    object.insert(QStringLiteral("abs_x"), QJsonValue(abs.x()));
+    object.insert(QStringLiteral("abs_y"), QJsonValue(abs.y()));
+
+    object.insert(QStringLiteral("enabled"), QJsonValue::fromVariant(item->property("enabled")));
+    object.insert(QStringLiteral("visible"), QJsonValue::fromVariant(item->property("visible")));
+
+    object.insert(QStringLiteral("text"), QJsonValue::fromVariant(item->property("text")));
+    object.insert(QStringLiteral("title"), QJsonValue::fromVariant(item->property("title")));
+    object.insert(QStringLiteral("name"), QJsonValue::fromVariant(item->property("name")));
+
+    return object;
+}
+
+QStringList QAEngine::recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value)
+{
+    QStringList results;
+
+    if (parentItem->property(property.toLatin1().constData()).toString() == value
+            && m_objectToId.contains(parentItem)) {
+
+        results.append(m_objectToId[parentItem]);
+    }
+
+    for (QQuickItem *child : parentItem->childItems()) {
+        QStringList objects = recursiveFindObjects(child, property, value);
+        if (!objects.isEmpty()) {
+            results.append(objects);
+        }
+    }
+
+    return results;
+}
+
+QStringList QAEngine::recursiveFindObjects(QQuickItem *parentItem, const QString &className)
+{
+    QStringList results;
+
+    if (QString::fromLatin1(parentItem->metaObject()->className()).startsWith(QStringLiteral("%1_").arg(className))) {
+        results.append(m_objectToId[parentItem]);
+    }
+
+    for (QQuickItem *child : parentItem->childItems()) {
+        QStringList objects = recursiveFindObjects(child, className);
+        if (!objects.isEmpty()) {
+            results.append(objects);
+        }
+    }
+
+    return results;
+}
+
+bool QAEngine::mousePress(const QPointF &point)
+{
+    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseButtonPress,
+                                         point,
+                                         Qt::LeftButton,
+                                         m_mouseButton,
+                                         Qt::NoModifier);
+    m_mouseButton = Qt::LeftButton;
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    return wp->deliverMouseEvent(event);
+}
+
+bool QAEngine::mouseRelease(const QPointF &point)
+{
+    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseButtonRelease,
+                                         point,
+                                         Qt::LeftButton,
+                                         m_mouseButton,
+                                         Qt::NoModifier);
+    m_mouseButton = Qt::NoButton;
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    return wp->deliverMouseEvent(event);
+}
+
+bool QAEngine::mouseMove(const QPointF &point)
+{
+    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseMove,
+                                         point,
+                                         Qt::LeftButton,
+                                         m_mouseButton,
+                                         Qt::NoModifier);
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    return wp->deliverMouseEvent(event);
+}
+
+bool QAEngine::mouseDblClick(const QPointF &point)
+{
+    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseButtonDblClick,
+                                         point,
+                                         Qt::LeftButton,
+                                         m_mouseButton,
+                                         Qt::NoModifier);
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    return wp->deliverMouseEvent(event);
+}
+
 void QAEngine::addObject(QObject *o)
 {
-    if (!m_rootItem && o != this) {
-        m_objects.append(o);
+    if (!m_rootItem) {
+        m_rawObjects.append(o);
     }
 }
 
 void QAEngine::removeObject(QObject *o)
 {
-    m_objects.removeAll(o);
-}
+    m_rawObjects.removeAll(o);
 
-QQuickItem *QAEngine::rootItem() const
-{
-    return m_rootItem;
+    if (m_rootItem && !m_objectToId.isEmpty()) {
+        QMutableHashIterator<QQuickItem*, QString> it(m_objectToId);
+        while (it.hasNext()) {
+            it.next();
+            if (it.key() == o) {
+                m_idToObject.remove(it.value());
+                it.remove();
+                return;
+            }
+        }
+    }
 }
 
 QAEngine *QAEngine::instance()
@@ -103,4 +252,126 @@ QAEngine::QAEngine(QObject *parent)
 
 QAEngine::~QAEngine()
 {
+}
+
+void QAEngine::dumpTree(const QDBusMessage &message)
+{
+    m_idToObject.clear();
+    m_objectToId.clear();
+
+    QJsonObject tree = recursiveDumpTree(m_rootItem);
+    QJsonDocument doc(tree);
+    const QByteArray dump = doc.toJson(QJsonDocument::Indented);
+
+    QAService::sendMessageReply(message, QString::fromUtf8(dump));
+}
+
+void QAEngine::dumpCurrentPage(const QDBusMessage &message)
+{
+    QString result;
+
+    QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
+    if (pageStack) {
+        qDebug() << Q_FUNC_INFO << pageStack;
+        QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
+        if (currentPage) {
+            qDebug() << Q_FUNC_INFO << currentPage;
+
+            m_idToObject.clear();
+            m_objectToId.clear();
+
+            QJsonObject tree = recursiveDumpTree(currentPage);
+            QJsonDocument doc(tree);
+            const QByteArray dump = doc.toJson(QJsonDocument::Indented);
+            result = QString::fromUtf8(dump);
+        }
+    }
+
+    QAService::sendMessageReply(message, result);
+}
+
+void QAEngine::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message)
+{
+    QQuickItem *item = nullptr;
+    if (parentObject.isEmpty()) {
+        item = m_rootItem;
+    } else if (m_idToObject.contains(parentObject)) {
+        item = m_idToObject[parentObject];
+    }
+    qDebug() << Q_FUNC_INFO << item;
+
+    QStringList result;
+    if (item) {
+        result = recursiveFindObjects(item, property, value);
+    }
+
+    QAService::sendMessageReply(message, result);
+}
+
+void QAEngine::findObjectsByClassname(const QString &parentObject, const QString &className, const QDBusMessage &message)
+{
+
+    QQuickItem *item = nullptr;
+    if (parentObject.isEmpty()) {
+        item = m_rootItem;
+    } else if (m_idToObject.contains(parentObject)) {
+        item = m_idToObject[parentObject];
+    }
+    qDebug() << Q_FUNC_INFO << item;
+
+    QStringList result;
+    if (item) {
+        result = recursiveFindObjects(item, className);
+    }
+
+    QAService::sendMessageReply(message, result);
+}
+
+void QAEngine::clickPoint(int posx, int posy, const QDBusMessage &message)
+{
+    QPointF point(posx, posy);
+    bool result = mousePress(point)
+            && mouseRelease(point);
+
+    QAService::sendMessageReply(message, result);
+}
+
+void QAEngine::clickObject(const QString &object, const QDBusMessage &message)
+{
+    bool result = false;
+
+    if (m_idToObject.contains(object)) {
+        QQuickItem *item = m_idToObject[object];
+
+        QPointF point(item->width() / 2, item->height() / 2);
+
+        QMouseEvent *pressEvent = new QMouseEvent(QMouseEvent::MouseButtonPress,
+                                             point,
+                                             Qt::LeftButton,
+                                             Qt::NoButton,
+                                             Qt::NoModifier);
+
+        QMouseEvent *releaseEvent = new QMouseEvent(QMouseEvent::MouseButtonRelease,
+                                             point,
+                                             Qt::LeftButton,
+                                             Qt::LeftButton,
+                                             Qt::NoModifier);
+
+        result = qApp->sendEvent(item, pressEvent)
+                && qApp->sendEvent(item, releaseEvent);
+    }
+
+    QAService::sendMessageReply(message, result);
+}
+
+void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message)
+{
+    QPointF pointPress(startx, starty);
+    QPointF pointRelease(stopx, stopy);
+
+    bool result = mousePress(pointPress)
+            && mouseMove(pointRelease)
+            && mouseRelease(pointRelease);
+
+    QAService::sendMessageReply(message, result);
 }

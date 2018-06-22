@@ -10,7 +10,17 @@
 
 #define NAME(x) #x
 
+#define METHOD_NAME_HERE funcName(Q_FUNC_INFO)
+
 static QAService *s_instance = nullptr;
+
+const char *funcName(const char *line)
+{
+    QByteArray l = QByteArray::fromRawData(line, strlen(line));
+    const int to = l.indexOf('(');
+    const int from = l.lastIndexOf("::", to) + 2;
+    return l.mid(from, to - from).constData();
+}
 
 bool QAService::initialize(const QString &serviceName)
 {
@@ -55,63 +65,95 @@ QString QAService::dumpTree()
     qDebug() << Q_FUNC_INFO;
 
     setDelayedReply(true);
-    QMetaObject::invokeMethod(this,
-                              NAME(doDumpTree),
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
                               Qt::QueuedConnection,
                               Q_ARG(QDBusMessage, message()));
     return QString();
 }
 
-void QAService::doDumpTree(const QDBusMessage &message)
+QString QAService::dumpCurrentPage()
 {
-    QString result = QStringLiteral("Hello!");
+    qDebug() << Q_FUNC_INFO;
 
-    sendMessageReply(message, result);
-
-
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QDBusMessage, message()));
+    return QString();
 }
 
-QString QAService::findObjectByProperty(const QString &parentObject, const QString &property, const QString &value)
+QStringList QAService::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value)
 {
     qDebug() << Q_FUNC_INFO << property << value;
 
     setDelayedReply(true);
-    QMetaObject::invokeMethod(this,
-                              NAME(doFindObjectByProperty),
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
                               Qt::QueuedConnection,
                               Q_ARG(QString, parentObject),
                               Q_ARG(QString, property),
                               Q_ARG(QString, value),
                               Q_ARG(QDBusMessage, message()));
-    return QString();
+    return QStringList();
 }
 
-void QAService::doFindObjectByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message)
+QStringList QAService::findObjectsByClassname(const QString &parentObject, const QString &className)
 {
-    QString result = QStringLiteral("object1");
-
-    sendMessageReply(message, result);
-}
-
-bool QAService::sendMouseEvent(const QString &object, const QVariantMap &event)
-{
-    qDebug() << Q_FUNC_INFO << object << event;
+    qDebug() << Q_FUNC_INFO << className;
 
     setDelayedReply(true);
-    QMetaObject::invokeMethod(this,
-                              NAME(doSendMouseEvent),
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
                               Qt::QueuedConnection,
-                              Q_ARG(QString, object),
-                              Q_ARG(QVariantMap, event),
+                              Q_ARG(QString, parentObject),
+                              Q_ARG(QString, className),
+                              Q_ARG(QDBusMessage, message()));
+    return QStringList();
+}
+
+bool QAService::clickPoint(int posx, int posy)
+{
+    qDebug() << Q_FUNC_INFO << posx << posy;
+
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(int, posx),
+                              Q_ARG(int, posy),
                               Q_ARG(QDBusMessage, message()));
     return false;
 }
 
-void QAService::doSendMouseEvent(const QString &object, const QVariantMap &event, const QDBusMessage &message)
+bool QAService::clickObject(const QString &object)
 {
-    bool result = true;
+    qDebug() << Q_FUNC_INFO << object;
 
-    sendMessageReply(message, result);
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, object),
+                              Q_ARG(QDBusMessage, message()));
+    return false;
+}
+
+bool QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
+{
+    qDebug() << Q_FUNC_INFO << startx << starty << stopx << stopy;
+
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(int, startx),
+                              Q_ARG(int, starty),
+                              Q_ARG(int, stopx),
+                              Q_ARG(int, stopy),
+                              Q_ARG(QDBusMessage, message()));
+    return false;
 }
 
 void QAService::sendMessageReply(const QDBusMessage &message, const QVariant &result)
