@@ -1,9 +1,7 @@
 TEMPLATE = lib
-QT = core dbus qml
+QT = core dbus qml quick
 CONFIG += plugin
-QMAKE_CFLAGS += -std=c11
-
-LIBS = -ldl
+CONFIG += c++11
 
 SOURCES += \
     src/qapreload.cpp \
@@ -16,7 +14,7 @@ target.path = /usr/lib
 
 INSTALLS = target
 
-OTHER_FILES += rpm/pqapreload.spec
+OTHER_FILES += rpm/qapreload.spec
 
 HEADERS += \
     src/QAHooks.hpp \
