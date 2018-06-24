@@ -6,8 +6,6 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 
-#include <QDebug>
-
 #define NAME(x) #x
 
 #define METHOD_NAME_HERE funcName(Q_FUNC_INFO)
@@ -62,8 +60,6 @@ QAService::QAService(QObject *parent)
 
 QString QAService::dumpTree()
 {
-    qDebug() << Q_FUNC_INFO;
-
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
@@ -74,8 +70,6 @@ QString QAService::dumpTree()
 
 QString QAService::dumpCurrentPage()
 {
-    qDebug() << Q_FUNC_INFO;
-
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
@@ -86,8 +80,6 @@ QString QAService::dumpCurrentPage()
 
 QStringList QAService::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value)
 {
-    qDebug() << Q_FUNC_INFO << property << value;
-
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
@@ -101,8 +93,6 @@ QStringList QAService::findObjectsByProperty(const QString &parentObject, const 
 
 QStringList QAService::findObjectsByClassname(const QString &parentObject, const QString &className)
 {
-    qDebug() << Q_FUNC_INFO << className;
-
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
@@ -115,8 +105,6 @@ QStringList QAService::findObjectsByClassname(const QString &parentObject, const
 
 bool QAService::clickPoint(int posx, int posy)
 {
-    qDebug() << Q_FUNC_INFO << posx << posy;
-
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
@@ -129,8 +117,6 @@ bool QAService::clickPoint(int posx, int posy)
 
 bool QAService::clickObject(const QString &object)
 {
-    qDebug() << Q_FUNC_INFO << object;
-
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
@@ -142,8 +128,6 @@ bool QAService::clickObject(const QString &object)
 
 bool QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
 {
-    qDebug() << Q_FUNC_INFO << startx << starty << stopx << stopy;
-
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
