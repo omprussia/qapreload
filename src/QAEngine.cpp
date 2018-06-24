@@ -15,6 +15,7 @@
 #include <QDBusMessage>
 
 #include <private/qquickwindow_p.h>
+#include <private/qquickitem_p.h>
 
 static QAEngine *s_instance = nullptr;
 static const char *c_initDelayValue = "QA_INSPECTOR_DELAY";
@@ -76,12 +77,15 @@ QQuickItem *QAEngine::findRootHelper(QObject *object)
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
 {
-    QJsonObject object = dumpObject(rootItem);
+    QJsonObject object = dumpObject(rootItem, depth);
 
     QJsonArray childArray;
 
-    for (QQuickItem *child : rootItem->childItems()) {
-        QJsonObject childObject = recursiveDumpTree(child, depth + 1);
+    QQuickItemPrivate *itemPrivate = QQuickItemPrivate::get(rootItem);
+
+    int z = 0;
+    for (QQuickItem *child : itemPrivate->paintOrderChildItems()) {
+        QJsonObject childObject = recursiveDumpTree(child, ++z);
         childArray.append(QJsonValue(childObject));
     }
 
@@ -90,7 +94,7 @@ QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
     return object;
 }
 
-QJsonObject QAEngine::dumpObject(QQuickItem *item)
+QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
 {
     QJsonObject object;
 
@@ -107,15 +111,21 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item)
     object.insert(QStringLiteral("height"), QJsonValue(item->height()));
     object.insert(QStringLiteral("x"), QJsonValue(item->x()));
     object.insert(QStringLiteral("y"), QJsonValue(item->y()));
+    object.insert(QStringLiteral("z"), QJsonValue(depth));
 
     QPointF position(item->x(), item->y());
-    QPoint abs = item->mapToItem(m_rootItem, position).toPoint();
+    QPoint abs;
+    if (item->parentItem()) {
+        abs = m_rootItem->mapFromItem(item->parentItem(), position).toPoint();
+    } else {
+        abs = position.toPoint();
+    }
 
     object.insert(QStringLiteral("abs_x"), QJsonValue(abs.x()));
     object.insert(QStringLiteral("abs_y"), QJsonValue(abs.y()));
 
-    object.insert(QStringLiteral("enabled"), QJsonValue::fromVariant(item->property("enabled")));
-    object.insert(QStringLiteral("visible"), QJsonValue::fromVariant(item->property("visible")));
+    object.insert(QStringLiteral("enabled"), QJsonValue::fromVariant(item->isEnabled()));
+    object.insert(QStringLiteral("visible"), QJsonValue::fromVariant(item->isVisible()));
 
     object.insert(QStringLiteral("text"), QJsonValue::fromVariant(item->property("text")));
     object.insert(QStringLiteral("title"), QJsonValue::fromVariant(item->property("title")));

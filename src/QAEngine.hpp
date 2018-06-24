@@ -35,7 +35,7 @@ private slots:
 
 private:
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
-    QJsonObject dumpObject(QQuickItem *item);
+    QJsonObject dumpObject(QQuickItem *item, int depth = 0);
 
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
