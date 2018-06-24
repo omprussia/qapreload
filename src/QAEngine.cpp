@@ -98,7 +98,9 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
 {
     QJsonObject object;
 
-    const QString id = QStringLiteral("%1_0x%2").arg(item->metaObject()->className())
+    const QString className = QString::fromLatin1(item->metaObject()->className()).section(QChar('_'), 0, 0);
+
+    const QString id = QStringLiteral("%1_0x%2").arg(className)
                        .arg(reinterpret_cast<quintptr>(item),
                        QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
 
@@ -106,6 +108,7 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     m_objectToId.insert(item, id);
 
     object.insert(QStringLiteral("id"), QJsonValue(id));
+    object.insert(QStringLiteral("classname"), QJsonValue(className));
 
     object.insert(QStringLiteral("width"), QJsonValue(item->width()));
     object.insert(QStringLiteral("height"), QJsonValue(item->height()));
@@ -130,6 +133,8 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("text"), QJsonValue::fromVariant(item->property("text")));
     object.insert(QStringLiteral("title"), QJsonValue::fromVariant(item->property("title")));
     object.insert(QStringLiteral("name"), QJsonValue::fromVariant(item->property("name")));
+    object.insert(QStringLiteral("label"), QJsonValue::fromVariant(item->property("label")));
+    object.insert(QStringLiteral("placeholderText"), QJsonValue::fromVariant(item->property("placeholderText")));
 
     return object;
 }
