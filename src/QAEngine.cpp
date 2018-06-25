@@ -111,10 +111,12 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("id"), QJsonValue(id));
     object.insert(QStringLiteral("classname"), QJsonValue(className));
 
-    object.insert(QStringLiteral("width"), QJsonValue(item->width()));
-    object.insert(QStringLiteral("height"), QJsonValue(item->height()));
-    object.insert(QStringLiteral("x"), QJsonValue(item->x()));
-    object.insert(QStringLiteral("y"), QJsonValue(item->y()));
+    QRectF rectF(item->x(), item->y(), item->width(), item->height());
+    QRect rect = rectF.toRect();
+    object.insert(QStringLiteral("width"), QJsonValue(rect.width()));
+    object.insert(QStringLiteral("height"), QJsonValue(rect.height()));
+    object.insert(QStringLiteral("x"), QJsonValue(rect.x()));
+    object.insert(QStringLiteral("y"), QJsonValue(rect.y()));
     object.insert(QStringLiteral("z"), QJsonValue(depth));
 
     QPointF position(item->x(), item->y());
@@ -128,14 +130,23 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("abs_x"), QJsonValue(abs.x()));
     object.insert(QStringLiteral("abs_y"), QJsonValue(abs.y()));
 
-    object.insert(QStringLiteral("enabled"), QJsonValue::fromVariant(item->isEnabled()));
-    object.insert(QStringLiteral("visible"), QJsonValue::fromVariant(item->isVisible()));
+    object.insert(QStringLiteral("enabled"), QJsonValue(item->isEnabled()));
+    object.insert(QStringLiteral("visible"), QJsonValue(item->isVisible()));
+
+    object.insert(QStringLiteral("checkable"), QJsonValue::fromVariant(item->property("checkable")));
+    object.insert(QStringLiteral("checked"), QJsonValue::fromVariant(item->property("checked")));
+
+    object.insert(QStringLiteral("busy"), QJsonValue::fromVariant(item->property("busy")));
 
     object.insert(QStringLiteral("text"), QJsonValue::fromVariant(item->property("text")));
     object.insert(QStringLiteral("title"), QJsonValue::fromVariant(item->property("title")));
     object.insert(QStringLiteral("name"), QJsonValue::fromVariant(item->property("name")));
     object.insert(QStringLiteral("label"), QJsonValue::fromVariant(item->property("label")));
+    object.insert(QStringLiteral("value"), QJsonValue::fromVariant(item->property("value")));
+    object.insert(QStringLiteral("description"), QJsonValue::fromVariant(item->property("description")));
     object.insert(QStringLiteral("placeholderText"), QJsonValue::fromVariant(item->property("placeholderText")));
+
+    object.insert(QStringLiteral("currentIndex"), QJsonValue::fromVariant(item->property("currentIndex")));
 
     return object;
 }
