@@ -29,6 +29,9 @@ public slots:
 
     void mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message);
 
+    void grabWindow(const QDBusMessage &message);
+    void grabCurrentPage(const QDBusMessage &message);
+
 private slots:
     void postInit();
     QQuickItem *findRootItem() const;

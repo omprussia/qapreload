@@ -7,6 +7,14 @@
         <method name="dumpCurrentPage">
             <arg name="tree" type="s" direction="out" />
         </method>
+        <method name="grabCurrentPage">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QByteArray"/>
+            <arg name="image" type="a(y)" direction="out" />
+        </method>
+        <method name="grabWindow">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QByteArray"/>
+            <arg name="image" type="a(y)" direction="out" />
+        </method>
         <method name="findObjectsByProperty">
             <arg name="parentObject" type="s" direction="in" />
             <arg name="property" type="s" direction="in" />

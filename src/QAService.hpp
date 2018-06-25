@@ -21,6 +21,8 @@ public:
 private slots:
     QString dumpTree();
     QString dumpCurrentPage();
+    QByteArray grabWindow();
+    QByteArray grabCurrentPage();
 
     QStringList findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value);
     QStringList findObjectsByClassname(const QString &parentObject, const QString &className);

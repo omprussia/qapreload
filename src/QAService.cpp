@@ -78,6 +78,26 @@ QString QAService::dumpCurrentPage()
     return QString();
 }
 
+QByteArray QAService::grabWindow()
+{
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QDBusMessage, message()));
+    return QByteArray();
+}
+
+QByteArray QAService::grabCurrentPage()
+{
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QDBusMessage, message()));
+    return QByteArray();
+}
+
 QStringList QAService::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value)
 {
     setDelayedReply(true);

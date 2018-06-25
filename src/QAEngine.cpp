@@ -10,6 +10,7 @@
 
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
+#include <QQuickItemGrabResult>
 #include <QQuickView>
 
 #include <QDBusMessage>
@@ -389,4 +390,42 @@ void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy, const QD
             && mouseRelease(pointRelease);
 
     QAService::sendMessageReply(message, result);
+}
+
+void QAEngine::grabWindow(const QDBusMessage &message)
+{
+    qDebug() << Q_FUNC_INFO;
+
+    QSharedPointer<QQuickItemGrabResult> grabber = m_rootItem->grabToImage();
+    connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, message]() {
+        QByteArray arr;
+        QBuffer buffer(&arr);
+        buffer.open(QIODevice::WriteOnly);
+        grabber->image().save(&buffer, "PNG");
+
+        QAService::sendMessageReply(message, arr);
+    });
+}
+
+void QAEngine::grabCurrentPage(const QDBusMessage &message)
+{
+    qDebug() << Q_FUNC_INFO;
+
+    QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
+    if (pageStack) {
+        qDebug() << Q_FUNC_INFO << pageStack;
+        QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
+        if (currentPage) {
+            qDebug() << Q_FUNC_INFO << currentPage;
+            QSharedPointer<QQuickItemGrabResult> grabber = currentPage->grabToImage();
+            connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, message]() {
+                QByteArray arr;
+                QBuffer buffer(&arr);
+                buffer.open(QIODevice::WriteOnly);
+                grabber->image().save(&buffer, "PNG");
+
+                QAService::sendMessageReply(message, arr);
+            });
+        }
+    }
 }
