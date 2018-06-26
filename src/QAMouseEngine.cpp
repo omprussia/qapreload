@@ -59,17 +59,17 @@ void QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int durat
     const float stepX = qAbs(pointB.x() - pointA.x()) / moveSteps;
     const float stepY = qAbs(pointB.y() - pointA.y()) / moveSteps;
 
-    if (stepX < stepY && stepX < 1) {
-        m_moveStepCount = qAbs(pointB.y() - pointA.y());
-    } else if (stepY < stepX && stepY < 1) {
+    if (stepX < 1 && stepX > 0) {
         m_moveStepCount = qAbs(pointB.x() - pointA.x());
+    } else if (stepY < 1 && stepY > 0) {
+        m_moveStepCount = qAbs(pointB.y() - pointA.y());
     } else {
         m_moveStepCount = moveSteps;
     }
 
     m_currentMoveStep = 0;
 
-    m_timer->start(duration / m_moveStepCount);
+    m_timer->start(qMin(duration / m_moveStepCount, 1));
 }
 
 void QAMouseEngine::sendPress(const QPointF &point)
