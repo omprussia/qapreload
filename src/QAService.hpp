@@ -27,10 +27,10 @@ private slots:
     QStringList findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value);
     QStringList findObjectsByClassname(const QString &parentObject, const QString &className);
 
-    bool clickPoint(int posx, int posy);
-    bool clickObject(const QString &object);
+    void clickPoint(int posx, int posy);
+    void clickObject(const QString &object);
 
-    bool mouseSwipe(int startx, int starty, int stopx, int stopy);
+    void mouseSwipe(int startx, int starty, int stopx, int stopy);
 
 private:
     explicit QAService(QObject *parent = nullptr);

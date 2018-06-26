@@ -29,20 +29,20 @@
             <arg name="objects" type="a(s)" direction="out" />
         </method>
         <method name="clickPoint">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="posx" type="i" direction="in" />
             <arg name="posy" type="i" direction="in" />
-            <arg name="succss" type="b" direction="out" />
         </method>
         <method name="mouseSwipe">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="startx" type="i" direction="in" />
             <arg name="starty" type="i" direction="in" />
             <arg name="stopx" type="i" direction="in" />
             <arg name="stopy" type="i" direction="in" />
-            <arg name="succss" type="b" direction="out" />
         </method>
         <method name="clickObject">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="object" type="s" direction="in" />
-            <arg name="succss" type="b" direction="out" />
         </method>
     </interface>
 </node>

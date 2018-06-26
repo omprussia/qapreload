@@ -1,6 +1,8 @@
 #ifndef QAENGINE_HPP
 #define QAENGINE_HPP
 
+#include "QAMouseEngine.hpp"
+
 #include <QObject>
 #include <QHash>
 
@@ -24,10 +26,10 @@ public slots:
     void findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message);
     void findObjectsByClassname(const QString &parentObject, const QString &className, const QDBusMessage &message);
 
-    void clickPoint(int posx, int posy, const QDBusMessage &message);
-    void clickObject(const QString &object, const QDBusMessage &message);
+    void clickPoint(int posx, int posy);
+    void clickObject(const QString &object);
 
-    void mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message);
+    void mouseSwipe(int startx, int starty, int stopx, int stopy);
 
     void grabWindow(const QDBusMessage &message);
     void grabCurrentPage(const QDBusMessage &message);
@@ -36,17 +38,14 @@ private slots:
     void postInit();
     QQuickItem *findRootItem() const;
 
+    void onMouseEvent(QMouseEvent *event);
+
 private:
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
 
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
-
-    bool mousePress(const QPointF &point);
-    bool mouseRelease(const QPointF &point);
-    bool mouseMove(const QPointF &point);
-    bool mouseDblClick(const QPointF &point);
 
     explicit QAEngine(QObject *parent = nullptr);
     friend class QAHooks;
@@ -64,6 +63,8 @@ private:
     QList<QObject*> m_rawObjects;
 
     Qt::MouseButton m_mouseButton = Qt::NoButton;
+
+    QAMouseEngine *m_mouseEngine;
 
 };
 

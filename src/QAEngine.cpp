@@ -189,54 +189,10 @@ QStringList QAEngine::recursiveFindObjects(QQuickItem *parentItem, const QString
     return results;
 }
 
-bool QAEngine::mousePress(const QPointF &point)
+void QAEngine::onMouseEvent(QMouseEvent *event)
 {
-    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseButtonPress,
-                                         point,
-                                         Qt::LeftButton,
-                                         m_mouseButton,
-                                         Qt::NoModifier);
-    m_mouseButton = Qt::LeftButton;
-
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
-    return wp->deliverMouseEvent(event);
-}
-
-bool QAEngine::mouseRelease(const QPointF &point)
-{
-    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseButtonRelease,
-                                         point,
-                                         Qt::LeftButton,
-                                         m_mouseButton,
-                                         Qt::NoModifier);
-    m_mouseButton = Qt::NoButton;
-
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
-    return wp->deliverMouseEvent(event);
-}
-
-bool QAEngine::mouseMove(const QPointF &point)
-{
-    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseMove,
-                                         point,
-                                         Qt::LeftButton,
-                                         m_mouseButton,
-                                         Qt::NoModifier);
-
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
-    return wp->deliverMouseEvent(event);
-}
-
-bool QAEngine::mouseDblClick(const QPointF &point)
-{
-    QMouseEvent *event = new QMouseEvent(QMouseEvent::MouseButtonDblClick,
-                                         point,
-                                         Qt::LeftButton,
-                                         m_mouseButton,
-                                         Qt::NoModifier);
-
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
-    return wp->deliverMouseEvent(event);
+    wp->deliverMouseEvent(event);
 }
 
 void QAEngine::addObject(QObject *o)
@@ -250,17 +206,29 @@ void QAEngine::removeObject(QObject *o)
 {
     m_rawObjects.removeAll(o);
 
-    if (m_rootItem && !m_objectToId.isEmpty()) {
-        QMutableHashIterator<QQuickItem*, QString> it(m_objectToId);
-        while (it.hasNext()) {
-            it.next();
-            if (it.key() == o) {
-                m_idToObject.remove(it.value());
-                it.remove();
-                return;
-            }
-        }
+    if (!m_rootItem || m_objectToId.isEmpty()) {
+        return;
     }
+
+    QQuickItem *item = qobject_cast<QQuickItem*>(o);
+    if (!item) {
+        return;
+    }
+
+    if (m_objectToId.contains(item)) {
+        const QString &key = m_objectToId.take(item);
+        m_idToObject.remove(key);
+    }
+
+//        QMutableHashIterator<QQuickItem*, QString> it(m_objectToId);
+//        while (it.hasNext()) {
+//            it.next();
+//            if (it.key() == o) {
+//                m_idToObject.remove(it.value());
+//                it.remove();
+//                return;
+//            }
+//        }
 }
 
 QAEngine *QAEngine::instance()
@@ -274,7 +242,9 @@ QAEngine *QAEngine::instance()
 
 QAEngine::QAEngine(QObject *parent)
     : QObject(parent)
+    , m_mouseEngine(new QAMouseEngine(this))
 {
+    connect(m_mouseEngine, &QAMouseEngine::triggered, this, &QAEngine::onMouseEvent);
 }
 
 QAEngine::~QAEngine()
@@ -319,6 +289,10 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
 
 void QAEngine::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message)
 {
+    if (m_idToObject.contains(parentObject)) {
+        recursiveDumpTree(m_rootItem);
+    }
+
     QQuickItem *item = nullptr;
     if (parentObject.isEmpty()) {
         item = m_rootItem;
@@ -337,6 +311,9 @@ void QAEngine::findObjectsByProperty(const QString &parentObject, const QString 
 
 void QAEngine::findObjectsByClassname(const QString &parentObject, const QString &className, const QDBusMessage &message)
 {
+    if (m_idToObject.contains(parentObject)) {
+        recursiveDumpTree(m_rootItem);
+    }
 
     QQuickItem *item = nullptr;
     if (parentObject.isEmpty()) {
@@ -354,53 +331,41 @@ void QAEngine::findObjectsByClassname(const QString &parentObject, const QString
     QAService::sendMessageReply(message, result);
 }
 
-void QAEngine::clickPoint(int posx, int posy, const QDBusMessage &message)
+void QAEngine::clickPoint(int posx, int posy)
 {
     QPointF point(posx, posy);
-    bool result = mousePress(point)
-            && mouseRelease(point);
-
-    QAService::sendMessageReply(message, result);
+    m_mouseEngine->click(point);
 }
 
-void QAEngine::clickObject(const QString &object, const QDBusMessage &message)
+void QAEngine::clickObject(const QString &object)
 {
-    bool result = false;
-
     if (m_idToObject.contains(object)) {
-        QQuickItem *item = m_idToObject[object];
-
-        QPointF point(item->width() / 2, item->height() / 2);
-
-        QMouseEvent *pressEvent = new QMouseEvent(QMouseEvent::MouseButtonPress,
-                                             point,
-                                             Qt::LeftButton,
-                                             Qt::NoButton,
-                                             Qt::NoModifier);
-
-        QMouseEvent *releaseEvent = new QMouseEvent(QMouseEvent::MouseButtonRelease,
-                                             point,
-                                             Qt::LeftButton,
-                                             Qt::LeftButton,
-                                             Qt::NoModifier);
-
-        result = qApp->sendEvent(item, pressEvent)
-                && qApp->sendEvent(item, releaseEvent);
+        recursiveDumpTree(m_rootItem);
     }
 
-    QAService::sendMessageReply(message, result);
+    if (!m_idToObject.contains(object)) {
+        qWarning() << Q_FUNC_INFO << "No such object!" << object;
+        return;
+    }
+
+    QQuickItem *item = m_idToObject[object];
+
+    QPointF position(item->x(), item->y());
+    QPointF abs;
+    if (item->parentItem()) {
+        abs = m_rootItem->mapFromItem(item->parentItem(), position);
+    } else {
+        abs = position;
+    }
+
+    QPointF point(abs.x() + item->width() / 2, abs.y() + item->height() / 2);
+
+    m_mouseEngine->click(point);
 }
 
-void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message)
+void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy)
 {
-    QPointF pointPress(startx, starty);
-    QPointF pointRelease(stopx, stopy);
-
-    bool result = mousePress(pointPress)
-            && mouseMove(pointRelease)
-            && mouseRelease(pointRelease);
-
-    QAService::sendMessageReply(message, result);
+    m_mouseEngine->move(QPointF(startx, starty), QPointF(stopx, stopy));
 }
 
 void QAEngine::grabWindow(const QDBusMessage &message)
@@ -436,7 +401,10 @@ void QAEngine::grabCurrentPage(const QDBusMessage &message)
                 grabber->image().save(&buffer, "PNG");
 
                 QAService::sendMessageReply(message, arr);
+                return;
             });
         }
     }
+
+    QAService::sendMessageReply(message, QByteArray());
 }

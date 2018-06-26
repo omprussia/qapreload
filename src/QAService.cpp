@@ -123,41 +123,32 @@ QStringList QAService::findObjectsByClassname(const QString &parentObject, const
     return QStringList();
 }
 
-bool QAService::clickPoint(int posx, int posy)
+void QAService::clickPoint(int posx, int posy)
 {
-    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
                               Q_ARG(int, posx),
-                              Q_ARG(int, posy),
-                              Q_ARG(QDBusMessage, message()));
-    return false;
+                              Q_ARG(int, posy));
 }
 
-bool QAService::clickObject(const QString &object)
+void QAService::clickObject(const QString &object)
 {
-    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
-                              Q_ARG(QString, object),
-                              Q_ARG(QDBusMessage, message()));
-    return false;
+                              Q_ARG(QString, object));
 }
 
-bool QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
+void QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
 {
-    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
                               Q_ARG(int, startx),
                               Q_ARG(int, starty),
                               Q_ARG(int, stopx),
-                              Q_ARG(int, stopy),
-                              Q_ARG(QDBusMessage, message()));
-    return false;
+                              Q_ARG(int, stopy));
 }
 
 void QAService::sendMessageReply(const QDBusMessage &message, const QVariant &result)
