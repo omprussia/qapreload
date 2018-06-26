@@ -13,7 +13,7 @@ void QAHooks::installHooks()
 void QAHooks::removeHooks()
 {
     qtHookData[QAHooks::AddQObject] = reinterpret_cast<quintptr>(nullptr);
-    qtHookData[QAHooks::RemoveQObject] = reinterpret_cast<quintptr>(nullptr);
+//    qtHookData[QAHooks::RemoveQObject] = reinterpret_cast<quintptr>(nullptr);
     qtHookData[QAHooks::Startup] = reinterpret_cast<quintptr>(nullptr);
 }
 

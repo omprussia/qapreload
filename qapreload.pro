@@ -1,5 +1,5 @@
 TEMPLATE = lib
-QT = core dbus qml quick
+QT = core dbus qml quick quick-private core-private
 CONFIG += plugin
 CONFIG += c++11
 
@@ -7,7 +7,8 @@ SOURCES += \
     src/qapreload.cpp \
     src/QAHooks.cpp \
     src/QAEngine.cpp \
-    src/QAService.cpp
+    src/QAService.cpp \
+    src/QAMouseEngine.cpp
 
 TARGET = qapreload
 target.path = /usr/lib
@@ -19,7 +20,8 @@ OTHER_FILES += rpm/qapreload.spec
 HEADERS += \
     src/QAHooks.hpp \
     src/QAEngine.hpp \
-    src/QAService.hpp
+    src/QAService.hpp \
+    src/QAMouseEngine.hpp
 
 qa_dbus_adaptor.files = dbus/ru.omprussia.qaservice.xml
 qa_dbus_adaptor.source_flags = -c QAAdaptor
