@@ -20,7 +20,7 @@ const char *funcName(const char *line)
     return l.mid(from, to - from).constData();
 }
 
-bool QAService::initialize(const QString &serviceName)
+bool QAService::initialize(const QString &serviceName, bool loaded)
 {
     if (QDBusConnection::sessionBus().interface()->isServiceRegistered(serviceName)) {
         qWarning() << Q_FUNC_INFO << "Service name" << serviceName << "is already taken!";
@@ -34,11 +34,14 @@ bool QAService::initialize(const QString &serviceName)
         return success;
     }
 
-    m_adaptor = new QAAdaptor(this);
-
     success = QDBusConnection::sessionBus().registerService(serviceName);
     if (!success) {
         qWarning () << Q_FUNC_INFO << "Failed to register service!";
+    }
+
+    if (success) {
+        m_adaptor = new QAAdaptor(this);
+        emit m_adaptor->engineLoaded(loaded);
     }
 
     return success;
@@ -153,6 +156,13 @@ void QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
 
 void QAService::sendMessageReply(const QDBusMessage &message, const QVariant &result)
 {
-    QDBusMessage replyMessage = message.createReply(result);
+    const QDBusMessage replyMessage = message.createReply(result);
     QDBusConnection::sessionBus().send(replyMessage);
+}
+
+void QAService::sendMessageError(const QDBusMessage &message, const QString &errorString)
+{
+    const QDBusError error(QDBusError::Failed, errorString);
+    const QDBusMessage errorMessage = message.createErrorReply(error);
+    QDBusConnection::sessionBus().send(errorMessage);
 }

@@ -2,7 +2,7 @@
 
 __attribute__((constructor))
 static void libConstructor() {
-    QAHooks::installHooks();
+    QAHooks::installAllHooks();
 }
 
 __attribute__((destructor))

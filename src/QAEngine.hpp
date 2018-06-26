@@ -47,6 +47,8 @@ private:
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
 
+    void sendGrabbedObject(QQuickItem *item, const QDBusMessage &message);
+
     explicit QAEngine(QObject *parent = nullptr);
     friend class QAHooks;
 

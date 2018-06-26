@@ -23,6 +23,7 @@ static const char *c_initDelayValue = "QA_INSPECTOR_DELAY";
 
 void QAEngine::initialize()
 {
+    QAHooks::removeStartupHook();
     setParent(qApp);
     int delay = 5000;
     if (Q_UNLIKELY(qEnvironmentVariableIsSet(c_initDelayValue))) {
@@ -42,10 +43,10 @@ void QAEngine::postInit()
     m_rootItem = findRootItem();
     qDebug() << Q_FUNC_INFO << "Root item:" << m_rootItem;
     if (m_rootItem) {
-        QAHooks::removeHooks();
+        QAHooks::removeObjectAddedHook();
         m_rawObjects.clear();
     }
-    QAService::instance()->initialize(QStringLiteral("ru.omprussia.qaservice.%1").arg(qApp->applicationFilePath().section(QLatin1Char('/'), -1)));
+    QAService::instance()->initialize(QStringLiteral("ru.omprussia.qaservice.%1").arg(qApp->applicationFilePath().section(QLatin1Char('/'), -1)), m_rootItem);
 }
 
 QQuickItem *QAEngine::findRootItem() const
@@ -189,6 +190,27 @@ QStringList QAEngine::recursiveFindObjects(QQuickItem *parentItem, const QString
     return results;
 }
 
+void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
+{
+    QSharedPointer<QQuickItemGrabResult> grabber = item->grabToImage();
+    connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, message]() {
+        QByteArray arr;
+        QBuffer buffer(&arr);
+        buffer.open(QIODevice::WriteOnly);
+        bool success = grabber->image().save(&buffer, "PNG");
+
+        if (!success) {
+            qWarning() << Q_FUNC_INFO << "Error saving image!";
+        }
+
+        if (arr.isEmpty()) {
+            qWarning() << Q_FUNC_INFO << "Saved empty image!";
+        }
+
+        QAService::sendMessageReply(message, arr);
+    });
+}
+
 void QAEngine::onMouseEvent(QMouseEvent *event)
 {
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
@@ -219,16 +241,6 @@ void QAEngine::removeObject(QObject *o)
         const QString &key = m_objectToId.take(item);
         m_idToObject.remove(key);
     }
-
-//        QMutableHashIterator<QQuickItem*, QString> it(m_objectToId);
-//        while (it.hasNext()) {
-//            it.next();
-//            if (it.key() == o) {
-//                m_idToObject.remove(it.value());
-//                it.remove();
-//                return;
-//            }
-//        }
 }
 
 QAEngine *QAEngine::instance()
@@ -265,31 +277,33 @@ void QAEngine::dumpTree(const QDBusMessage &message)
 
 void QAEngine::dumpCurrentPage(const QDBusMessage &message)
 {
-    QString result;
-
     QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
-    if (pageStack) {
-        qDebug() << Q_FUNC_INFO << pageStack;
-        QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
-        if (currentPage) {
-            qDebug() << Q_FUNC_INFO << currentPage;
-
-            m_idToObject.clear();
-            m_objectToId.clear();
-
-            QJsonObject tree = recursiveDumpTree(currentPage);
-            QJsonDocument doc(tree);
-            const QByteArray dump = doc.toJson(QJsonDocument::Indented);
-            result = QString::fromUtf8(dump);
-        }
+    if (!pageStack) {
+        qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
+        QAService::sendMessageError(message, QStringLiteral("PageStack not found"));
+        return;
     }
 
-    QAService::sendMessageReply(message, result);
+    QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
+    if (!currentPage) {
+        qWarning() << Q_FUNC_INFO << "Cannot get currentPage from PageStack!";
+        QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
+        return;
+    }
+
+    m_idToObject.clear();
+    m_objectToId.clear();
+
+    QJsonObject tree = recursiveDumpTree(currentPage);
+    QJsonDocument doc(tree);
+    const QByteArray dump = doc.toJson(QJsonDocument::Indented);
+
+    QAService::sendMessageReply(message, QString::fromUtf8(dump));
 }
 
 void QAEngine::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message)
 {
-    if (m_idToObject.contains(parentObject)) {
+    if (!m_idToObject.contains(parentObject)) {
         recursiveDumpTree(m_rootItem);
     }
 
@@ -299,11 +313,12 @@ void QAEngine::findObjectsByProperty(const QString &parentObject, const QString 
     } else if (m_idToObject.contains(parentObject)) {
         item = m_idToObject[parentObject];
     }
-    qDebug() << Q_FUNC_INFO << item;
 
     QStringList result;
     if (item) {
         result = recursiveFindObjects(item, property, value);
+    } else {
+        qWarning() << Q_FUNC_INFO << "Cannot find item!";
     }
 
     QAService::sendMessageReply(message, result);
@@ -311,7 +326,7 @@ void QAEngine::findObjectsByProperty(const QString &parentObject, const QString 
 
 void QAEngine::findObjectsByClassname(const QString &parentObject, const QString &className, const QDBusMessage &message)
 {
-    if (m_idToObject.contains(parentObject)) {
+    if (!m_idToObject.contains(parentObject)) {
         recursiveDumpTree(m_rootItem);
     }
 
@@ -321,11 +336,12 @@ void QAEngine::findObjectsByClassname(const QString &parentObject, const QString
     } else if (m_idToObject.contains(parentObject)) {
         item = m_idToObject[parentObject];
     }
-    qDebug() << Q_FUNC_INFO << item;
 
     QStringList result;
     if (item) {
         result = recursiveFindObjects(item, className);
+    } else {
+        qWarning() << Q_FUNC_INFO << "Cannot find parent item!";
     }
 
     QAService::sendMessageReply(message, result);
@@ -339,7 +355,7 @@ void QAEngine::clickPoint(int posx, int posy)
 
 void QAEngine::clickObject(const QString &object)
 {
-    if (m_idToObject.contains(object)) {
+    if (!m_idToObject.contains(object)) {
         recursiveDumpTree(m_rootItem);
     }
 
@@ -370,41 +386,24 @@ void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy)
 
 void QAEngine::grabWindow(const QDBusMessage &message)
 {
-    qDebug() << Q_FUNC_INFO;
-
-    QSharedPointer<QQuickItemGrabResult> grabber = m_rootItem->grabToImage();
-    connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, message]() {
-        QByteArray arr;
-        QBuffer buffer(&arr);
-        buffer.open(QIODevice::WriteOnly);
-        grabber->image().save(&buffer, "PNG");
-
-        QAService::sendMessageReply(message, arr);
-    });
+    sendGrabbedObject(m_rootItem, message);
 }
 
 void QAEngine::grabCurrentPage(const QDBusMessage &message)
 {
-    qDebug() << Q_FUNC_INFO;
-
     QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
-    if (pageStack) {
-        qDebug() << Q_FUNC_INFO << pageStack;
-        QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
-        if (currentPage) {
-            qDebug() << Q_FUNC_INFO << currentPage;
-            QSharedPointer<QQuickItemGrabResult> grabber = currentPage->grabToImage();
-            connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, message]() {
-                QByteArray arr;
-                QBuffer buffer(&arr);
-                buffer.open(QIODevice::WriteOnly);
-                grabber->image().save(&buffer, "PNG");
-
-                QAService::sendMessageReply(message, arr);
-                return;
-            });
-        }
+    if (!pageStack) {
+        qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
+        QAService::sendMessageError(message, QStringLiteral("PageStack not found"));
+        return;
     }
 
-    QAService::sendMessageReply(message, QByteArray());
+    QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
+    if (currentPage) {
+        qWarning() << Q_FUNC_INFO << "Cannot find currentPage in PageStack!";
+        QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
+        return;
+    }
+
+    sendGrabbedObject(currentPage, message);
 }

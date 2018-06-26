@@ -20,8 +20,15 @@ public:
         LastHookIndex
     };
 
-    static void installHooks();
-    static void removeHooks();
+    static void installAllHooks();
+    static void installStartupHook();
+    static void installObjectAddedHook();
+    static void installObjectRemovedHook();
+
+    static void removeAllHooks();
+    static void removeStartupHook();
+    static void removeObjectAddedHook();
+    static void removeObjectRemovedHook();
 
     static void applicationStarted();
     static void objectAdded(QObject *o);

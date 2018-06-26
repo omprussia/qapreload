@@ -13,10 +13,11 @@ class QAService : public QObject, public QDBusContext
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "ru.omprussia.qaservice")
 public:
-    bool initialize(const QString &serviceName);
+    bool initialize(const QString &serviceName, bool loaded);
 
     static QAService *instance();
     static void sendMessageReply(const QDBusMessage &message, const QVariant &result);
+    static void sendMessageError(const QDBusMessage &message, const QString &errorString);
 
 private slots:
     QString dumpTree();

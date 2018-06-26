@@ -44,5 +44,8 @@
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="object" type="s" direction="in" />
         </method>
+        <signal name="engineLoaded">
+            <arg name="loaded" type="b"/>
+        </signal>
     </interface>
 </node>
