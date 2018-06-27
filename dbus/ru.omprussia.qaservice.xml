@@ -33,6 +33,11 @@
             <arg name="posx" type="i" direction="in" />
             <arg name="posy" type="i" direction="in" />
         </method>
+        <method name="pressAndHold">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+            <arg name="posx" type="i" direction="in" />
+            <arg name="posy" type="i" direction="in" />
+        </method>
         <method name="mouseSwipe">
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="startx" type="i" direction="in" />

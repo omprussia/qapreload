@@ -29,6 +29,8 @@ public slots:
     void clickPoint(int posx, int posy);
     void clickObject(const QString &object);
 
+    void pressAndHold(int posx, int posy);
+
     void mouseSwipe(int startx, int starty, int stopx, int stopy);
 
     void grabWindow(const QDBusMessage &message);

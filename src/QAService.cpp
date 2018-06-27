@@ -143,6 +143,15 @@ void QAService::clickObject(const QString &object)
                               Q_ARG(QString, object));
 }
 
+void QAService::pressAndHold(int posx, int posy)
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(int, posx),
+                              Q_ARG(int, posy));
+}
+
 void QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
 {
     QMetaObject::invokeMethod(QAEngine::instance(),

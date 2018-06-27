@@ -349,8 +349,7 @@ void QAEngine::findObjectsByClassname(const QString &parentObject, const QString
 
 void QAEngine::clickPoint(int posx, int posy)
 {
-    QPointF point(posx, posy);
-    m_mouseEngine->click(point);
+    m_mouseEngine->click(QPointF(posx, posy));
 }
 
 void QAEngine::clickObject(const QString &object)
@@ -366,7 +365,7 @@ void QAEngine::clickObject(const QString &object)
 
     QQuickItem *item = m_idToObject[object];
 
-    QPointF position(item->x(), item->y());
+    const QPointF position(item->x(), item->y());
     QPointF abs;
     if (item->parentItem()) {
         abs = m_rootItem->mapFromItem(item->parentItem(), position);
@@ -374,9 +373,14 @@ void QAEngine::clickObject(const QString &object)
         abs = position;
     }
 
-    QPointF point(abs.x() + item->width() / 2, abs.y() + item->height() / 2);
+    const QPointF point(abs.x() + item->width() / 2, abs.y() + item->height() / 2);
 
     m_mouseEngine->click(point);
+}
+
+void QAEngine::pressAndHold(int posx, int posy)
+{
+    m_mouseEngine->pressAndHold(QPointF(posx, posy));
 }
 
 void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy)
