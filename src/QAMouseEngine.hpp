@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointF>
 
+class QElapsedTimer;
 class QTimer;
 class QMouseEvent;
 class QAMouseEngine : public QObject
@@ -33,7 +34,8 @@ private slots:
     void onMoveTimer();
 
 private:
-    Qt::MouseButton m_button = Qt::NoButton;
+    Qt::MouseButtons m_buttons = Qt::NoButton;
+    QElapsedTimer *m_eta;
 
     // MOVE POLYANA
     QTimer *m_timer;

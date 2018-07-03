@@ -215,6 +215,10 @@ void QAEngine::onMouseEvent(QMouseEvent *event)
 {
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
     wp->deliverMouseEvent(event);
+
+    if (event->type() == QEvent::MouseButtonRelease && wp->mouseGrabberItem) {
+        wp->mouseGrabberItem = nullptr;
+    }
 }
 
 void QAEngine::addObject(QObject *o)

@@ -5,14 +5,18 @@
 #include <private/qvariantanimation_p.h>
 #include <QtMath>
 
+#include <QElapsedTimer>
+
 #include <QDebug>
 
 QAMouseEngine::QAMouseEngine(QObject *parent)
     : QObject(parent)
+    , m_eta(new QElapsedTimer())
     , m_timer(new QTimer(this))
 {
     m_timer->setSingleShot(false);
     connect(m_timer, &QTimer::timeout, this, &QAMouseEngine::onMoveTimer);
+    m_eta->start();
 }
 
 bool QAMouseEngine::isRunning() const
@@ -74,11 +78,16 @@ void QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int durat
 
 void QAMouseEngine::sendPress(const QPointF &point)
 {
+    m_buttons |= Qt::LeftButton;
     QMouseEvent event(QMouseEvent::MouseButtonPress,
                       point,
+                      point,
+                      point,
                       Qt::LeftButton,
-                      Qt::NoButton,
-                      Qt::NoModifier);
+                      m_buttons,
+                      Qt::NoModifier,
+                      Qt::MouseEventSynthesizedByQt);
+    event.setTimestamp(m_eta->elapsed());
 
     emit triggered(&event);
 }
@@ -101,11 +110,16 @@ void QAMouseEngine::onMoveTimer()
 
 void QAMouseEngine::sendRelease(const QPointF &point)
 {
+    m_buttons &= ~Qt::LeftButton;
     QMouseEvent event(QMouseEvent::MouseButtonRelease,
                       point,
+                      point,
+                      point,
                       Qt::LeftButton,
-                      Qt::NoButton,
-                      Qt::NoModifier);
+                      m_buttons,
+                      Qt::NoModifier,
+                      Qt::MouseEventSynthesizedByQt);
+    event.setTimestamp(m_eta->elapsed());
 
     emit triggered(&event);
 }
@@ -121,9 +135,13 @@ void QAMouseEngine::sendMove(const QPointF &point)
 {
     QMouseEvent event(QMouseEvent::MouseMove,
                       point,
+                      point,
+                      point,
                       Qt::LeftButton,
-                      Qt::NoButton,
-                      Qt::NoModifier);
+                      m_buttons,
+                      Qt::NoModifier,
+                      Qt::MouseEventSynthesizedByQt);
+    event.setTimestamp(m_eta->elapsed());
 
     emit triggered(&event);
 }
