@@ -13,8 +13,6 @@ class QAEngine : public QObject
 {
     Q_OBJECT
 public:
-    using RunMethod = void (*)(const QVariant &v);
-
     static QAEngine *instance();
 
     virtual ~QAEngine();
@@ -22,9 +20,6 @@ public:
 public slots:
     void dumpTree(const QDBusMessage &message);
     void dumpCurrentPage(const QDBusMessage &message);
-
-    void findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message);
-    void findObjectsByClassname(const QString &parentObject, const QString &className, const QDBusMessage &message);
 
     void clickPoint(int posx, int posy);
     void clickObject(const QString &object);
@@ -37,9 +32,6 @@ public slots:
     void grabCurrentPage(const QDBusMessage &message);
 
 private slots:
-    void postInit();
-    QQuickItem *findRootItem() const;
-
     void onMouseEvent(QMouseEvent *event);
 
 private:
@@ -55,16 +47,8 @@ private:
     friend class QAHooks;
 
     void initialize();
-    void addObject(QObject *o);
-    void removeObject(QObject *o);
-    static QQuickItem *findRootHelper(QObject *object);
 
     QQuickItem *m_rootItem = nullptr;
-
-    QHash<QString, QQuickItem*> m_idToObject;
-    QHash<QQuickItem*, QString> m_objectToId;
-
-    QList<QObject*> m_rawObjects;
 
     Qt::MouseButton m_mouseButton = Qt::NoButton;
 

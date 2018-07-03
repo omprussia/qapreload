@@ -5,6 +5,8 @@
 #include <QDebug>
 
 #include <QCoreApplication>
+#include <QGuiApplication>
+
 #include <QScopedValueRollback>
 #include <QTimer>
 
@@ -19,62 +21,29 @@
 #include <private/qquickitem_p.h>
 
 static QAEngine *s_instance = nullptr;
-static const char *c_initDelayValue = "QA_INSPECTOR_DELAY";
 
 void QAEngine::initialize()
 {
     QAHooks::removeStartupHook();
+
+    QGuiApplication *gui = qobject_cast<QGuiApplication*>(qApp);
+    if (!gui) {
+        deleteLater();
+        return;
+    }
+
     setParent(qApp);
-    int delay = 5000;
-    if (Q_UNLIKELY(qEnvironmentVariableIsSet(c_initDelayValue))) {
-        bool ok = false;
-        const int newDelay = qEnvironmentVariableIntValue(c_initDelayValue, &ok);
-        if (!ok || newDelay < 0) {
-            qWarning("The delay environment variable is not valid");
-        } else {
-            delay = newDelay;
+    QTimer::singleShot(0, this, [this](){
+        QWindowList windows = qGuiApp->topLevelWindows();
+        for (QWindow *window : windows) {
+            QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
+            if (qWindow && qWindow->contentItem()) {
+                m_rootItem = qWindow->contentItem();
+                QAService::instance()->initialize(m_rootItem);
+                break;
+            }
         }
-    }
-    QTimer::singleShot(delay, this, &QAEngine::postInit);
-}
-
-void QAEngine::postInit()
-{
-    m_rootItem = findRootItem();
-    qDebug() << Q_FUNC_INFO << "Root item:" << m_rootItem;
-    if (m_rootItem) {
-        QAHooks::removeObjectAddedHook();
-        m_rawObjects.clear();
-    }
-    QAService::instance()->initialize(QStringLiteral("ru.omprussia.qaservice.%1").arg(qApp->applicationFilePath().section(QLatin1Char('/'), -1)), m_rootItem);
-}
-
-QQuickItem *QAEngine::findRootItem() const
-{
-    for (QObject *object : m_rawObjects) {
-        QQuickItem *root = findRootHelper(object);
-        if (!root) {
-            continue;
-        }
-        return root;
-    }
-    return nullptr;
-}
-
-QQuickItem *QAEngine::findRootHelper(QObject *object)
-{
-    QQuickView *view = qobject_cast<QQuickView*>(object);
-    if (view) {
-        return view->rootObject();
-    }
-    QQmlApplicationEngine *engine = qobject_cast<QQmlApplicationEngine*>(object);
-    if (engine && !engine->rootObjects().isEmpty()) {
-        QQuickWindow *window = qobject_cast<QQuickWindow*>(engine->rootObjects().first());
-        if (window) {
-            return window->contentItem();
-        }
-    }
-    return nullptr;
+    });
 }
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
@@ -105,9 +74,6 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     const QString id = QStringLiteral("%1_0x%2").arg(className)
                        .arg(reinterpret_cast<quintptr>(item),
                        QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
-
-    m_idToObject.insert(id, item);
-    m_objectToId.insert(item, id);
 
     object.insert(QStringLiteral("id"), QJsonValue(id));
     object.insert(QStringLiteral("classname"), QJsonValue(className));
@@ -152,44 +118,6 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     return object;
 }
 
-QStringList QAEngine::recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value)
-{
-    QStringList results;
-
-    if (parentItem->property(property.toLatin1().constData()).toString() == value
-            && m_objectToId.contains(parentItem)) {
-
-        results.append(m_objectToId[parentItem]);
-    }
-
-    for (QQuickItem *child : parentItem->childItems()) {
-        QStringList objects = recursiveFindObjects(child, property, value);
-        if (!objects.isEmpty()) {
-            results.append(objects);
-        }
-    }
-
-    return results;
-}
-
-QStringList QAEngine::recursiveFindObjects(QQuickItem *parentItem, const QString &className)
-{
-    QStringList results;
-
-    if (QString::fromLatin1(parentItem->metaObject()->className()).startsWith(QStringLiteral("%1_").arg(className))) {
-        results.append(m_objectToId[parentItem]);
-    }
-
-    for (QQuickItem *child : parentItem->childItems()) {
-        QStringList objects = recursiveFindObjects(child, className);
-        if (!objects.isEmpty()) {
-            results.append(objects);
-        }
-    }
-
-    return results;
-}
-
 void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
 {
     QSharedPointer<QQuickItemGrabResult> grabber = item->grabToImage();
@@ -221,36 +149,9 @@ void QAEngine::onMouseEvent(QMouseEvent *event)
     }
 }
 
-void QAEngine::addObject(QObject *o)
-{
-    if (!m_rootItem) {
-        m_rawObjects.append(o);
-    }
-}
-
-void QAEngine::removeObject(QObject *o)
-{
-    m_rawObjects.removeAll(o);
-
-    if (!m_rootItem || m_objectToId.isEmpty()) {
-        return;
-    }
-
-    QQuickItem *item = qobject_cast<QQuickItem*>(o);
-    if (!item) {
-        return;
-    }
-
-    if (m_objectToId.contains(item)) {
-        const QString &key = m_objectToId.take(item);
-        m_idToObject.remove(key);
-    }
-}
-
 QAEngine *QAEngine::instance()
 {
     if (!s_instance) {
-        QScopedValueRollback<quintptr> rb(qtHookData[QAHooks::AddQObject], reinterpret_cast<quintptr>(nullptr));
         s_instance = new QAEngine;
     }
     return s_instance;
@@ -269,9 +170,6 @@ QAEngine::~QAEngine()
 
 void QAEngine::dumpTree(const QDBusMessage &message)
 {
-    m_idToObject.clear();
-    m_objectToId.clear();
-
     QJsonObject tree = recursiveDumpTree(m_rootItem);
     QJsonDocument doc(tree);
     const QByteArray dump = doc.toJson(QJsonDocument::Indented);
@@ -281,7 +179,11 @@ void QAEngine::dumpTree(const QDBusMessage &message)
 
 void QAEngine::dumpCurrentPage(const QDBusMessage &message)
 {
-    QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
+    if (m_rootItem->childItems().isEmpty()) {
+        return;
+    }
+
+    QQuickItem *pageStack = m_rootItem->childItems().first()->property("pageStack").value<QQuickItem*>();
     if (!pageStack) {
         qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
         QAService::sendMessageError(message, QStringLiteral("PageStack not found"));
@@ -295,9 +197,6 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
         return;
     }
 
-    m_idToObject.clear();
-    m_objectToId.clear();
-
     QJsonObject tree = recursiveDumpTree(currentPage);
     QJsonDocument doc(tree);
     const QByteArray dump = doc.toJson(QJsonDocument::Indented);
@@ -305,81 +204,9 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
     QAService::sendMessageReply(message, QString::fromUtf8(dump));
 }
 
-void QAEngine::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value, const QDBusMessage &message)
-{
-    if (!m_idToObject.contains(parentObject)) {
-        recursiveDumpTree(m_rootItem);
-    }
-
-    QQuickItem *item = nullptr;
-    if (parentObject.isEmpty()) {
-        item = m_rootItem;
-    } else if (m_idToObject.contains(parentObject)) {
-        item = m_idToObject[parentObject];
-    }
-
-    QStringList result;
-    if (item) {
-        result = recursiveFindObjects(item, property, value);
-    } else {
-        qWarning() << Q_FUNC_INFO << "Cannot find item!";
-    }
-
-    QAService::sendMessageReply(message, result);
-}
-
-void QAEngine::findObjectsByClassname(const QString &parentObject, const QString &className, const QDBusMessage &message)
-{
-    if (!m_idToObject.contains(parentObject)) {
-        recursiveDumpTree(m_rootItem);
-    }
-
-    QQuickItem *item = nullptr;
-    if (parentObject.isEmpty()) {
-        item = m_rootItem;
-    } else if (m_idToObject.contains(parentObject)) {
-        item = m_idToObject[parentObject];
-    }
-
-    QStringList result;
-    if (item) {
-        result = recursiveFindObjects(item, className);
-    } else {
-        qWarning() << Q_FUNC_INFO << "Cannot find parent item!";
-    }
-
-    QAService::sendMessageReply(message, result);
-}
-
 void QAEngine::clickPoint(int posx, int posy)
 {
     m_mouseEngine->click(QPointF(posx, posy));
-}
-
-void QAEngine::clickObject(const QString &object)
-{
-    if (!m_idToObject.contains(object)) {
-        recursiveDumpTree(m_rootItem);
-    }
-
-    if (!m_idToObject.contains(object)) {
-        qWarning() << Q_FUNC_INFO << "No such object!" << object;
-        return;
-    }
-
-    QQuickItem *item = m_idToObject[object];
-
-    const QPointF position(item->x(), item->y());
-    QPointF abs;
-    if (item->parentItem()) {
-        abs = m_rootItem->mapFromItem(item->parentItem(), position);
-    } else {
-        abs = position;
-    }
-
-    const QPointF point(abs.x() + item->width() / 2, abs.y() + item->height() / 2);
-
-    m_mouseEngine->click(point);
 }
 
 void QAEngine::pressAndHold(int posx, int posy)

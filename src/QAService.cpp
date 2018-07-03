@@ -6,6 +6,8 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 
+#include <QDebug>
+
 #define NAME(x) #x
 
 #define METHOD_NAME_HERE funcName(Q_FUNC_INFO)
@@ -20,11 +22,19 @@ const char *funcName(const char *line)
     return l.mid(from, to - from).constData();
 }
 
-bool QAService::initialize(const QString &serviceName, bool loaded)
+bool QAService::initialize(bool loaded)
 {
-    if (QDBusConnection::sessionBus().interface()->isServiceRegistered(serviceName)) {
-        qWarning() << Q_FUNC_INFO << "Service name" << serviceName << "is already taken!";
-        return false;
+    QString processName = qApp->applicationFilePath().section(QLatin1Char('/'), -1);
+
+    if (processName == QStringLiteral("booster-silica-qt5")) {
+        processName = qApp->applicationName();
+    }
+
+    int serviceSuffix = 0;
+    QString finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1").arg(processName);
+
+    while (QDBusConnection::sessionBus().interface()->isServiceRegistered(finalServiceName)) {
+        finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1_xx_%2").arg(processName).arg(++serviceSuffix);
     }
 
     bool success = false;
@@ -34,7 +44,7 @@ bool QAService::initialize(const QString &serviceName, bool loaded)
         return success;
     }
 
-    success = QDBusConnection::sessionBus().registerService(serviceName);
+    success = QDBusConnection::sessionBus().registerService(finalServiceName);
     if (!success) {
         qWarning () << Q_FUNC_INFO << "Failed to register service!";
     }
@@ -101,31 +111,6 @@ QByteArray QAService::grabCurrentPage()
     return QByteArray();
 }
 
-QStringList QAService::findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value)
-{
-    setDelayedReply(true);
-    QMetaObject::invokeMethod(QAEngine::instance(),
-                              METHOD_NAME_HERE,
-                              Qt::QueuedConnection,
-                              Q_ARG(QString, parentObject),
-                              Q_ARG(QString, property),
-                              Q_ARG(QString, value),
-                              Q_ARG(QDBusMessage, message()));
-    return QStringList();
-}
-
-QStringList QAService::findObjectsByClassname(const QString &parentObject, const QString &className)
-{
-    setDelayedReply(true);
-    QMetaObject::invokeMethod(QAEngine::instance(),
-                              METHOD_NAME_HERE,
-                              Qt::QueuedConnection,
-                              Q_ARG(QString, parentObject),
-                              Q_ARG(QString, className),
-                              Q_ARG(QDBusMessage, message()));
-    return QStringList();
-}
-
 void QAService::clickPoint(int posx, int posy)
 {
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -133,14 +118,6 @@ void QAService::clickPoint(int posx, int posy)
                               Qt::QueuedConnection,
                               Q_ARG(int, posx),
                               Q_ARG(int, posy));
-}
-
-void QAService::clickObject(const QString &object)
-{
-    QMetaObject::invokeMethod(QAEngine::instance(),
-                              METHOD_NAME_HERE,
-                              Qt::QueuedConnection,
-                              Q_ARG(QString, object));
 }
 
 void QAService::pressAndHold(int posx, int posy)

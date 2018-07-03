@@ -15,19 +15,6 @@
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QByteArray"/>
             <arg name="image" type="a(y)" direction="out" />
         </method>
-        <method name="findObjectsByProperty">
-            <arg name="parentObject" type="s" direction="in" />
-            <arg name="property" type="s" direction="in" />
-            <arg name="value" type="s" direction="in" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QStringList"/>
-            <arg name="objects" type="a(s)" direction="out" />
-        </method>
-        <method name="findObjectsByClassname">
-            <arg name="parentObject" type="s" direction="in" />
-            <arg name="className" type="s" direction="in" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QStringList"/>
-            <arg name="objects" type="a(s)" direction="out" />
-        </method>
         <method name="clickPoint">
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="posx" type="i" direction="in" />
@@ -44,10 +31,6 @@
             <arg name="starty" type="i" direction="in" />
             <arg name="stopx" type="i" direction="in" />
             <arg name="stopy" type="i" direction="in" />
-        </method>
-        <method name="clickObject">
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
-            <arg name="object" type="s" direction="in" />
         </method>
         <signal name="engineLoaded">
             <arg name="loaded" type="b"/>

@@ -13,7 +13,7 @@ class QAService : public QObject, public QDBusContext
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "ru.omprussia.qaservice")
 public:
-    bool initialize(const QString &serviceName, bool loaded);
+    bool initialize(bool loaded);
 
     static QAService *instance();
     static void sendMessageReply(const QDBusMessage &message, const QVariant &result);
@@ -25,11 +25,7 @@ private slots:
     QByteArray grabWindow();
     QByteArray grabCurrentPage();
 
-    QStringList findObjectsByProperty(const QString &parentObject, const QString &property, const QString &value);
-    QStringList findObjectsByClassname(const QString &parentObject, const QString &className);
-
     void clickPoint(int posx, int posy);
-    void clickObject(const QString &object);
 
     void pressAndHold(int posx, int posy);
 
