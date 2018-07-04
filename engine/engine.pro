@@ -4,7 +4,7 @@ CONFIG += plugin
 CONFIG += c++11
 
 SOURCES += \
-    src/qaengine.cpp \
+    src/engine.cpp \
     src/QAHooks.cpp \
     src/QAEngine.cpp \
     src/QAService.cpp \

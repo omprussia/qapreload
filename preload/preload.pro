@@ -3,7 +3,7 @@ QT =
 CONFIG += plugin
 
 SOURCES += \
-    src/qapreload.cpp
+    src/preload.cpp
 
 TARGET = qapreload
 target.path = /usr/lib
