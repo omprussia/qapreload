@@ -14,6 +14,10 @@ class QAEngine : public QObject
     Q_OBJECT
 public:
     static QAEngine *instance();
+    static void initialize();
+    static bool isLoaded();
+
+    void waitForChildrens();
 
     virtual ~QAEngine();
 
@@ -22,10 +26,7 @@ public slots:
     void dumpCurrentPage(const QDBusMessage &message);
 
     void clickPoint(int posx, int posy);
-    void clickObject(const QString &object);
-
     void pressAndHold(int posx, int posy);
-
     void mouseSwipe(int startx, int starty, int stopx, int stopy);
 
     void grabWindow(const QDBusMessage &message);
@@ -33,6 +34,9 @@ public slots:
 
 private slots:
     void onMouseEvent(QMouseEvent *event);
+    void onLateInitialization();
+
+    void onChildrenChanged();
 
 private:
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
@@ -44,15 +48,12 @@ private:
     void sendGrabbedObject(QQuickItem *item, const QDBusMessage &message);
 
     explicit QAEngine(QObject *parent = nullptr);
-    friend class QAHooks;
-
-    void initialize();
 
     QQuickItem *m_rootItem = nullptr;
 
     Qt::MouseButton m_mouseButton = Qt::NoButton;
 
-    QAMouseEngine *m_mouseEngine;
+    QAMouseEngine *m_mouseEngine = nullptr;
 
 };
 

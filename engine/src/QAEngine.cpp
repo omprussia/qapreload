@@ -7,7 +7,6 @@
 #include <QCoreApplication>
 #include <QGuiApplication>
 
-#include <QScopedValueRollback>
 #include <QTimer>
 
 #include <QQmlApplicationEngine>
@@ -24,26 +23,30 @@ static QAEngine *s_instance = nullptr;
 
 void QAEngine::initialize()
 {
-    QAHooks::removeStartupHook();
-
-    QGuiApplication *gui = qobject_cast<QGuiApplication*>(qApp);
-    if (!gui) {
-        deleteLater();
+    if (s_instance) {
         return;
     }
 
-    setParent(qApp);
-    QTimer::singleShot(0, this, [this](){
-        QWindowList windows = qGuiApp->topLevelWindows();
-        for (QWindow *window : windows) {
-            QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
-            if (qWindow && qWindow->contentItem()) {
-                m_rootItem = qWindow->contentItem();
-                QAService::instance()->initialize(m_rootItem);
-                break;
-            }
-        }
-    });
+    QGuiApplication *gui = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
+    if (!gui) {
+        return;
+    }
+
+    QTimer::singleShot(0, QAEngine::instance(), &QAEngine::onLateInitialization);
+}
+
+bool QAEngine::isLoaded()
+{
+    return s_instance;
+}
+
+void QAEngine::waitForChildrens()
+{
+    if (!m_rootItem) {
+        return;
+    }
+
+    connect(m_rootItem, &QQuickItem::childrenChanged, this, &QAEngine::onChildrenChanged);
 }
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
@@ -145,8 +148,41 @@ void QAEngine::onMouseEvent(QMouseEvent *event)
     wp->deliverMouseEvent(event);
 
     if (event->type() == QEvent::MouseButtonRelease && wp->mouseGrabberItem) {
-        wp->mouseGrabberItem = nullptr;
+        wp->setMouseGrabber(nullptr);
     }
+}
+
+void QAEngine::onLateInitialization()
+{
+    setParent(qGuiApp);
+
+    QWindowList windows = qGuiApp->topLevelWindows();
+    for (QWindow *window : windows) {
+        QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
+        if (qWindow && qWindow->contentItem()) {
+            m_rootItem = qWindow->contentItem();
+            break;
+        }
+    }
+    if (!m_rootItem) {
+        qWarning() << Q_FUNC_INFO << "Can't find window";
+        return;
+    }
+
+    QAService::instance()->initialize();
+    m_mouseEngine = new QAMouseEngine(this);
+    connect(m_mouseEngine, &QAMouseEngine::triggered, this, &QAEngine::onMouseEvent);
+}
+
+void QAEngine::onChildrenChanged()
+{
+    if (m_rootItem->childItems().isEmpty()) {
+        return;
+    }
+
+    disconnect(m_rootItem, &QQuickItem::childrenChanged, this, &QAEngine::onChildrenChanged);
+
+    QAService::instance()->initialize();
 }
 
 QAEngine *QAEngine::instance()
@@ -159,9 +195,7 @@ QAEngine *QAEngine::instance()
 
 QAEngine::QAEngine(QObject *parent)
     : QObject(parent)
-    , m_mouseEngine(new QAMouseEngine(this))
 {
-    connect(m_mouseEngine, &QAMouseEngine::triggered, this, &QAEngine::onMouseEvent);
 }
 
 QAEngine::~QAEngine()

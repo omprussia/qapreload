@@ -13,11 +13,14 @@ class QAService : public QObject, public QDBusContext
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "ru.omprussia.qaservice")
 public:
-    bool initialize(bool loaded);
 
     static QAService *instance();
+
     static void sendMessageReply(const QDBusMessage &message, const QVariant &result);
     static void sendMessageError(const QDBusMessage &message, const QString &errorString);
+
+public slots:
+    void initialize();
 
 private slots:
     QString dumpTree();
@@ -26,16 +29,15 @@ private slots:
     QByteArray grabCurrentPage();
 
     void clickPoint(int posx, int posy);
-
     void pressAndHold(int posx, int posy);
-
     void mouseSwipe(int startx, int starty, int stopx, int stopy);
 
 private:
     explicit QAService(QObject *parent = nullptr);
     QAAdaptor *m_adaptor = nullptr;
 
-    QHash<QString, QQuickItem*> m_objects;
+    int m_loadCount = 0;
+
 };
 
 #endif // QASERVICE_HPP
