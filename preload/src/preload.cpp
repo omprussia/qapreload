@@ -3,6 +3,8 @@
 
 #include <dlfcn.h>
 
+unsigned int qtHookData[7];
+
 static uid_t nemo_uid()
 {
     static struct passwd *nemo_pwd;
@@ -17,11 +19,16 @@ static uid_t nemo_uid()
     return nemo_pwd->pw_uid;
 }
 
-extern "C" void qt_startup_hook()
+static void qt_startup_hook()
 {
+    dlopen("libqaengine.so", RTLD_LAZY);
+}
+
+__attribute__((constructor))
+static void libConstructor() {
     if (getuid() != nemo_uid()) {
         return;
     }
-
-    dlopen("libqaengine.so", RTLD_LAZY);
+    qtHookData[5] = reinterpret_cast<unsigned int>(&qt_startup_hook);
 }
+

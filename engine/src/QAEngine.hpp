@@ -17,7 +17,6 @@ public:
     static void initialize();
     static bool isLoaded();
 
-    void waitForChildrens();
 
     virtual ~QAEngine();
 
@@ -46,6 +45,8 @@ private:
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
 
     void sendGrabbedObject(QQuickItem *item, const QDBusMessage &message);
+
+    void waitForChildrens();
 
     explicit QAEngine(QObject *parent = nullptr);
 

@@ -1,5 +1,4 @@
 #include "QAEngine.hpp"
-#include "QAHooks.hpp"
 #include "QAService.hpp"
 
 #include <QDebug>
@@ -169,9 +168,14 @@ void QAEngine::onLateInitialization()
         return;
     }
 
-    QAService::instance()->initialize();
     m_mouseEngine = new QAMouseEngine(this);
     connect(m_mouseEngine, &QAMouseEngine::triggered, this, &QAEngine::onMouseEvent);
+
+    if (m_rootItem->childItems().isEmpty()) { // probably declarative cache
+        waitForChildrens(); // let's wait for loading
+    } else {
+        QAService::instance()->initialize();
+    }
 }
 
 void QAEngine::onChildrenChanged()

@@ -5,7 +5,6 @@ CONFIG += c++11
 
 SOURCES += \
     src/engine.cpp \
-    src/QAHooks.cpp \
     src/QAEngine.cpp \
     src/QAService.cpp \
     src/QAMouseEngine.cpp
@@ -16,7 +15,6 @@ target.path = /usr/lib
 INSTALLS = target
 
 HEADERS += \
-    src/QAHooks.hpp \
     src/QAEngine.hpp \
     src/QAService.hpp \
     src/QAMouseEngine.hpp

@@ -26,11 +26,6 @@ void QAService::initialize()
 {
     QString processName = qApp->applicationFilePath().section(QLatin1Char('/'), -1);
 
-    if (processName == QStringLiteral("booster-silica-qt5")) {
-        QAEngine::instance()->waitForChildrens();
-        return;
-    }
-
     int serviceSuffix = 0;
     QString finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1").arg(processName);
 
