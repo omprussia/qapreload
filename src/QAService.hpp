@@ -31,6 +31,10 @@ private slots:
 
     void mouseSwipe(int startx, int starty, int stopx, int stopy);
 
+    void pressEnter(int count);
+    void pressBackspace(int count);
+    void pressKeys(const QString &keys);
+
 private:
     explicit QAService(QObject *parent = nullptr);
     QAAdaptor *m_adaptor = nullptr;

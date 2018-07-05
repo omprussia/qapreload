@@ -140,6 +140,30 @@ void QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
                               Q_ARG(int, stopy));
 }
 
+void QAService::pressKeys(const QString &keys)
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, keys));
+}
+
+void QAService::pressEnter(int count)
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(int, count));
+}
+
+void QAService::pressBackspace(int count)
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(int, count));
+}
+
 void QAService::sendMessageReply(const QDBusMessage &message, const QVariant &result)
 {
     const QDBusMessage replyMessage = message.createReply(result);

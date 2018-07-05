@@ -160,8 +160,10 @@ QAEngine *QAEngine::instance()
 QAEngine::QAEngine(QObject *parent)
     : QObject(parent)
     , m_mouseEngine(new QAMouseEngine(this))
+    , m_keyEngine(new QAKeyEngine(this))
 {
     connect(m_mouseEngine, &QAMouseEngine::triggered, this, &QAEngine::onMouseEvent);
+    connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 }
 
 QAEngine::~QAEngine()
@@ -241,4 +243,25 @@ void QAEngine::grabCurrentPage(const QDBusMessage &message)
     }
 
     sendGrabbedObject(currentPage, message);
+}
+
+void QAEngine::onKeyEvent(QKeyEvent *event)
+{
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    wp->deliverKeyEvent(event);
+}
+
+void QAEngine::pressKeys(const QString &keys)
+{
+    m_keyEngine->pressKeys(keys);
+}
+
+void QAEngine::pressBackspace(int count)
+{
+    m_keyEngine->pressBackspace(count);
+}
+
+void QAEngine::pressEnter(int count)
+{
+    m_keyEngine->pressEnter(count);
 }
