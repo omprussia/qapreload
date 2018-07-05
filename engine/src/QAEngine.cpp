@@ -224,7 +224,7 @@ void QAEngine::dumpTree(const QDBusMessage &message)
 {
     QJsonObject tree = recursiveDumpTree(m_rootItem);
     QJsonDocument doc(tree);
-    const QByteArray dump = doc.toJson(QJsonDocument::Indented);
+    const QByteArray dump = doc.toJson(QJsonDocument::Compact);
 
     QAService::sendMessageReply(message, QString::fromUtf8(dump));
 }
@@ -251,7 +251,7 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
 
     QJsonObject tree = recursiveDumpTree(currentPage);
     QJsonDocument doc(tree);
-    const QByteArray dump = doc.toJson(QJsonDocument::Indented);
+    const QByteArray dump = doc.toJson(QJsonDocument::Compact);
 
     QAService::sendMessageReply(message, QString::fromUtf8(dump));
 }
