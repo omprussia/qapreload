@@ -1,10 +1,15 @@
 #include "QAEngine.hpp"
 #include "QAService.hpp"
+#include "QAMouseEngine.hpp"
+#include "QAKeyEngine.hpp"
 
 #include <QDebug>
 
 #include <QCoreApplication>
 #include <QGuiApplication>
+
+#include <QMouseEvent>
+#include <QKeyEvent>
 
 #include <QTimer>
 
@@ -151,6 +156,12 @@ void QAEngine::onMouseEvent(QMouseEvent *event)
     }
 }
 
+void QAEngine::onKeyEvent(QKeyEvent *event)
+{
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    wp->deliverKeyEvent(event);
+}
+
 void QAEngine::onLateInitialization()
 {
     setParent(qGuiApp);
@@ -170,6 +181,9 @@ void QAEngine::onLateInitialization()
 
     m_mouseEngine = new QAMouseEngine(this);
     connect(m_mouseEngine, &QAMouseEngine::triggered, this, &QAEngine::onMouseEvent);
+
+    m_keyEngine = new QAKeyEngine(this);
+    connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
     if (m_rootItem->childItems().isEmpty()) { // probably declarative cache
         waitForChildrens(); // let's wait for loading
@@ -279,4 +293,19 @@ void QAEngine::grabCurrentPage(const QDBusMessage &message)
     }
 
     sendGrabbedObject(currentPage, message);
+}
+
+void QAEngine::pressEnter(int count)
+{
+    m_keyEngine->pressEnter(count);
+}
+
+void QAEngine::pressBackspace(int count)
+{
+    m_keyEngine->pressBackspace(count);
+}
+
+void QAEngine::pressKeys(const QString &keys)
+{
+    m_keyEngine->pressKeys(keys);
 }

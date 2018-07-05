@@ -7,17 +7,19 @@ SOURCES += \
     src/engine.cpp \
     src/QAEngine.cpp \
     src/QAService.cpp \
-    src/QAMouseEngine.cpp
+    src/QAMouseEngine.cpp \
+    src/QAKeyEngine.cpp
+
+HEADERS += \
+    src/QAEngine.hpp \
+    src/QAService.hpp \
+    src/QAMouseEngine.hpp \
+    src/QAKeyEngine.hpp
 
 TARGET = qaengine
 target.path = /usr/lib
 
 INSTALLS = target
-
-HEADERS += \
-    src/QAEngine.hpp \
-    src/QAService.hpp \
-    src/QAMouseEngine.hpp
 
 qa_dbus_adaptor.files = dbus/ru.omprussia.qaservice.xml
 qa_dbus_adaptor.source_flags = -c QAAdaptor

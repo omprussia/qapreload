@@ -1,14 +1,14 @@
 #ifndef QAENGINE_HPP
 #define QAENGINE_HPP
 
-#include "QAMouseEngine.hpp"
-
 #include <QObject>
-#include <QHash>
 
 class QDBusMessage;
-class QAHooks;
 class QQuickItem;
+class QMouseEvent;
+class QKeyEvent;
+class QAKeyEngine;
+class QAMouseEngine;
 class QAEngine : public QObject
 {
     Q_OBJECT
@@ -16,7 +16,6 @@ public:
     static QAEngine *instance();
     static void initialize();
     static bool isLoaded();
-
 
     virtual ~QAEngine();
 
@@ -31,8 +30,13 @@ public slots:
     void grabWindow(const QDBusMessage &message);
     void grabCurrentPage(const QDBusMessage &message);
 
+    void pressEnter(int count);
+    void pressBackspace(int count);
+    void pressKeys(const QString &keys);
+
 private slots:
     void onMouseEvent(QMouseEvent *event);
+    void onKeyEvent(QKeyEvent *event);
     void onLateInitialization();
 
     void onChildrenChanged();
@@ -55,6 +59,7 @@ private:
     Qt::MouseButton m_mouseButton = Qt::NoButton;
 
     QAMouseEngine *m_mouseEngine = nullptr;
+    QAKeyEngine *m_keyEngine = nullptr;
 
 };
 

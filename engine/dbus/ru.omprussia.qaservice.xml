@@ -32,6 +32,18 @@
             <arg name="stopx" type="i" direction="in" />
             <arg name="stopy" type="i" direction="in" />
         </method>
+        <method name="pressKeys">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+            <arg name="keys" type="s" direction="in" />
+        </method>
+        <method name="pressEnter">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+            <arg name="count" type="i" direction="in" />
+        </method>
+        <method name="pressBackspace">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+            <arg name="count" type="i" direction="in" />
+        </method>
         <signal name="engineLoaded">
             <arg name="loaded" type="b"/>
         </signal>
