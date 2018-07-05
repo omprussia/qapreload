@@ -24,7 +24,11 @@ const char *funcName(const char *line)
 
 void QAService::initialize()
 {
-    QString processName = qApp->applicationFilePath().section(QLatin1Char('/'), -1);
+    if (m_adaptor) {
+        return;
+    }
+
+    QString processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
 
     int serviceSuffix = 0;
     QString finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1").arg(processName);
