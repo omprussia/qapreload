@@ -111,39 +111,47 @@ QByteArray QAService::grabCurrentPage()
 
 void QAService::clickPoint(int posx, int posy)
 {
+    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
                               Q_ARG(int, posx),
-                              Q_ARG(int, posy));
+                              Q_ARG(int, posy),
+                              Q_ARG(QDBusMessage, message()));
 }
 
 void QAService::pressAndHold(int posx, int posy)
 {
+    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
                               Q_ARG(int, posx),
-                              Q_ARG(int, posy));
+                              Q_ARG(int, posy),
+                              Q_ARG(QDBusMessage, message()));
 }
 
 void QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
 {
+    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
                               Q_ARG(int, startx),
                               Q_ARG(int, starty),
                               Q_ARG(int, stopx),
-                              Q_ARG(int, stopy));
+                              Q_ARG(int, stopy),
+                              Q_ARG(QDBusMessage, message()));
 }
 
 void QAService::pressKeys(const QString &keys)
 {
+    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
-                              Q_ARG(QString, keys));
+                              Q_ARG(QString, keys),
+                              Q_ARG(QDBusMessage, message()));
 }
 
 void QAService::quit()
@@ -154,6 +162,7 @@ void QAService::quit()
 
 void QAService::pressEnter(int count)
 {
+    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
@@ -162,6 +171,7 @@ void QAService::pressEnter(int count)
 
 void QAService::pressBackspace(int count)
 {
+    setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,

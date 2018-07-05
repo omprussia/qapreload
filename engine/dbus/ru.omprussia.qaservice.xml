@@ -16,32 +16,26 @@
             <arg name="image" type="a(y)" direction="out" />
         </method>
         <method name="clickPoint">
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="posx" type="i" direction="in" />
             <arg name="posy" type="i" direction="in" />
         </method>
         <method name="pressAndHold">
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="posx" type="i" direction="in" />
             <arg name="posy" type="i" direction="in" />
         </method>
         <method name="mouseSwipe">
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="startx" type="i" direction="in" />
             <arg name="starty" type="i" direction="in" />
             <arg name="stopx" type="i" direction="in" />
             <arg name="stopy" type="i" direction="in" />
         </method>
         <method name="pressKeys">
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="keys" type="s" direction="in" />
         </method>
         <method name="pressEnter">
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="count" type="i" direction="in" />
         </method>
         <method name="pressBackspace">
-            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="count" type="i" direction="in" />
         </method>
         <method name="quit">

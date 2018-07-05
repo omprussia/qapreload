@@ -3,6 +3,7 @@
 
 #include <QObject>
 
+class QAPendingEvent;
 class QKeyEvent;
 class QAKeyEngine : public QObject
 {
@@ -10,9 +11,9 @@ class QAKeyEngine : public QObject
 public:
     explicit QAKeyEngine(QObject *parent = nullptr);
 
-    void pressEnter(int count);
-    void pressBackspace(int count);
-    void pressKeys(const QString &keys);
+    QAPendingEvent *pressEnter(int count);
+    QAPendingEvent *pressBackspace(int count);
+    QAPendingEvent *pressKeys(const QString &keys);
 
 signals:
     void triggered(QKeyEvent *event);

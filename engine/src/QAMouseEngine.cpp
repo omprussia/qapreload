@@ -1,4 +1,5 @@
 #include "QAMouseEngine.hpp"
+#include "QAPendingEvent.hpp"
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -24,32 +25,57 @@ bool QAMouseEngine::isRunning() const
     return m_timer->isActive();
 }
 
-void QAMouseEngine::press(const QPointF &point)
+QAPendingEvent *QAMouseEngine::press(const QPointF &point)
 {
+    QAPendingEvent *pending = new QAPendingEvent(this);
+
     sendPress(point);
+
+    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
+    return pending;
 }
 
-void QAMouseEngine::release(const QPointF &point)
+QAPendingEvent *QAMouseEngine::release(const QPointF &point)
 {
+    QAPendingEvent *pending = new QAPendingEvent(this);
+
     sendRelease(point);
+
+    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
+    return pending;
 }
 
-void QAMouseEngine::click(const QPointF &point)
+QAPendingEvent *QAMouseEngine::click(const QPointF &point)
 {
+    QAPendingEvent *pending = new QAPendingEvent(this);
+
     sendPress(point);
     sendRelease(point);
+
+    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
+    return pending;
 }
 
-void QAMouseEngine::pressAndHold(const QPointF &point, int delay)
+QAPendingEvent *QAMouseEngine::pressAndHold(const QPointF &point, int delay)
 {
+    QAPendingEvent *pending = new QAPendingEvent(this);
+
     sendPress(point);
-    QTimer::singleShot(delay, this, [this, point]() {
+    QTimer::singleShot(delay, this, [this, point, pending]() {
         sendRelease(point);
+        QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
     });
+
+    return pending;
 }
 
-void QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int duration, int moveSteps, int releaseDelay)
+QAPendingEvent *QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int duration, int moveSteps, int releaseDelay)
 {
+    if (m_pendingMove) {
+        return m_pendingMove;
+    }
+    m_pendingMove = new QAPendingEvent(this);
+
     if (duration < 100 || moveSteps < 1) {
         qWarning() << Q_FUNC_INFO << "QA ENGINEER IDIOT";
     }
@@ -74,6 +100,31 @@ void QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int durat
     m_currentMoveStep = 0;
 
     m_timer->start(qMin(duration / m_moveStepCount, 1));
+
+    return m_pendingMove;
+}
+
+void QAMouseEngine::onMoveTimer()
+{
+    auto *interpolator = QVariantAnimationPrivate::getInterpolator(QMetaType::QPointF);
+    float progress = static_cast<float>(m_currentMoveStep) / m_moveStepCount;
+
+    QPointF pointMove = interpolator(&m_pointA, &m_pointB, progress).toPointF();
+
+    sendMove(pointMove);
+    if (m_currentMoveStep++ == m_moveStepCount) {
+        m_timer->stop();
+
+        sendMove(m_pointB);
+        sendRelease(m_pointB, m_releaseAfterMoveDelay);
+
+        if (m_pendingMove) {
+            QMetaObject::invokeMethod(m_pendingMove, "setCompleted", Qt::QueuedConnection);
+            m_pendingMove = nullptr;
+        } else {
+            qWarning() << Q_FUNC_INFO << "Pending move is null!";
+        }
+    }
 }
 
 void QAMouseEngine::sendPress(const QPointF &point)
@@ -90,22 +141,6 @@ void QAMouseEngine::sendPress(const QPointF &point)
     event.setTimestamp(m_eta->elapsed());
 
     emit triggered(&event);
-}
-
-void QAMouseEngine::onMoveTimer()
-{
-    auto *interpolator = QVariantAnimationPrivate::getInterpolator(QMetaType::QPointF);
-    float progress = static_cast<float>(m_currentMoveStep) / m_moveStepCount;
-
-    QPointF pointMove = interpolator(&m_pointA, &m_pointB, progress).toPointF();
-
-    sendMove(pointMove);
-    if (m_currentMoveStep++ == m_moveStepCount) {
-        m_timer->stop();
-
-        sendMove(m_pointB);
-        sendRelease(m_pointB, m_releaseAfterMoveDelay);
-    }
 }
 
 void QAMouseEngine::sendRelease(const QPointF &point)

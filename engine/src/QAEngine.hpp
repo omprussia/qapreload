@@ -23,16 +23,16 @@ public slots:
     void dumpTree(const QDBusMessage &message);
     void dumpCurrentPage(const QDBusMessage &message);
 
-    void clickPoint(int posx, int posy);
-    void pressAndHold(int posx, int posy);
-    void mouseSwipe(int startx, int starty, int stopx, int stopy);
+    void clickPoint(int posx, int posy, const QDBusMessage &message);
+    void pressAndHold(int posx, int posy, const QDBusMessage &message);
+    void mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message);
 
     void grabWindow(const QDBusMessage &message);
     void grabCurrentPage(const QDBusMessage &message);
 
-    void pressEnter(int count);
-    void pressBackspace(int count);
-    void pressKeys(const QString &keys);
+    void pressEnter(int count, const QDBusMessage &message);
+    void pressBackspace(int count, const QDBusMessage &message);
+    void pressKeys(const QString &keys, const QDBusMessage &message);
 
 private slots:
     void onMouseEvent(QMouseEvent *event);

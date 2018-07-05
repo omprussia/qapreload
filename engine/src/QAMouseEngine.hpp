@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QPointF>
 
+class QAPendingEvent;
 class QElapsedTimer;
 class QTimer;
 class QMouseEvent;
@@ -14,11 +15,11 @@ public:
     explicit QAMouseEngine(QObject *parent = nullptr);
     bool isRunning() const;
 
-    void press(const QPointF &point);
-    void release(const QPointF &point);
-    void click(const QPointF &point);
-    void pressAndHold(const QPointF &point, int delay = 1200);
-    void move(const QPointF &pointA, const QPointF &pointB, int duration = 100, int moveSteps = 100, int releaseDelay = 600);
+    QAPendingEvent *press(const QPointF &point);
+    QAPendingEvent *release(const QPointF &point);
+    QAPendingEvent * click(const QPointF &point);
+    QAPendingEvent *pressAndHold(const QPointF &point, int delay = 1200);
+    QAPendingEvent *move(const QPointF &pointA, const QPointF &pointB, int duration = 100, int moveSteps = 100, int releaseDelay = 600);
 
 signals:
     void triggered(QMouseEvent *event);
@@ -45,6 +46,7 @@ private:
     float m_moveStepSize = 5.0f;
     int m_moveStepCount = 1;
     int m_currentMoveStep = 0;
+    QAPendingEvent *m_pendingMove = nullptr;
     //
 };
 

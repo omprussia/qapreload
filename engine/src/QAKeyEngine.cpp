@@ -1,4 +1,5 @@
 #include "QAKeyEngine.hpp"
+#include "QAPendingEvent.hpp"
 
 #include <QKeyEvent>
 
@@ -7,28 +8,43 @@ QAKeyEngine::QAKeyEngine(QObject *parent)
 {
 }
 
-void QAKeyEngine::pressEnter(int count)
+QAPendingEvent *QAKeyEngine::pressEnter(int count)
 {
+    QAPendingEvent *pending = new QAPendingEvent(this);
+
     for (int i = 0; i < count; i++) {
         sendPress('\b', Qt::Key_Enter);
         sendRelease('\b', Qt::Key_Enter);
     }
+
+    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
+    return pending;
 }
 
-void QAKeyEngine::pressBackspace(int count)
+QAPendingEvent *QAKeyEngine::pressBackspace(int count)
 {
+    QAPendingEvent *pending = new QAPendingEvent(this);
+
     for (int i = 0; i < count; i++) {
         sendPress('\b', Qt::Key_Backspace);
         sendRelease('\b', Qt::Key_Backspace);
     }
+
+    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
+    return pending;
 }
 
-void QAKeyEngine::pressKeys(const QString &keys)
+QAPendingEvent *QAKeyEngine::pressKeys(const QString &keys)
 {
+    QAPendingEvent *pending = new QAPendingEvent(this);
+
     for (const QChar &key : keys) {
         sendPress(key);
         sendRelease(key);
     }
+
+    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
+    return pending;
 }
 
 void QAKeyEngine::sendPress(const QChar &text, int key)

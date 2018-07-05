@@ -8,13 +8,15 @@ SOURCES += \
     src/QAEngine.cpp \
     src/QAService.cpp \
     src/QAMouseEngine.cpp \
-    src/QAKeyEngine.cpp
+    src/QAKeyEngine.cpp \
+    src/QAPendingEvent.cpp
 
 HEADERS += \
     src/QAEngine.hpp \
     src/QAService.hpp \
     src/QAMouseEngine.hpp \
-    src/QAKeyEngine.hpp
+    src/QAKeyEngine.hpp \
+    src/QAPendingEvent.hpp
 
 TARGET = qaengine
 target.path = /usr/lib

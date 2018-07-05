@@ -2,6 +2,7 @@
 #include "QAService.hpp"
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
+#include "QAPendingEvent.hpp"
 
 #include <QDebug>
 
@@ -256,19 +257,28 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
     QAService::sendMessageReply(message, QString::fromUtf8(dump));
 }
 
-void QAEngine::clickPoint(int posx, int posy)
+void QAEngine::clickPoint(int posx, int posy, const QDBusMessage &message)
 {
-    m_mouseEngine->click(QPointF(posx, posy));
+    connect(m_mouseEngine->click(QPointF(posx, posy)),
+            &QAPendingEvent::completed, [message](){
+        QAService::sendMessageReply(message, QVariantList());
+    });
 }
 
-void QAEngine::pressAndHold(int posx, int posy)
+void QAEngine::pressAndHold(int posx, int posy, const QDBusMessage &message)
 {
-    m_mouseEngine->pressAndHold(QPointF(posx, posy));
+    connect(m_mouseEngine->pressAndHold(QPointF(posx, posy)),
+            &QAPendingEvent::completed, [message](){
+        QAService::sendMessageReply(message, QVariantList());
+    });
 }
 
-void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy)
+void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message)
 {
-    m_mouseEngine->move(QPointF(startx, starty), QPointF(stopx, stopy));
+    connect(m_mouseEngine->move(QPointF(startx, starty), QPointF(stopx, stopy)),
+            &QAPendingEvent::completed, [message](){
+        QAService::sendMessageReply(message, QVariantList());
+    });
 }
 
 void QAEngine::grabWindow(const QDBusMessage &message)
@@ -295,17 +305,26 @@ void QAEngine::grabCurrentPage(const QDBusMessage &message)
     sendGrabbedObject(currentPage, message);
 }
 
-void QAEngine::pressEnter(int count)
+void QAEngine::pressEnter(int count, const QDBusMessage &message)
 {
-    m_keyEngine->pressEnter(count);
+    connect(m_keyEngine->pressEnter(count),
+            &QAPendingEvent::completed, [message](){
+        QAService::sendMessageReply(message, QVariantList());
+    });
 }
 
-void QAEngine::pressBackspace(int count)
+void QAEngine::pressBackspace(int count, const QDBusMessage &message)
 {
-    m_keyEngine->pressBackspace(count);
+    connect(m_keyEngine->pressBackspace(count),
+            &QAPendingEvent::completed, [message](){
+        QAService::sendMessageReply(message, QVariantList());
+    });
 }
 
-void QAEngine::pressKeys(const QString &keys)
+void QAEngine::pressKeys(const QString &keys, const QDBusMessage &message)
 {
-    m_keyEngine->pressKeys(keys);
+    connect(m_keyEngine->pressKeys(keys),
+            &QAPendingEvent::completed, [message](){
+        QAService::sendMessageReply(message, QVariantList());
+    });
 }
