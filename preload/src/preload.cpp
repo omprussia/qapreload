@@ -5,6 +5,8 @@
 
 unsigned int qtHookData[7];
 
+static int qa_loaded = 0;
+
 static uid_t nemo_uid()
 {
     static struct passwd *nemo_pwd;
@@ -21,7 +23,11 @@ static uid_t nemo_uid()
 
 static void qt_startup_hook()
 {
+    if (qa_loaded) {
+        return;
+    }
     dlopen("libqaengine.so", RTLD_LAZY);
+    qa_loaded = 1;
 }
 
 __attribute__((constructor))
