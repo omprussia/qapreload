@@ -146,6 +146,12 @@ void QAService::pressKeys(const QString &keys)
                               Q_ARG(QString, keys));
 }
 
+void QAService::quit()
+{
+    emit m_adaptor->engineLoaded(false);
+    qApp->quit();
+}
+
 void QAService::pressEnter(int count)
 {
     QMetaObject::invokeMethod(QAEngine::instance(),

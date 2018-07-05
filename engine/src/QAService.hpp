@@ -36,6 +36,8 @@ private slots:
     void pressBackspace(int count);
     void pressKeys(const QString &keys);
 
+    void quit();
+
 private:
     explicit QAService(QObject *parent = nullptr);
     QAAdaptor *m_adaptor = nullptr;
