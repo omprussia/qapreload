@@ -3,11 +3,12 @@
 
 #include <dlfcn.h>
 
-unsigned int qtHookData[7];
+unsigned int qtHookData[100];
 
 static int qa_loaded = 0;
+static int is_nemo = 0;
 
-static uid_t nemo_uid()
+inline uid_t nemo_uid()
 {
     static struct passwd *nemo_pwd;
 
@@ -21,8 +22,11 @@ static uid_t nemo_uid()
     return nemo_pwd->pw_uid;
 }
 
-static void qt_startup_hook()
+extern "C" void qt_startup_hook()
 {
+    if (!is_nemo) {
+        return;
+    }
     if (qa_loaded) {
         return;
     }
@@ -32,9 +36,9 @@ static void qt_startup_hook()
 
 __attribute__((constructor))
 static void libConstructor() {
-    if (getuid() != nemo_uid()) {
-        return;
+    is_nemo = getuid() == nemo_uid();
+    if (is_nemo) {
+        qtHookData[5] = reinterpret_cast<unsigned int>(&qt_startup_hook);
     }
-    qtHookData[5] = reinterpret_cast<unsigned int>(&qt_startup_hook);
 }
 
