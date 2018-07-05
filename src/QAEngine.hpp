@@ -2,6 +2,7 @@
 #define QAENGINE_HPP
 
 #include "QAMouseEngine.hpp"
+#include "QAKeyEngine.hpp"
 
 #include <QObject>
 #include <QHash>
@@ -31,8 +32,13 @@ public slots:
     void grabWindow(const QDBusMessage &message);
     void grabCurrentPage(const QDBusMessage &message);
 
+    void pressKeys(const QString &keys);
+    void pressBackspace(int count);
+    void pressEnter(int count);
+
 private slots:
     void onMouseEvent(QMouseEvent *event);
+    void onKeyEvent(QKeyEvent *event);
 
 private:
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
@@ -53,7 +59,7 @@ private:
     Qt::MouseButton m_mouseButton = Qt::NoButton;
 
     QAMouseEngine *m_mouseEngine;
-
+    QAKeyEngine * m_keyEngine;
 };
 
 #endif // QAENGINE_HPP

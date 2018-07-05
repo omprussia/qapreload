@@ -8,7 +8,8 @@ SOURCES += \
     src/QAHooks.cpp \
     src/QAEngine.cpp \
     src/QAService.cpp \
-    src/QAMouseEngine.cpp
+    src/QAMouseEngine.cpp \
+    src/QAKeyEngine.cpp
 
 TARGET = qapreload
 target.path = /usr/lib
@@ -21,7 +22,8 @@ HEADERS += \
     src/QAHooks.hpp \
     src/QAEngine.hpp \
     src/QAService.hpp \
-    src/QAMouseEngine.hpp
+    src/QAMouseEngine.hpp \
+    src/QAKeyEngine.hpp
 
 qa_dbus_adaptor.files = dbus/ru.omprussia.qaservice.xml
 qa_dbus_adaptor.source_flags = -c QAAdaptor
