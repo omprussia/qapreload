@@ -33,4 +33,5 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%{_libdir}/lib%{name}.so
+%{_libdir}/libqapreload.so
+%{_libdir}/libqaengine.so

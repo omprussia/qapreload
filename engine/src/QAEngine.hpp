@@ -1,20 +1,21 @@
 #ifndef QAENGINE_HPP
 #define QAENGINE_HPP
 
-#include "QAMouseEngine.hpp"
-#include "QAKeyEngine.hpp"
-
 #include <QObject>
-#include <QHash>
 
 class QDBusMessage;
-class QAHooks;
 class QQuickItem;
+class QMouseEvent;
+class QKeyEvent;
+class QAKeyEngine;
+class QAMouseEngine;
 class QAEngine : public QObject
 {
     Q_OBJECT
 public:
     static QAEngine *instance();
+    static void initialize();
+    static bool isLoaded();
 
     virtual ~QAEngine();
 
@@ -23,22 +24,22 @@ public slots:
     void dumpCurrentPage(const QDBusMessage &message);
 
     void clickPoint(int posx, int posy);
-    void clickObject(const QString &object);
-
     void pressAndHold(int posx, int posy);
-
     void mouseSwipe(int startx, int starty, int stopx, int stopy);
 
     void grabWindow(const QDBusMessage &message);
     void grabCurrentPage(const QDBusMessage &message);
 
-    void pressKeys(const QString &keys);
-    void pressBackspace(int count);
     void pressEnter(int count);
+    void pressBackspace(int count);
+    void pressKeys(const QString &keys);
 
 private slots:
     void onMouseEvent(QMouseEvent *event);
     void onKeyEvent(QKeyEvent *event);
+    void onLateInitialization();
+
+    void onChildrenChanged();
 
 private:
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
@@ -49,17 +50,17 @@ private:
 
     void sendGrabbedObject(QQuickItem *item, const QDBusMessage &message);
 
-    explicit QAEngine(QObject *parent = nullptr);
-    friend class QAHooks;
+    void waitForChildrens();
 
-    void initialize();
+    explicit QAEngine(QObject *parent = nullptr);
 
     QQuickItem *m_rootItem = nullptr;
 
     Qt::MouseButton m_mouseButton = Qt::NoButton;
 
-    QAMouseEngine *m_mouseEngine;
-    QAKeyEngine * m_keyEngine;
+    QAMouseEngine *m_mouseEngine = nullptr;
+    QAKeyEngine *m_keyEngine = nullptr;
+
 };
 
 #endif // QAENGINE_HPP

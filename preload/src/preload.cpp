@@ -1,7 +1,9 @@
-#include "QAHooks.hpp"
-
 #include <unistd.h>
 #include <pwd.h>
+
+#include <dlfcn.h>
+
+unsigned int qtHookData[7];
 
 static uid_t nemo_uid()
 {
@@ -17,14 +19,16 @@ static uid_t nemo_uid()
     return nemo_pwd->pw_uid;
 }
 
-__attribute__((constructor))
-static void libConstructor() {
-    if (getuid() == nemo_uid()) {
-        QAHooks::installStartupHook();
-    }
+static void qt_startup_hook()
+{
+    dlopen("libqaengine.so", RTLD_LAZY);
 }
 
-__attribute__((destructor))
-static void libDestructor() {
-    //
+__attribute__((constructor))
+static void libConstructor() {
+    if (getuid() != nemo_uid()) {
+        return;
+    }
+    qtHookData[5] = reinterpret_cast<unsigned int>(&qt_startup_hook);
 }
+
