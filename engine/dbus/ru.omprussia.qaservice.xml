@@ -41,6 +41,9 @@
         <method name="quit">
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
         </method>
+        <method name="clearFocus">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+        </method>
         <signal name="engineLoaded">
             <arg name="loaded" type="b"/>
         </signal>

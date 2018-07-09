@@ -328,3 +328,13 @@ void QAEngine::pressKeys(const QString &keys, const QDBusMessage &message)
         QAService::sendMessageReply(message, QVariantList());
     });
 }
+
+void QAEngine::clearFocus()
+{
+    if (!m_rootItem) {
+        return;
+    }
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    wp->clearFocusObject();
+}
