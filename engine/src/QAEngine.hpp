@@ -44,6 +44,8 @@ private slots:
     void onChildrenChanged();
 
 private:
+    QString getText(QQuickItem *item) const;
+
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
 

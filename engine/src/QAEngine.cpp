@@ -86,6 +86,22 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("id"), QJsonValue(id));
     object.insert(QStringLiteral("classname"), QJsonValue(className));
 
+    auto mo = item->metaObject();
+    do {
+      std::vector<std::pair<QString, QVariant> > v;
+      v.reserve(mo->propertyCount() - mo->propertyOffset());
+      for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i)
+          v.emplace_back(mo->property(i).name(),
+                         mo->property(i).read(item));
+      std::sort(v.begin(), v.end());
+      for (auto &i : v) {
+          if (!object.contains(i.first)
+                  && i.second.canConvert<QString>()) {
+              object.insert(i.first, QJsonValue::fromVariant(i.second));
+          }
+      }
+    } while ((mo = mo->superClass()));
+
     QRectF rectF(item->x(), item->y(), item->width(), item->height());
     QRect rect = rectF.toRect();
     object.insert(QStringLiteral("width"), QJsonValue(rect.width()));
@@ -109,31 +125,7 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("enabled"), QJsonValue(item->isEnabled()));
     object.insert(QStringLiteral("visible"), QJsonValue(item->isVisible()));
 
-    object.insert(QStringLiteral("text"), QJsonValue::fromVariant(item->property("text")));
-    object.insert(QStringLiteral("title"), QJsonValue::fromVariant(item->property("title")));
-    object.insert(QStringLiteral("name"), QJsonValue::fromVariant(item->property("name")));
-    object.insert(QStringLiteral("label"), QJsonValue::fromVariant(item->property("label")));
-    object.insert(QStringLiteral("value"), QJsonValue::fromVariant(item->property("value")));
-    object.insert(QStringLiteral("description"), QJsonValue::fromVariant(item->property("description")));
-    object.insert(QStringLiteral("placeholderText"), QJsonValue::fromVariant(item->property("placeholderText")));
-
-    static const char* extraProperties[] = {
-        "backNavigation",
-        "forwardNavigation",
-        "canAccept",
-        "acceptableInput",
-        "busy",
-        "currentIndex",
-        "checkable",
-        "checked",
-        "errorHighlight",
-    };
-
-    for (const char *extraProperty : extraProperties) {
-        if (item->metaObject()->indexOfProperty(extraProperty) > 0) {
-            object.insert(QString::fromLatin1(extraProperty), QJsonValue::fromVariant(item->property(extraProperty)));
-        }
-    }
+    object.insert(QStringLiteral("mainTextProperty"), getText(item));
 
     return object;
 }
@@ -214,6 +206,27 @@ void QAEngine::onChildrenChanged()
     disconnect(m_rootItem, &QQuickItem::childrenChanged, this, &QAEngine::onChildrenChanged);
 
     QAService::instance()->initialize();
+}
+
+QString QAEngine::getText(QQuickItem *item) const
+{
+    static const char *textProperties[] = {
+        "label",
+        "title",
+        "description",
+        "placeholderText",
+        "text",
+        "value",
+        "name",
+    };
+
+    for (const char *textProperty : textProperties) {
+        if (item->metaObject()->indexOfProperty(textProperty) > 0) {
+            return item->property(textProperty).toString();
+        }
+    }
+
+    return QString();
 }
 
 QAEngine *QAEngine::instance()
