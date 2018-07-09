@@ -154,6 +154,13 @@ void QAService::pressKeys(const QString &keys)
                               Q_ARG(QDBusMessage, message()));
 }
 
+void QAService::clearFocus()
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection);
+}
+
 void QAService::quit()
 {
     emit m_adaptor->engineLoaded(false);

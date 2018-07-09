@@ -105,6 +105,7 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("abs_x"), QJsonValue(abs.x()));
     object.insert(QStringLiteral("abs_y"), QJsonValue(abs.y()));
 
+    object.insert(QStringLiteral("objectName"), QJsonValue(item->objectName()));
     object.insert(QStringLiteral("enabled"), QJsonValue(item->isEnabled()));
     object.insert(QStringLiteral("visible"), QJsonValue(item->isVisible()));
 
@@ -327,4 +328,14 @@ void QAEngine::pressKeys(const QString &keys, const QDBusMessage &message)
             &QAPendingEvent::completed, [message](){
         QAService::sendMessageReply(message, QVariantList());
     });
+}
+
+void QAEngine::clearFocus()
+{
+    if (!m_rootItem) {
+        return;
+    }
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    wp->clearFocusObject();
 }

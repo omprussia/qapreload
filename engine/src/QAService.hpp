@@ -36,6 +36,7 @@ private slots:
     void pressBackspace(int count);
     void pressKeys(const QString &keys);
 
+    void clearFocus();
     void quit();
 
 private:

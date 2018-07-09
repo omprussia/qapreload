@@ -34,6 +34,8 @@ public slots:
     void pressBackspace(int count, const QDBusMessage &message);
     void pressKeys(const QString &keys, const QDBusMessage &message);
 
+    void clearFocus();
+
 private slots:
     void onMouseEvent(QMouseEvent *event);
     void onKeyEvent(QKeyEvent *event);
