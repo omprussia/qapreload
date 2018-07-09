@@ -105,6 +105,7 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("abs_x"), QJsonValue(abs.x()));
     object.insert(QStringLiteral("abs_y"), QJsonValue(abs.y()));
 
+    object.insert(QStringLiteral("objectName"), QJsonValue(item->objectName()));
     object.insert(QStringLiteral("enabled"), QJsonValue(item->isEnabled()));
     object.insert(QStringLiteral("visible"), QJsonValue(item->isVisible()));
 
