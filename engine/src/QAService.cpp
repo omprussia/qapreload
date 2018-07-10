@@ -173,7 +173,8 @@ void QAService::pressEnter(int count)
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
-                              Q_ARG(int, count));
+                              Q_ARG(int, count),
+                              Q_ARG(QDBusMessage, message()));
 }
 
 void QAService::pressBackspace(int count)
@@ -182,7 +183,8 @@ void QAService::pressBackspace(int count)
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,
-                              Q_ARG(int, count));
+                              Q_ARG(int, count),
+                              Q_ARG(QDBusMessage, message()));
 }
 
 void QAService::sendMessageReply(const QDBusMessage &message, const QVariant &result)
