@@ -161,6 +161,29 @@ void QAService::clearFocus()
                               Qt::QueuedConnection);
 }
 
+QString QAService::executeInPage(const QString &jsCode)
+{
+    qWarning() << Q_FUNC_INFO << jsCode;
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, jsCode),
+                              Q_ARG(QDBusMessage, message()));
+    return QString();
+}
+
+QString QAService::executeInWindow(const QString &jsCode)
+{
+    setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, jsCode),
+                              Q_ARG(QDBusMessage, message()));
+    return QString();
+}
+
 void QAService::quit()
 {
     emit m_adaptor->engineLoaded(false);

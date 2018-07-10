@@ -15,6 +15,7 @@
 #include <QTimer>
 
 #include <QQmlApplicationEngine>
+#include <QQmlExpression>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
 #include <QQuickView>
@@ -128,6 +129,34 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("mainTextProperty"), getText(item));
 
     return object;
+}
+
+QVariant QAEngine::executeJson(const QString &jsCode, QQuickItem *item)
+{
+    QQmlExpression expr(qmlEngine(item)->rootContext(), item, jsCode);
+    bool isUndefined = false;
+    const QVariant reply = expr.evaluate(&isUndefined);
+    return isUndefined ? QVariant(QStringLiteral("undefined")) : reply.toString();
+}
+
+QQuickItem *QAEngine::getCurrentPage()
+{
+    QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
+    if (!pageStack) {
+        pageStack = m_rootItem->childItems().first()->property("pageStack").value<QQuickItem*>();
+        if (!pageStack) {
+            qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
+            return nullptr;
+        }
+    }
+
+    QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
+    if (!currentPage) {
+        qWarning() << Q_FUNC_INFO << "Cannot get currentPage from PageStack!";
+        return nullptr;
+    }
+
+    return currentPage;
 }
 
 void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
@@ -261,16 +290,8 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
         return;
     }
 
-    QQuickItem *pageStack = m_rootItem->childItems().first()->property("pageStack").value<QQuickItem*>();
-    if (!pageStack) {
-        qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
-        QAService::sendMessageError(message, QStringLiteral("PageStack not found"));
-        return;
-    }
-
-    QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
+    QQuickItem *currentPage = getCurrentPage();
     if (!currentPage) {
-        qWarning() << Q_FUNC_INFO << "Cannot get currentPage from PageStack!";
         QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
     }
@@ -313,16 +334,8 @@ void QAEngine::grabWindow(const QDBusMessage &message)
 
 void QAEngine::grabCurrentPage(const QDBusMessage &message)
 {
-    QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
-    if (!pageStack) {
-        qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
-        QAService::sendMessageError(message, QStringLiteral("PageStack not found"));
-        return;
-    }
-
-    QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
-    if (currentPage) {
-        qWarning() << Q_FUNC_INFO << "Cannot find currentPage in PageStack!";
+    QQuickItem *currentPage = getCurrentPage();
+    if (!currentPage) {
         QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
     }
@@ -362,4 +375,20 @@ void QAEngine::clearFocus()
 
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
     wp->clearFocusObject();
+}
+
+void QAEngine::executeInPage(const QString &jsCode, const QDBusMessage &message)
+{
+    QQuickItem *currentPage = getCurrentPage();
+    if (!currentPage) {
+        QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
+        return;
+    }
+
+    QAService::sendMessageReply(message, executeJson(jsCode, currentPage));
+}
+
+void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &message)
+{
+    QAService::sendMessageReply(message, executeJson(jsCode, m_rootItem));
 }

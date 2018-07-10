@@ -38,6 +38,14 @@
         <method name="pressBackspace">
             <arg name="count" type="i" direction="in" />
         </method>
+        <method name="executeInPage">
+            <arg name="jsCode" type="s" direction="in" />
+            <arg name="result" type="s" direction="out" />
+        </method>
+        <method name="executeInWindow">
+            <arg name="jsCode" type="s" direction="in" />
+            <arg name="result" type="s" direction="out" />
+        </method>
         <method name="quit">
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
         </method>

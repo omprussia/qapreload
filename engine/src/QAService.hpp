@@ -37,6 +37,9 @@ private slots:
     void pressKeys(const QString &keys);
 
     void clearFocus();
+    QString executeInPage(const QString &jsCode);
+    QString executeInWindow(const QString &jsCode);
+
     void quit();
 
 private:

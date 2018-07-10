@@ -36,6 +36,9 @@ public slots:
 
     void clearFocus();
 
+    void executeInPage(const QString &jsCode, const QDBusMessage &message);
+    void executeInWindow(const QString &jsCode, const QDBusMessage &message);
+
 private slots:
     void onMouseEvent(QMouseEvent *event);
     void onKeyEvent(QKeyEvent *event);
@@ -48,6 +51,10 @@ private:
 
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
+
+    QVariant executeJson(const QString &jsCode, QQuickItem *item);
+
+    QQuickItem *getCurrentPage();
 
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
