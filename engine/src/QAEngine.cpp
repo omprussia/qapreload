@@ -390,5 +390,15 @@ void QAEngine::executeInPage(const QString &jsCode, const QDBusMessage &message)
 
 void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &message)
 {
-    QAService::sendMessageReply(message, executeJson(jsCode, m_rootItem));
+    QQmlEngine *engine = qmlEngine(m_rootItem);
+    QQuickItem *trueItem = m_rootItem;
+    if (!engine) {
+        trueItem = m_rootItem->childItems().first();
+        engine = qmlEngine(trueItem);
+        if (!engine) {
+            QAService::sendMessageError(message, QStringLiteral("window engine not found"));
+        }
+    }
+
+    QAService::sendMessageReply(message, executeJson(jsCode, trueItem));
 }
