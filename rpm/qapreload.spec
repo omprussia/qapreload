@@ -18,6 +18,15 @@ BuildRequires:  pkgconfig(Qt5Quick)
 %description
 Library for performing automatic testing QML applications.
 
+%package ld
+Summary:    ld.so.preload enabler
+Group:      System/System
+BuildArch:  noarch
+Requires:   %{name}
+
+%description ld
+%{summary}.
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -31,7 +40,30 @@ rm -rf %{buildroot}
 
 %qmake5_install
 
+%post ld
+if grep libqapreload /etc/ld.so.preload > /dev/null; then
+    echo "Preload already exists"
+else
+    echo /usr/lib/libqapreload.so >> /etc/ld.so.preload
+fi
+/sbin/ldconfig
+
+%postun ld
+case "$*" in
+0)
+echo Uninstalling package
+sed -i "/libqapreload/ d" /etc/ld.so.preload
+;;
+1)
+echo Upgrading package
+;;
+*) echo case "$*" not handled in postun
+esac
+/sbin/ldconfig
+
 %files
 %defattr(-,root,root,-)
 %{_libdir}/libqapreload.so
 %{_libdir}/libqaengine.so
+
+%files ld
