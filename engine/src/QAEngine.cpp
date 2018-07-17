@@ -24,6 +24,7 @@
 
 #include <private/qquickwindow_p.h>
 #include <private/qquickitem_p.h>
+#include "qpa/qwindowsysteminterface_p.h"
 
 static QAEngine *s_instance = nullptr;
 
@@ -180,14 +181,15 @@ void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
     });
 }
 
-void QAEngine::onMouseEvent(QMouseEvent *event)
+void QAEngine::onTouchEvent(QTouchEvent *event)
 {
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
-    wp->deliverMouseEvent(event);
 
-    if (event->type() == QEvent::MouseButtonRelease && wp->mouseGrabberItem) {
-        wp->setMouseGrabber(nullptr);
-    }
+    event->setWindow(m_rootItem->window());
+    event->setTarget(wp->mouseGrabberItem);
+
+    QWindowSystemInterface::handleTouchEvent(m_rootItem->window(), event->device(),
+        QWindowSystemInterfacePrivate::toNativeTouchPoints(event->touchPoints(), m_rootItem->window()), Qt::NoModifier);
 }
 
 void QAEngine::onKeyEvent(QKeyEvent *event)
@@ -214,7 +216,7 @@ void QAEngine::onLateInitialization()
     }
 
     m_mouseEngine = new QAMouseEngine(this);
-    connect(m_mouseEngine, &QAMouseEngine::triggered, this, &QAEngine::onMouseEvent);
+    connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &QAEngine::onTouchEvent);
 
     m_keyEngine = new QAKeyEngine(this);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);

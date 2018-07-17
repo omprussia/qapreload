@@ -6,6 +6,7 @@
 class QDBusMessage;
 class QQuickItem;
 class QMouseEvent;
+class QTouchEvent;
 class QKeyEvent;
 class QAKeyEngine;
 class QAMouseEngine;
@@ -45,7 +46,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
-    void onMouseEvent(QMouseEvent *event);
+    void onTouchEvent(QTouchEvent *event);
     void onKeyEvent(QKeyEvent *event);
     void onLateInitialization();
 

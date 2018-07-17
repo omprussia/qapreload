@@ -8,6 +8,8 @@ class QAPendingEvent;
 class QElapsedTimer;
 class QTimer;
 class QMouseEvent;
+class QTouchEvent;
+class QTouchDevice;
 class QAMouseEngine : public QObject
 {
     Q_OBJECT
@@ -17,12 +19,13 @@ public:
 
     QAPendingEvent *press(const QPointF &point);
     QAPendingEvent *release(const QPointF &point);
-    QAPendingEvent * click(const QPointF &point);
+    QAPendingEvent *click(const QPointF &point);
     QAPendingEvent *pressAndHold(const QPointF &point, int delay = 1200);
     QAPendingEvent *move(const QPointF &pointA, const QPointF &pointB, int duration = 100, int moveSteps = 100, int releaseDelay = 600);
 
 signals:
     void triggered(QMouseEvent *event);
+    void touchEvent(QTouchEvent *event);
 
 public slots:
 
@@ -35,7 +38,6 @@ private slots:
     void onMoveTimer();
 
 private:
-    Qt::MouseButtons m_buttons = Qt::NoButton;
     QElapsedTimer *m_eta;
 
     // MOVE POLYANA
@@ -48,6 +50,9 @@ private:
     int m_currentMoveStep = 0;
     QAPendingEvent *m_pendingMove = nullptr;
     //
+
+    QTouchDevice *m_touchDevice;
+    int m_tpId = 0;
 };
 
 #endif // QAMOUSEENGINE_HPP

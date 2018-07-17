@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QTimer>
 #include <private/qvariantanimation_p.h>
+#include "qpa/qwindowsysteminterface_p.h"
 #include <QtMath>
 
 #include <QElapsedTimer>
@@ -14,7 +15,15 @@ QAMouseEngine::QAMouseEngine(QObject *parent)
     : QObject(parent)
     , m_eta(new QElapsedTimer())
     , m_timer(new QTimer(this))
+    , m_touchDevice(new QTouchDevice())
 {
+    m_touchDevice->setCapabilities(QTouchDevice::Position | QTouchDevice::Area);
+    m_touchDevice->setMaximumTouchPoints(1);
+    m_touchDevice->setType(QTouchDevice::TouchScreen);
+    m_touchDevice->setName(QStringLiteral("qainput"));
+
+    QWindowSystemInterface::registerTouchDevice(m_touchDevice);
+
     m_timer->setSingleShot(false);
     connect(m_timer, &QTimer::timeout, this, &QAMouseEngine::onMoveTimer);
     m_eta->start();
@@ -129,34 +138,50 @@ void QAMouseEngine::onMoveTimer()
 
 void QAMouseEngine::sendPress(const QPointF &point)
 {
-    m_buttons |= Qt::LeftButton;
-    QMouseEvent event(QMouseEvent::MouseButtonPress,
-                      point,
-                      point,
-                      point,
-                      Qt::LeftButton,
-                      m_buttons,
-                      Qt::NoModifier,
-                      Qt::MouseEventSynthesizedByQt);
-    event.setTimestamp(m_eta->elapsed());
+    QTouchEvent::TouchPoint tp(++m_tpId);
+    tp.setState(Qt::TouchPointPressed);
 
-    emit triggered(&event);
+    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+    tp.setRect(rect);
+    tp.setSceneRect(rect);
+    tp.setScreenRect(rect);
+    tp.setLastPos(point);
+    tp.setStartPos(point);
+    tp.setPressure(1);
+    tp.setVelocity(QVector2D(0, 0));
+
+    QTouchEvent *te = new QTouchEvent(QEvent::TouchBegin,
+                   m_touchDevice,
+                   Qt::NoModifier,
+                   Qt::TouchPointPressed,
+                   { tp });
+    te->setTimestamp(m_eta->elapsed());
+
+    emit touchEvent(te);
 }
 
 void QAMouseEngine::sendRelease(const QPointF &point)
 {
-    m_buttons &= ~Qt::LeftButton;
-    QMouseEvent event(QMouseEvent::MouseButtonRelease,
-                      point,
-                      point,
-                      point,
-                      Qt::LeftButton,
-                      m_buttons,
-                      Qt::NoModifier,
-                      Qt::MouseEventSynthesizedByQt);
-    event.setTimestamp(m_eta->elapsed());
+    QTouchEvent::TouchPoint tp(m_tpId);
+    tp.setState(Qt::TouchPointReleased);
 
-    emit triggered(&event);
+    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+    tp.setRect(rect);
+    tp.setSceneRect(rect);
+    tp.setScreenRect(rect);
+    tp.setLastPos(point);
+    tp.setStartPos(point);
+    tp.setPressure(0);
+    tp.setVelocity(QVector2D(0, 0));
+
+    QTouchEvent *te = new QTouchEvent(QEvent::TouchEnd,
+                   m_touchDevice,
+                   Qt::NoModifier,
+                   Qt::TouchPointReleased,
+                   { tp });
+    te->setTimestamp(m_eta->elapsed());
+
+    emit touchEvent(te);
 }
 
 void QAMouseEngine::sendRelease(const QPointF &point, int delay)
@@ -168,15 +193,24 @@ void QAMouseEngine::sendRelease(const QPointF &point, int delay)
 
 void QAMouseEngine::sendMove(const QPointF &point)
 {
-    QMouseEvent event(QMouseEvent::MouseMove,
-                      point,
-                      point,
-                      point,
-                      Qt::LeftButton,
-                      m_buttons,
-                      Qt::NoModifier,
-                      Qt::MouseEventSynthesizedByQt);
-    event.setTimestamp(m_eta->elapsed());
+    QTouchEvent::TouchPoint tp(m_tpId);
+    tp.setState(Qt::TouchPointMoved);
 
-    emit triggered(&event);
+    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+    tp.setRect(rect);
+    tp.setSceneRect(rect);
+    tp.setScreenRect(rect);
+    tp.setLastPos(point);
+    tp.setStartPos(point);
+    tp.setPressure(1);
+    tp.setVelocity(QVector2D(0, 0));
+
+    QTouchEvent *te = new QTouchEvent(QEvent::TouchUpdate,
+                   m_touchDevice,
+                   Qt::NoModifier,
+                   Qt::TouchPointPressed,
+                   { tp });
+    te->setTimestamp(m_eta->elapsed());
+
+    emit touchEvent(te);
 }
