@@ -14,12 +14,13 @@
 
 static QAService *s_instance = nullptr;
 
-const char *funcName(const char *line)
+QByteArray funcName(const char *line)
 {
     QByteArray l = QByteArray::fromRawData(line, strlen(line));
     const int to = l.indexOf('(');
     const int from = l.lastIndexOf("::", to) + 2;
-    return l.mid(from, to - from).constData();
+    const QByteArray name = l.mid(from, to - from);
+    return name;
 }
 
 void QAService::initialize()
