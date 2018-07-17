@@ -39,6 +39,11 @@ public slots:
     void executeInPage(const QString &jsCode, const QDBusMessage &message);
     void executeInWindow(const QString &jsCode, const QDBusMessage &message);
 
+    void setEventFilterEnabled(bool enable, const QDBusMessage &message);
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private slots:
     void onMouseEvent(QMouseEvent *event);
     void onKeyEvent(QKeyEvent *event);

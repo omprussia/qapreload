@@ -40,6 +40,8 @@ private slots:
     QString executeInPage(const QString &jsCode);
     QString executeInWindow(const QString &jsCode);
 
+    void setEventFilterEnabled(bool enable);
+
     void quit();
 
 private:

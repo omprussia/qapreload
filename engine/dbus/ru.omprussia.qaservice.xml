@@ -52,6 +52,9 @@
         <method name="clearFocus">
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
         </method>
+        <method name="setEventFilterEnabled">
+            <arg name="enable" type="b" direction="in" />
+        </method>
         <signal name="engineLoaded">
             <arg name="loaded" type="b"/>
         </signal>

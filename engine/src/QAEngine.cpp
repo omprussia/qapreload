@@ -402,3 +402,48 @@ void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &messag
 
     QAService::sendMessageReply(message, executeJson(jsCode, trueItem));
 }
+
+void QAEngine::setEventFilterEnabled(bool enable, const QDBusMessage &message)
+{
+    qWarning() << Q_FUNC_INFO << enable;
+    if (enable) {
+        qGuiApp->installEventFilter(this);
+        m_rootItem->window()->installEventFilter(this);
+    } else {
+        qGuiApp->removeEventFilter(this);
+        m_rootItem->window()->removeEventFilter(this);
+    }
+
+    QAService::sendMessageReply(message, QVariantList());
+}
+
+bool QAEngine::eventFilter(QObject *watched, QEvent *event)
+{
+    QQuickItem *item = qobject_cast<QQuickItem*>(watched);
+    if (!item) {
+        return QObject::eventFilter(watched, event);
+    }
+    switch (event->type()) {
+    case QEvent::TouchBegin:
+    case QEvent::TouchUpdate:
+    case QEvent::TouchEnd:
+    case QEvent::TouchCancel:
+    {
+        QTouchEvent *te = static_cast<QTouchEvent*>(event);
+        qWarning() << "[EV]" << te->device() << te->window() << te->target();
+    }
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseButtonDblClick:
+    case QEvent::MouseMove:
+    case QEvent::KeyPress:
+    case QEvent::KeyRelease:
+    case QEvent::FocusIn:
+    case QEvent::FocusOut:
+    case QEvent::FocusAboutToChange:
+        qWarning() << "[EV]" << watched << event;
+    default:
+        break;
+    }
+    return QObject::eventFilter(watched, event);
+}
