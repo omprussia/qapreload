@@ -432,7 +432,7 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
     case QEvent::TouchCancel:
     {
         QTouchEvent *te = static_cast<QTouchEvent*>(event);
-        qWarning() << "[EV]" << te->device() << te->window() << te->target();
+        qWarning() << "[TE]" << te->device() << te->window() << te->target();
     }
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease:
@@ -440,6 +440,10 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
     case QEvent::MouseMove:
     case QEvent::KeyPress:
     case QEvent::KeyRelease:
+    {
+        QInputEvent *ie = static_cast<QInputEvent*>(event);
+        qWarning() << "[IE]" << ie->timestamp();
+    }
     case QEvent::FocusIn:
     case QEvent::FocusOut:
     case QEvent::FocusAboutToChange:
