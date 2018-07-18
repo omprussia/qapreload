@@ -148,14 +148,17 @@ void QAMouseEngine::sendPress(const QPointF &point)
     tp.setLastPos(point);
     tp.setStartPos(point);
     tp.setPressure(1);
-    tp.setVelocity(QVector2D(0, 0));
 
     QTouchEvent *te = new QTouchEvent(QEvent::TouchBegin,
                    m_touchDevice,
                    Qt::NoModifier,
                    Qt::TouchPointPressed,
                    { tp });
-    te->setTimestamp(m_eta->elapsed());
+    const quint64 timestamp = m_eta->elapsed();
+    te->setTimestamp(timestamp);
+    m_previousEventTimestamp = timestamp;
+    m_previousPoint = point;
+    m_pressPoint = point;
 
     emit touchEvent(te);
 }
@@ -169,17 +172,29 @@ void QAMouseEngine::sendRelease(const QPointF &point)
     tp.setRect(rect);
     tp.setSceneRect(rect);
     tp.setScreenRect(rect);
-    tp.setLastPos(point);
-    tp.setStartPos(point);
+    tp.setLastPos(m_previousPoint);
+    tp.setStartPos(m_pressPoint);
     tp.setPressure(0);
-    tp.setVelocity(QVector2D(0, 0));
+
+    const quint64 timestamp = m_eta->elapsed();
+    const quint64 timeDelta = timestamp - m_previousEventTimestamp;
+
+    if (timeDelta > 0) {
+        QVector2D velocity;
+        velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
+        velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
+
+        tp.setVelocity(velocity);
+    }
 
     QTouchEvent *te = new QTouchEvent(QEvent::TouchEnd,
                    m_touchDevice,
                    Qt::NoModifier,
                    Qt::TouchPointReleased,
                    { tp });
-    te->setTimestamp(m_eta->elapsed());
+    te->setTimestamp(timestamp);
+    m_previousEventTimestamp = timestamp;
+    m_previousPoint = point;
 
     emit touchEvent(te);
 }
@@ -200,17 +215,29 @@ void QAMouseEngine::sendMove(const QPointF &point)
     tp.setRect(rect);
     tp.setSceneRect(rect);
     tp.setScreenRect(rect);
-    tp.setLastPos(point);
-    tp.setStartPos(point);
+    tp.setLastPos(m_previousPoint);
+    tp.setStartPos(m_pressPoint);
     tp.setPressure(1);
-    tp.setVelocity(QVector2D(0, 0));
+
+    const quint64 timestamp = m_eta->elapsed();
+    const quint64 timeDelta = timestamp - m_previousEventTimestamp;
+
+    if (timeDelta > 0) {
+        QVector2D velocity;
+        velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
+        velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
+
+        tp.setVelocity(velocity);
+    }
 
     QTouchEvent *te = new QTouchEvent(QEvent::TouchUpdate,
                    m_touchDevice,
                    Qt::NoModifier,
                    Qt::TouchPointPressed,
                    { tp });
-    te->setTimestamp(m_eta->elapsed());
+    te->setTimestamp(timestamp);
+    m_previousEventTimestamp = timestamp;
+    m_previousPoint = point;
 
     emit touchEvent(te);
 }

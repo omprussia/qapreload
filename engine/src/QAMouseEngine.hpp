@@ -7,7 +7,6 @@
 class QAPendingEvent;
 class QElapsedTimer;
 class QTimer;
-class QMouseEvent;
 class QTouchEvent;
 class QTouchDevice;
 class QAMouseEngine : public QObject
@@ -24,10 +23,7 @@ public:
     QAPendingEvent *move(const QPointF &pointA, const QPointF &pointB, int duration = 100, int moveSteps = 100, int releaseDelay = 600);
 
 signals:
-    void triggered(QMouseEvent *event);
     void touchEvent(QTouchEvent *event);
-
-public slots:
 
 private slots:
     void sendPress(const QPointF &point);
@@ -53,6 +49,9 @@ private:
 
     QTouchDevice *m_touchDevice;
     int m_tpId = 0;
+    qint64 m_previousEventTimestamp = 0;
+    QPointF m_previousPoint;
+    QPointF m_pressPoint;
 };
 
 #endif // QAMOUSEENGINE_HPP

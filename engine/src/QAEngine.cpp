@@ -183,13 +183,8 @@ void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
 
 void QAEngine::onTouchEvent(QTouchEvent *event)
 {
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
-
-    event->setWindow(m_rootItem->window());
-    event->setTarget(wp->mouseGrabberItem);
-
-    QWindowSystemInterface::handleTouchEvent(m_rootItem->window(), event->device(),
-        QWindowSystemInterfacePrivate::toNativeTouchPoints(event->touchPoints(), m_rootItem->window()), Qt::NoModifier);
+    QWindowSystemInterface::handleTouchEvent(m_rootItem->window(), event->timestamp(), event->device(),
+        QWindowSystemInterfacePrivate::toNativeTouchPoints(event->touchPoints(), m_rootItem->window()));
 }
 
 void QAEngine::onKeyEvent(QKeyEvent *event)
