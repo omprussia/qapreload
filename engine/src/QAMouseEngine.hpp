@@ -20,7 +20,7 @@ public:
     QAPendingEvent *release(const QPointF &point);
     QAPendingEvent *click(const QPointF &point);
     QAPendingEvent *pressAndHold(const QPointF &point, int delay = 1200);
-    QAPendingEvent *move(const QPointF &pointA, const QPointF &pointB, int duration = 100, int moveSteps = 10, int releaseDelay = 600);
+    QAPendingEvent *move(const QPointF &pointA, const QPointF &pointB, int duration = 20, int moveSteps = 20, int releaseDelay = 600);
 
 signals:
     void touchEvent(const QTouchEvent &event);

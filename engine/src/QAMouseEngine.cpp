@@ -85,7 +85,7 @@ QAPendingEvent *QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB
     }
     m_pendingMove = new QAPendingEvent(this);
 
-    if (duration < 100 || moveSteps < 1) {
+    if (duration < 1 || moveSteps < 1) {
         qWarning() << Q_FUNC_INFO << "QA ENGINEER IDIOT";
     }
 
