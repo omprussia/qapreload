@@ -98,17 +98,17 @@ QAPendingEvent *QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB
     const float stepX = qAbs(pointB.x() - pointA.x()) / moveSteps;
     const float stepY = qAbs(pointB.y() - pointA.y()) / moveSteps;
 
-    if (stepX < 1 && stepX > 0) {
-        m_moveStepCount = qAbs(pointB.x() - pointA.x());
-    } else if (stepY < 1 && stepY > 0) {
-        m_moveStepCount = qAbs(pointB.y() - pointA.y());
+    if (stepX > 0 && stepX < m_moveStepSize) {
+        m_moveStepCount = qAbs(qRound(pointB.x() - pointA.x())) / m_moveStepSize;
+    } else if (stepY > 0 && stepY < m_moveStepSize) {
+        m_moveStepCount = qAbs(qRound(pointB.y() - pointA.y())) / m_moveStepSize;
     } else {
         m_moveStepCount = moveSteps;
     }
 
     m_currentMoveStep = 0;
 
-    m_timer->start(qMin(duration / m_moveStepCount, 1));
+    m_timer->start(duration / m_moveStepCount);
 
     return m_pendingMove;
 }
