@@ -28,32 +28,27 @@
 
 static QAEngine *s_instance = nullptr;
 
-void QAEngine::initialize()
-{
-    if (s_instance) {
-        return;
-    }
-
-    QGuiApplication *gui = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
-    if (!gui) {
-        return;
-    }
-
-    QTimer::singleShot(0, QAEngine::instance(), &QAEngine::onLateInitialization);
-}
-
 bool QAEngine::isLoaded()
 {
     return s_instance;
 }
 
-void QAEngine::waitForChildrens()
+void QAEngine::initialize(QQuickItem *rootItem)
 {
-    if (!m_rootItem) {
-        return;
-    }
+    qWarning() << Q_FUNC_INFO << rootItem;
+    m_rootItem = rootItem;
+}
 
-    connect(m_rootItem, &QQuickItem::childrenChanged, this, &QAEngine::onChildrenChanged);
+void QAEngine::ready()
+{
+    qWarning() << Q_FUNC_INFO;
+    m_mouseEngine = new QAMouseEngine(this);
+    connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &QAEngine::onTouchEvent);
+
+    m_keyEngine = new QAKeyEngine(this);
+    connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
+
+    QAService::instance()->initialize();
 }
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
@@ -191,36 +186,6 @@ void QAEngine::onKeyEvent(QKeyEvent *event)
 {
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
     wp->deliverKeyEvent(event);
-}
-
-void QAEngine::onLateInitialization()
-{
-    setParent(qGuiApp);
-
-    QWindowList windows = qGuiApp->topLevelWindows();
-    for (QWindow *window : windows) {
-        QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
-        if (qWindow && qWindow->contentItem()) {
-            m_rootItem = qWindow->contentItem();
-            break;
-        }
-    }
-    if (!m_rootItem) {
-        qWarning() << Q_FUNC_INFO << "Can't find window";
-        return;
-    }
-
-    m_mouseEngine = new QAMouseEngine(this);
-    connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &QAEngine::onTouchEvent);
-
-    m_keyEngine = new QAKeyEngine(this);
-    connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
-
-    if (m_rootItem->childItems().isEmpty()) { // probably declarative cache
-        waitForChildrens(); // let's wait for loading
-    } else {
-        QAService::instance()->initialize();
-    }
 }
 
 void QAEngine::onChildrenChanged()

@@ -19,7 +19,7 @@ HEADERS += \
     src/QAPendingEvent.hpp
 
 TARGET = qaengine
-target.path = /usr/lib
+target.path = /usr/lib/qtpreloadplugins
 
 INSTALLS = target
 

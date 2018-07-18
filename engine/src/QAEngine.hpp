@@ -15,8 +15,10 @@ class QAEngine : public QObject
     Q_OBJECT
 public:
     static QAEngine *instance();
-    static void initialize();
     static bool isLoaded();
+
+    void initialize(QQuickItem *rootItem);
+    void ready();
 
     virtual ~QAEngine();
 
@@ -48,7 +50,6 @@ protected:
 private slots:
     void onTouchEvent(const QTouchEvent &event);
     void onKeyEvent(QKeyEvent *event);
-    void onLateInitialization();
 
     void onChildrenChanged();
 
@@ -66,8 +67,6 @@ private:
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
 
     void sendGrabbedObject(QQuickItem *item, const QDBusMessage &message);
-
-    void waitForChildrens();
 
     explicit QAEngine(QObject *parent = nullptr);
 

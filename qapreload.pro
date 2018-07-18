@@ -1,4 +1,4 @@
 TEMPLATE = subdirs
-SUBDIRS = preload engine
+SUBDIRS = engine
 
 OTHER_FILES += rpm/qapreload.spec
