@@ -46,7 +46,7 @@ protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
-    void onTouchEvent(QTouchEvent *event);
+    void onTouchEvent(const QTouchEvent &event);
     void onKeyEvent(QKeyEvent *event);
     void onLateInitialization();
 

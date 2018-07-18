@@ -23,7 +23,7 @@ public:
     QAPendingEvent *move(const QPointF &pointA, const QPointF &pointB, int duration = 100, int moveSteps = 100, int releaseDelay = 600);
 
 signals:
-    void touchEvent(QTouchEvent *event);
+    void touchEvent(const QTouchEvent &event);
 
 private slots:
     void sendPress(const QPointF &point);

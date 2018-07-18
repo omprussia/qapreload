@@ -181,10 +181,10 @@ void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
     });
 }
 
-void QAEngine::onTouchEvent(QTouchEvent *event)
+void QAEngine::onTouchEvent(const QTouchEvent &event)
 {
-    QWindowSystemInterface::handleTouchEvent(m_rootItem->window(), event->timestamp(), event->device(),
-        QWindowSystemInterfacePrivate::toNativeTouchPoints(event->touchPoints(), m_rootItem->window()));
+    QWindowSystemInterface::handleTouchEvent(m_rootItem->window(), event.timestamp(), event.device(),
+        QWindowSystemInterfacePrivate::toNativeTouchPoints(event.touchPoints(), m_rootItem->window()));
 }
 
 void QAEngine::onKeyEvent(QKeyEvent *event)

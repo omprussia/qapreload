@@ -149,13 +149,13 @@ void QAMouseEngine::sendPress(const QPointF &point)
     tp.setStartPos(point);
     tp.setPressure(1);
 
-    QTouchEvent *te = new QTouchEvent(QEvent::TouchBegin,
+    QTouchEvent te(QEvent::TouchBegin,
                    m_touchDevice,
                    Qt::NoModifier,
                    Qt::TouchPointPressed,
                    { tp });
     const quint64 timestamp = m_eta->elapsed();
-    te->setTimestamp(timestamp);
+    te.setTimestamp(timestamp);
     m_previousEventTimestamp = timestamp;
     m_previousPoint = point;
     m_pressPoint = point;
@@ -187,12 +187,12 @@ void QAMouseEngine::sendRelease(const QPointF &point)
         tp.setVelocity(velocity);
     }
 
-    QTouchEvent *te = new QTouchEvent(QEvent::TouchEnd,
+    QTouchEvent te(QEvent::TouchEnd,
                    m_touchDevice,
                    Qt::NoModifier,
                    Qt::TouchPointReleased,
                    { tp });
-    te->setTimestamp(timestamp);
+    te.setTimestamp(timestamp);
     m_previousEventTimestamp = timestamp;
     m_previousPoint = point;
 
@@ -230,12 +230,12 @@ void QAMouseEngine::sendMove(const QPointF &point)
         tp.setVelocity(velocity);
     }
 
-    QTouchEvent *te = new QTouchEvent(QEvent::TouchUpdate,
+    QTouchEvent te(QEvent::TouchUpdate,
                    m_touchDevice,
                    Qt::NoModifier,
                    Qt::TouchPointPressed,
                    { tp });
-    te->setTimestamp(timestamp);
+    te.setTimestamp(timestamp);
     m_previousEventTimestamp = timestamp;
     m_previousPoint = point;
 
