@@ -35,6 +35,8 @@ bool QAEngine::isLoaded()
 
 void QAEngine::initialize(QQuickItem *rootItem)
 {
+    setParent(qGuiApp);
+
     qWarning() << Q_FUNC_INFO << rootItem;
     m_rootItem = rootItem;
 }
