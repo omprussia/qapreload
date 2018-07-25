@@ -50,6 +50,11 @@ void QAService::initialize()
         qWarning () << Q_FUNC_INFO << "Failed to register service!";
     }
 
+    QDBusInterface iface("ru.omprussia.qatestrunner", "/ru/omprussia/qatestrunner", "ru.omprussia.qatestrunner", QDBusConnection::sessionBus());
+    if (iface.isValid()) {
+        iface.call("ApplicationReady", processName);
+    }
+
     if (success) {
         m_adaptor = new QAAdaptor(this);
         emit m_adaptor->engineLoaded(QAEngine::isLoaded());
