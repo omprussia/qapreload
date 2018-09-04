@@ -3,6 +3,7 @@
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
 #include "QAPendingEvent.hpp"
+#include "SailfishTest.hpp"
 
 #include <QDebug>
 
@@ -26,7 +27,15 @@
 #include <private/qquickitem_p.h>
 #include "qpa/qwindowsysteminterface_p.h"
 
+#include "SailfishTest.hpp"
+#include "LipstickTestHelper.hpp"
+
 static QAEngine *s_instance = nullptr;
+
+static QObject *lipstick_helper_provider(QQmlEngine *, QJSEngine *)
+{
+    return new LipstickTestHelper(QAEngine::instance());
+}
 
 bool QAEngine::isLoaded()
 {
@@ -37,13 +46,13 @@ void QAEngine::initialize(QQuickItem *rootItem)
 {
     setParent(qGuiApp);
 
-    qWarning() << Q_FUNC_INFO << rootItem;
     m_rootItem = rootItem;
+
+    qmlRegisterType<SailfishTest>("ru.omprussia.sailfishtest", 1, 0, "SailfishTest");
 }
 
 void QAEngine::ready()
 {
-    qWarning() << Q_FUNC_INFO;
     m_mouseEngine = new QAMouseEngine(this);
     connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &QAEngine::onTouchEvent);
 
@@ -51,6 +60,11 @@ void QAEngine::ready()
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
     QAService::instance()->initialize();
+
+    const QString processName = QAService::processName();
+    if (processName == QStringLiteral("lipstick")) {
+        qmlRegisterSingletonType<LipstickTestHelper>("ru.omprussia.sailfishtest", 1, 0, "LipstickTestHelper", lipstick_helper_provider);
+    }
 }
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
@@ -124,12 +138,12 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("enabled"), QJsonValue(item->isEnabled()));
     object.insert(QStringLiteral("visible"), QJsonValue(item->isVisible()));
 
-    object.insert(QStringLiteral("mainTextProperty"), getText(item));
+    object.insert(QStringLiteral("mainTextProperty"), QAEngine::getText(item));
 
     return object;
 }
 
-QVariant QAEngine::executeJson(const QString &jsCode, QQuickItem *item)
+QVariant QAEngine::executeJS(const QString &jsCode, QQuickItem *item)
 {
     QQmlExpression expr(qmlEngine(item)->rootContext(), item, jsCode);
     bool isUndefined = false;
@@ -201,7 +215,7 @@ void QAEngine::onChildrenChanged()
     QAService::instance()->initialize();
 }
 
-QString QAEngine::getText(QQuickItem *item) const
+QString QAEngine::getText(QQuickItem *item)
 {
     static const char *textProperties[] = {
         "label",
@@ -222,6 +236,134 @@ QString QAEngine::getText(QQuickItem *item) const
     return QString();
 }
 
+QString QAEngine::className(QQuickItem *item)
+{
+    return QString::fromLatin1(item->metaObject()->className()).section(QChar('_'), 0, 0);
+}
+
+QPointF QAEngine::getAbsPosition(QQuickItem *item)
+{
+    QPointF position(item->x(), item->y());
+    QPoint abs;
+    if (item->parentItem()) {
+        abs = QAEngine::instance()->rootItem()->mapFromItem(item->parentItem(), position).toPoint();
+    } else {
+        abs = position.toPoint();
+    }
+    return abs;
+}
+
+QQuickItem *QAEngine::findItemByObjectName(const QString &objectName, QQuickItem *parentItem)
+{
+    if (!parentItem) {
+        parentItem = QAEngine::instance()->rootItem();
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        if (child->objectName() == objectName) {
+            return child;
+        }
+        QQuickItem *item = findItemByObjectName(objectName, child);
+        if (item) {
+            return item;
+        }
+    }
+    return nullptr;
+}
+
+QVariantList QAEngine::findItemsByClassName(const QString &className, QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = QAEngine::instance()->rootItem();
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        if (QAEngine::className(child) == className) {
+            items.append(QVariant::fromValue(child));
+        }
+        QVariantList recursiveItems = findItemsByClassName(className, child);
+        items.append(recursiveItems);
+    }
+    return items;
+}
+
+QVariantList QAEngine::findItemsByText(const QString &text, bool partial, QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = QAEngine::instance()->rootItem();
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        const QString &itemText = QAEngine::getText(child);
+        if ((partial && itemText.contains(text)) || (!partial && itemText == text)) {
+            items.append(QVariant::fromValue(child));
+        }
+        QVariantList recursiveItems = findItemsByText(text, partial, child);
+        items.append(recursiveItems);
+    }
+    return items;
+}
+
+QVariantList QAEngine::findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = QAEngine::instance()->rootItem();
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        if (child->property(propertyName.toLatin1().constData()) == propertyValue) {
+            items.append(QVariant::fromValue(child));
+        }
+        QVariantList recursiveItems = findItemsByProperty(propertyName, propertyValue, child);
+        items.append(recursiveItems);
+    }
+    return items;
+}
+
+QQuickItem *QAEngine::findParentFlickable(QQuickItem *rootItem)
+{
+    if (!rootItem) {
+        return nullptr;
+    }
+    while (rootItem->parentItem()) {
+        if (!rootItem->parentItem()->metaObject()->indexOfProperty("flickableDirection") >= 0) {
+            return rootItem->parentItem();
+        }
+        rootItem = rootItem->parentItem();
+    }
+
+    return nullptr;
+}
+
+QVariantList QAEngine::findNestedFlickable(QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = QAEngine::instance()->rootItem();
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        if (child->metaObject()->indexOfProperty("flickableDirection") >= 0) {
+            items.append(QVariant::fromValue(child));
+        }
+        QVariantList recursiveItems = findNestedFlickable(child);
+        items.append(recursiveItems);
+    }
+    return items;
+}
+
 QAEngine *QAEngine::instance()
 {
     if (!s_instance) {
@@ -237,6 +379,11 @@ QAEngine::QAEngine(QObject *parent)
 
 QAEngine::~QAEngine()
 {
+}
+
+QQuickItem* QAEngine::rootItem()
+{
+    return m_rootItem;
 }
 
 void QAEngine::dumpTree(const QDBusMessage &message)
@@ -349,7 +496,7 @@ void QAEngine::executeInPage(const QString &jsCode, const QDBusMessage &message)
         return;
     }
 
-    QAService::sendMessageReply(message, executeJson(jsCode, currentPage));
+    QAService::sendMessageReply(message, QAEngine::executeJS(jsCode, currentPage));
 }
 
 void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &message)
@@ -364,7 +511,57 @@ void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &messag
         }
     }
 
-    QAService::sendMessageReply(message, executeJson(jsCode, trueItem));
+    QAService::sendMessageReply(message, QAEngine::executeJS(jsCode, trueItem));
+}
+
+void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &message)
+{
+    QQmlEngine *engine = qmlEngine(m_rootItem);
+    QQuickItem *trueItem = m_rootItem;
+    if (!engine) {
+        trueItem = m_rootItem->childItems().first();
+        engine = qmlEngine(trueItem);
+    }
+    if (!engine) {
+        QAService::sendMessageError(message, QStringLiteral("window engine not found"));
+        return;
+    }
+    QQmlComponent component(engine, QUrl::fromLocalFile(fileName));
+    if (!component.isReady()) {
+        QAService::sendMessageError(message, component.errorString());
+        return;
+    }
+    QObject *object = component.create(qmlEngine(trueItem)->rootContext());
+    if (!object) {
+        QAService::sendMessageError(message, component.errorString());
+        return;
+    }
+    SailfishTest* test = qobject_cast<SailfishTest*>(object);
+    if (!test) {
+        qWarning() << Q_FUNC_INFO << fileName << "is not SailfishTest instance!";;
+        object->deleteLater();
+        return;
+    }
+
+    const QStringList objectFunctions = test->declarativeFunctions();
+
+    if (objectFunctions.contains(QStringLiteral("init"))) {
+        QMetaObject::invokeMethod(test, "init", Qt::QueuedConnection);
+    }
+
+    object->deleteLater();
+    engine->clearComponentCache();
+
+    QAService::sendMessageReply(message, QString("done!"));
+}
+
+void QAEngine::clearComponentCache()
+{
+    QQmlEngine *engine = getEngine();
+    if (!engine) {
+        return;
+    }
+    engine->clearComponentCache();
 }
 
 void QAEngine::setEventFilterEnabled(bool enable, const QDBusMessage &message)
@@ -414,4 +611,13 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
         break;
     }
     return QObject::eventFilter(watched, event);
+}
+
+QQmlEngine *QAEngine::getEngine()
+{
+    QQmlEngine *engine = qmlEngine(m_rootItem);
+    if (!engine) {
+        engine = qmlEngine(m_rootItem->childItems().first());
+    }
+    return engine;
 }

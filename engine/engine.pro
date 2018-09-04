@@ -9,14 +9,18 @@ SOURCES += \
     src/QAService.cpp \
     src/QAMouseEngine.cpp \
     src/QAKeyEngine.cpp \
-    src/QAPendingEvent.cpp
+    src/QAPendingEvent.cpp \
+    src/SailfishTest.cpp \
+    src/LipstickTestHelper.cpp
 
 HEADERS += \
     src/QAEngine.hpp \
     src/QAService.hpp \
     src/QAMouseEngine.hpp \
     src/QAKeyEngine.hpp \
-    src/QAPendingEvent.hpp
+    src/QAPendingEvent.hpp \
+    src/SailfishTest.hpp \
+    src/LipstickTestHelper.hpp
 
 TARGET = qaengine
 target.path = /usr/lib/qtpreloadplugins

@@ -15,6 +15,7 @@ class QAService : public QObject, public QDBusContext
 public:
 
     static QAService *instance();
+    static QString processName();
 
     static void sendMessageReply(const QDBusMessage &message, const QVariant &result);
     static void sendMessageError(const QDBusMessage &message, const QString &errorString);
@@ -39,6 +40,8 @@ private slots:
     void clearFocus();
     QString executeInPage(const QString &jsCode);
     QString executeInWindow(const QString &jsCode);
+    QString loadSailfishTest(const QString &fileName);
+    void clearComponentCache();
 
     void setEventFilterEnabled(bool enable);
 

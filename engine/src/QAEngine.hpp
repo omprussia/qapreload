@@ -3,8 +3,9 @@
 
 #include <QObject>
 
-class QDBusMessage;
 class QQuickItem;
+class QQmlEngine;
+class QDBusMessage;
 class QMouseEvent;
 class QTouchEvent;
 class QKeyEvent;
@@ -22,7 +23,23 @@ public:
 
     virtual ~QAEngine();
 
-public slots:
+    Q_PROPERTY(QQuickItem* rootItem READ rootItem CONSTANT)
+    QQuickItem* rootItem();
+
+    static QString getText(QQuickItem *item);
+    static QString className(QQuickItem* item);
+    static QPointF getAbsPosition(QQuickItem* item);
+
+    static QQuickItem* findItemByObjectName(const QString &objectName, QQuickItem* parentItem = nullptr);
+    static QVariantList findItemsByClassName(const QString &className, QQuickItem* parentItem = nullptr);
+    static QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem* parentItem = nullptr);
+    static QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem* parentItem = nullptr);
+    static QQuickItem* findParentFlickable(QQuickItem* rootItem = nullptr);
+    static QVariantList findNestedFlickable(QQuickItem* parentItem = nullptr);
+
+    static QVariant executeJS(const QString &jsCode, QQuickItem *item);
+
+private slots:
     void dumpTree(const QDBusMessage &message);
     void dumpCurrentPage(const QDBusMessage &message);
 
@@ -42,26 +59,31 @@ public slots:
     void executeInPage(const QString &jsCode, const QDBusMessage &message);
     void executeInWindow(const QString &jsCode, const QDBusMessage &message);
 
+    void loadSailfishTest(const QString &fileName, const QDBusMessage &message);
+    void clearComponentCache();
+
     void setEventFilterEnabled(bool enable, const QDBusMessage &message);
 
-protected:
-    bool eventFilter(QObject *watched, QEvent *event) override;
-
-private slots:
     void onTouchEvent(const QTouchEvent &event);
     void onKeyEvent(QKeyEvent *event);
 
     void onChildrenChanged();
 
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
-    QString getText(QQuickItem *item) const;
+    friend class SailfishTest;
+    friend class LipstickTesthelper;
+
+
+    QQmlEngine* getEngine();
 
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
 
-    QVariant executeJson(const QString &jsCode, QQuickItem *item);
 
-    QQuickItem *getCurrentPage();
+    QQuickItem* getCurrentPage();
 
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
@@ -71,8 +93,6 @@ private:
     explicit QAEngine(QObject *parent = nullptr);
 
     QQuickItem *m_rootItem = nullptr;
-
-    Qt::MouseButton m_mouseButton = Qt::NoButton;
 
     QAMouseEngine *m_mouseEngine = nullptr;
     QAKeyEngine *m_keyEngine = nullptr;

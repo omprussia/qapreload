@@ -13,6 +13,7 @@
 #define METHOD_NAME_HERE funcName(Q_FUNC_INFO)
 
 static QAService *s_instance = nullptr;
+static QString s_processName;
 
 QByteArray funcName(const char *line)
 {
@@ -29,13 +30,13 @@ void QAService::initialize()
         return;
     }
 
-    QString processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
+    s_processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
 
     int serviceSuffix = 0;
-    QString finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1").arg(processName);
+    QString finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1").arg(s_processName);
 
     while (QDBusConnection::sessionBus().interface()->isServiceRegistered(finalServiceName)) {
-        finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1_xx_%2").arg(processName).arg(++serviceSuffix);
+        finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1_xx_%2").arg(s_processName).arg(++serviceSuffix);
     }
 
     bool success = false;
@@ -62,7 +63,7 @@ void QAService::initialize()
                 QStringLiteral("/ru/omprussia/qatestrunner"),
                 QStringLiteral("ru.omprussia.qatestrunner"),
                 QStringLiteral("ApplicationReady"));
-    applicationReady.setArguments({processName});
+    applicationReady.setArguments({s_processName});
     QDBusConnection::sessionBus().call(applicationReady, QDBus::NoBlock);
 }
 
@@ -72,6 +73,11 @@ QAService *QAService::instance()
         s_instance = new QAService(qApp);
     }
     return s_instance;
+}
+
+QString QAService::processName()
+{
+    return s_processName;
 }
 
 QAService::QAService(QObject *parent)
@@ -195,9 +201,26 @@ QString QAService::executeInWindow(const QString &jsCode)
     return QString();
 }
 
-void QAService::setEventFilterEnabled(bool enable)
+QString QAService::loadSailfishTest(const QString &fileName)
 {
     setDelayedReply(true);
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, fileName),
+                              Q_ARG(QDBusMessage, message()));
+    return QString();
+}
+
+void QAService::clearComponentCache()
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection);
+}
+
+void QAService::setEventFilterEnabled(bool enable)
+{
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection,

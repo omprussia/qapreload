@@ -46,6 +46,13 @@
             <arg name="jsCode" type="s" direction="in" />
             <arg name="result" type="s" direction="out" />
         </method>
+        <method name="loadSailfishTest">
+            <arg name="fileName" type="s" direction="in" />
+            <arg name="result" type="s" direction="out" />
+        </method>
+        <method name="clearComponentCache">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+        </method>
         <method name="quit">
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
         </method>
