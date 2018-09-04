@@ -81,6 +81,7 @@ QAPendingEvent *QAMouseEngine::pressAndHold(const QPointF &point, int delay)
 QAPendingEvent *QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int duration, int moveSteps, int releaseDelay)
 {
     if (m_pendingMove) {
+        qWarning() << Q_FUNC_INFO << "Have pendingMove:" << m_pendingMove;
         return m_pendingMove;
     }
     m_pendingMove = new QAPendingEvent(this);
@@ -129,6 +130,7 @@ void QAMouseEngine::onMoveTimer()
 
         if (m_pendingMove) {
             QMetaObject::invokeMethod(m_pendingMove, "setCompleted", Qt::QueuedConnection);
+            m_pendingMove->deleteLater();
             m_pendingMove = nullptr;
         } else {
             qWarning() << Q_FUNC_INFO << "Pending move is null!";
