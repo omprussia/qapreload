@@ -283,7 +283,7 @@ void QAEngine::pressAndHold(int posx, int posy, const QDBusMessage &message)
     });
 }
 
-void QAEngine::mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message)
+void QAEngine::mouseMove(int startx, int starty, int stopx, int stopy, const QDBusMessage &message)
 {
     connect(m_mouseEngine->move(QPointF(startx, starty), QPointF(stopx, stopy)),
             &QAPendingEvent::completed, [message](){

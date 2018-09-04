@@ -30,7 +30,7 @@ private slots:
 
     void clickPoint(int posx, int posy);
     void pressAndHold(int posx, int posy);
-    void mouseSwipe(int startx, int starty, int stopx, int stopy);
+    void mouseMove(int startx, int starty, int stopx, int stopy);
 
     void pressEnter(int count);
     void pressBackspace(int count);

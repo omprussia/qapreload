@@ -23,7 +23,7 @@
             <arg name="posx" type="i" direction="in" />
             <arg name="posy" type="i" direction="in" />
         </method>
-        <method name="mouseSwipe">
+        <method name="mouseMove">
             <arg name="startx" type="i" direction="in" />
             <arg name="starty" type="i" direction="in" />
             <arg name="stopx" type="i" direction="in" />

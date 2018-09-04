@@ -142,7 +142,7 @@ void QAService::pressAndHold(int posx, int posy)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::mouseSwipe(int startx, int starty, int stopx, int stopy)
+void QAService::mouseMove(int startx, int starty, int stopx, int stopy)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),

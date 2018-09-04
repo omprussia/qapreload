@@ -28,7 +28,7 @@ public slots:
 
     void clickPoint(int posx, int posy, const QDBusMessage &message);
     void pressAndHold(int posx, int posy, const QDBusMessage &message);
-    void mouseSwipe(int startx, int starty, int stopx, int stopy, const QDBusMessage &message);
+    void mouseMove(int startx, int starty, int stopx, int stopy, const QDBusMessage &message);
 
     void grabWindow(const QDBusMessage &message);
     void grabCurrentPage(const QDBusMessage &message);
