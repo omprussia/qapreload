@@ -78,6 +78,47 @@ QAPendingEvent *QAMouseEngine::pressAndHold(const QPointF &point, int delay)
     return pending;
 }
 
+QAPendingEvent *QAMouseEngine::drag(const QPointF &pointA, const QPointF &pointB, int delay, int duration, int moveSteps, int releaseDelay)
+{
+    if (m_pendingMove) {
+        qWarning() << Q_FUNC_INFO << "Have pendingMove:" << m_pendingMove;
+        return m_pendingMove;
+    }
+    m_pendingMove = new QAPendingEvent(this);
+
+    if (duration < 1 || moveSteps < 1) {
+        qWarning() << Q_FUNC_INFO << "QA ENGINEER IDIOT";
+    }
+
+    sendPress(pointA);
+
+    m_pointA = pointA;
+    m_pointB = pointB;
+    m_releaseAfterMoveDelay = releaseDelay;
+
+    const float stepX = qAbs(pointB.x() - pointA.x()) / moveSteps;
+    const float stepY = qAbs(pointB.y() - pointA.y()) / moveSteps;
+
+    if (stepX > 0 && stepX < m_moveStepSize) {
+        m_moveStepCount = qAbs(qRound(pointB.x() - pointA.x())) / m_moveStepSize;
+    } else if (stepY > 0 && stepY < m_moveStepSize) {
+        m_moveStepCount = qAbs(qRound(pointB.y() - pointA.y())) / m_moveStepSize;
+    } else {
+        m_moveStepCount = moveSteps;
+    }
+
+    m_currentMoveStep = 0;
+    m_timer->setInterval(duration / m_moveStepCount);
+
+    QTimer *delayTimer = new QTimer;
+    connect(delayTimer, &QTimer::timeout, m_timer, static_cast<void (QTimer::*)()>(&QTimer::start));
+    connect(delayTimer, &QTimer::timeout, delayTimer, &QObject::deleteLater);
+    delayTimer->setSingleShot(true);
+    delayTimer->start(delay);
+
+    return m_pendingMove;
+}
+
 QAPendingEvent *QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int duration, int moveSteps, int releaseDelay)
 {
     if (m_pendingMove) {

@@ -56,6 +56,7 @@ public slots:
     void clickPoint(int posx, int posy);
     void pressAndHold(int posx, int posy);
     void mouseMove(int startx, int starty, int stopx, int stopy);
+    void mouseDrag(int startx, int starty, int stopx, int stopy, int delay = 1200);
 
     void goBack();
     void goForward();

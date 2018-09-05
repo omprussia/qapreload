@@ -352,6 +352,20 @@ void SailfishTest::mouseMove(int startx, int starty, int stopx, int stopy)
     loop.exec();
 }
 
+void SailfishTest::mouseDrag(int startx, int starty, int stopx, int stopy, int delay)
+{
+    QEventLoop loop;
+    QTimer timer;
+    timer.setInterval(800);
+    timer.setSingleShot(true);
+    connect(QAEngine::instance()->m_mouseEngine->drag(QPointF(startx, starty),
+                                                      QPointF(stopx, stopy),
+                                                      delay),
+            &QAPendingEvent::completed, &timer, static_cast<void (QTimer::*)()>(&QTimer::start));
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
 void SailfishTest::goBack()
 {
     clickPoint(10, 10);
