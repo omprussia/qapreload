@@ -470,3 +470,61 @@ void SailfishTest::sleep(int msecs)
     timer.start(msecs);
     loop.exec();
 }
+
+void SailfishTest::assert(const QString &text)
+{
+    message(text);
+}
+
+void SailfishTest::message(const QString &text)
+{
+    qWarning() << text;
+}
+
+void SailfishTest::assertEqual(const QVariant &value1, const QVariant &value2, const QString &text)
+{
+    if (!compareEqual(value1, value2)) {
+        assert(text.isEmpty() ? QStringLiteral("Assert: %1 != %2").arg(value1).arg(value2) : text);
+    }
+}
+
+void SailfishTest::assertNotEqual(const QVariant &value1, const QVariant &value2, const QString &text)
+{
+    if (!compareNotEqual(value1, value2)) {
+        assert(text.isEmpty() ? QStringLiteral("Assert: %1 == %2").arg(value1).arg(value2) : text);
+    }
+}
+
+void SailfishTest::assertTrue(bool value, const QString &text)
+{
+    if (!compareTrue(value)) {
+        assert(text.isEmpty() ? QStringLiteral("Assert: %1 is False").arg(value) : text);
+    }
+}
+
+void SailfishTest::assertFalse(bool value, const QString &text)
+{
+    if (!compareFalse(value)) {
+        assert(text.isEmpty() ? QStringLiteral("Assert: %1 is True").arg(value) : text);
+    }
+}
+
+bool SailfishTest::compareEqual(const QVariant &value1, const QVariant &value2)
+{
+    return value1 == value2;
+}
+
+bool SailfishTest::compareNotEqual(const QVariant &value1, const QVariant &value2)
+{
+    return value1 != value2;
+}
+
+bool SailfishTest::compareTrue(bool value)
+{
+    return value;
+}
+
+bool SailfishTest::compareFalse(bool value)
+{
+    return !value;
+}

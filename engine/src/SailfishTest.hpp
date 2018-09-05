@@ -73,6 +73,19 @@ public slots:
     void saveScreenshot(const QString &location, bool fillBackground = true);
 
     void sleep(int msecs);
+
+    void assert(const QString &text);
+    void message(const QString &text);
+
+    void assertEqual(const QVariant &value1, const QVariant &value2, const QString &text = QString());
+    void assertNotEqual(const QVariant &value1, const QVariant &value2, const QString &text = QString());
+    void assertTrue(bool value, const QString &text = QString());
+    void assertFalse(bool value, const QString &text = QString());
+
+    bool compareEqual(const QVariant &value1, const QVariant &value2);
+    bool compareNotEqual(const QVariant &value1, const QVariant &value2);
+    bool compareTrue(bool value);
+    bool compareFalse(bool value);
 };
 
 #endif // SAILFISHTEST_HPP
