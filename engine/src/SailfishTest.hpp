@@ -69,6 +69,8 @@ public slots:
     void clearFocus();
 
     void saveScreenshot(const QString &location, bool fillBackground = true);
+
+    void sleep(int msecs);
 };
 
 #endif // SAILFISHTEST_HPP

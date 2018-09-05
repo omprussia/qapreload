@@ -14,6 +14,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Quick)
+BuildRequires:  qt5-qtdeclarative-devel-tools
 Requires:   qtpreloadengine
 
 %description
@@ -31,7 +32,14 @@ Library for performing automatic testing QML applications.
 rm -rf %{buildroot}
 
 %qmake5_install
+ln -s ../../../../../qtpreloadplugins/libqaengine.so %{buildroot}/usr/lib/qt5/qml/ru/omprussia/sailfishtest/libqaengine.so
+
+/usr/lib/qt5/bin/qmlplugindump -v -noinstantiate -nonrelocatable ru.omprussia.sailfishtest 1.0 %{buildroot}%{_libdir}/qt5/qml > %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes |:
+sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
 
 %files
 %defattr(-,root,root,-)
+%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir
+%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/libqaengine.so
+%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
 %{_libdir}/qtpreloadplugins/libqaengine.so

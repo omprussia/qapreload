@@ -126,11 +126,9 @@ void SailfishTest::pullDownTo(const QString &text)
     QQuickItem* item = items.first().value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
-    int dragX = page->width() / 2;
-    int dragY = 100;
-    int dragYEnd = dragY - itemAbs.y() + item->height();
-
-    qWarning() << Q_FUNC_INFO << QAEngine::getText(item) << dragX << dragY << dragX << dragYEnd;
+    const int dragX = page->width() / 2;
+    const int dragY = 100;
+    const int dragYEnd = dragY - itemAbs.y() + item->height();
 
     mouseMove(dragX, dragY, dragX, dragYEnd);
 }
@@ -176,11 +174,9 @@ void SailfishTest::pullDownTo(int index)
     QQuickItem* item = items.at(index).value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
-    int dragX = page->width() / 2;
-    int dragY = 100;
-    int dragYEnd = dragY - itemAbs.y() + item->height();
-
-    qWarning() << Q_FUNC_INFO << QAEngine::getText(item) << dragX << dragY << dragX << dragYEnd;
+    const int dragX = page->width() / 2;
+    const int dragY = 100;
+    const int dragYEnd = dragY - itemAbs.y() + item->height();
 
     mouseMove(dragX, dragY, dragX, dragYEnd);
 }
@@ -226,11 +222,9 @@ void SailfishTest::pushUpTo(const QString &text)
     QQuickItem* item = items.first().value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
-    int dragX = page->width() / 2;
-    int dragY = page->height() - 100;
-    int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
-
-    qWarning() << Q_FUNC_INFO << QAEngine::getText(item) << itemAbs.y() << dragX << dragY << dragX << dragYEnd;
+    const int dragX = page->width() / 2;
+    const int dragY = page->height() - 100;
+    const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
 
     mouseMove(dragX, dragY, dragX, dragYEnd);
 }
@@ -276,11 +270,9 @@ void SailfishTest::pushUpTo(int index)
     QQuickItem* item = items.at(index).value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
-    int dragX = page->width() / 2;
-    int dragY = page->height() - 100;
-    int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
-
-    qWarning() << Q_FUNC_INFO << QAEngine::getText(item) << itemAbs.y() << dragX << dragY << dragX << dragYEnd;
+    const int dragX = page->width() / 2;
+    const int dragY = page->height() - 100;
+    const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
 
     mouseMove(dragX, dragY, dragX, dragYEnd);
 }
@@ -443,5 +435,15 @@ void SailfishTest::saveScreenshot(const QString &location, bool fillBackground)
         }
         loop.quit();
     });
+    loop.exec();
+}
+
+void SailfishTest::sleep(int msecs)
+{
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start(msecs);
     loop.exec();
 }

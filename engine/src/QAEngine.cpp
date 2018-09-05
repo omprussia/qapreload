@@ -32,11 +32,6 @@
 
 static QAEngine *s_instance = nullptr;
 
-static QObject *lipstick_helper_provider(QQmlEngine *, QJSEngine *)
-{
-    return new LipstickTestHelper(QAEngine::instance());
-}
-
 bool QAEngine::isLoaded()
 {
     return s_instance;
@@ -47,8 +42,6 @@ void QAEngine::initialize(QQuickItem *rootItem)
     setParent(qGuiApp);
 
     m_rootItem = rootItem;
-
-    qmlRegisterType<SailfishTest>("ru.omprussia.sailfishtest", 1, 0, "SailfishTest");
 }
 
 void QAEngine::ready()
@@ -60,11 +53,6 @@ void QAEngine::ready()
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
     QAService::instance()->initialize();
-
-    const QString processName = QAService::processName();
-    if (processName == QStringLiteral("lipstick")) {
-        qmlRegisterSingletonType<LipstickTestHelper>("ru.omprussia.sailfishtest", 1, 0, "LipstickTestHelper", lipstick_helper_provider);
-    }
 }
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)

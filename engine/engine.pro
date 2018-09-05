@@ -11,7 +11,8 @@ SOURCES += \
     src/QAKeyEngine.cpp \
     src/QAPendingEvent.cpp \
     src/SailfishTest.cpp \
-    src/LipstickTestHelper.cpp
+    src/LipstickTestHelper.cpp \
+    src/plugin.cpp
 
 HEADERS += \
     src/QAEngine.hpp \
@@ -31,3 +32,7 @@ qa_dbus_adaptor.files = dbus/ru.omprussia.qaservice.xml
 qa_dbus_adaptor.source_flags = -c QAAdaptor
 qa_dbus_adaptor.header_flags = -c QAAdaptor
 DBUS_ADAPTORS += qa_dbus_adaptor
+
+qml.files = qmldir
+qml.path = /usr/lib/qt5/qml/ru/omprussia/sailfishtest
+INSTALLS += qml
