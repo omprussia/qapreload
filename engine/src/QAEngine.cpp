@@ -336,7 +336,7 @@ QQuickItem *QAEngine::findParentFlickable(QQuickItem *rootItem)
         return nullptr;
     }
     while (rootItem->parentItem()) {
-        if (!rootItem->parentItem()->metaObject()->indexOfProperty("flickableDirection") >= 0) {
+        if (rootItem->parentItem()->metaObject()->indexOfProperty("flickableDirection") >= 0) {
             return rootItem->parentItem();
         }
         rootItem = rootItem->parentItem();
