@@ -51,6 +51,7 @@ public slots:
     void scrollToItem(QQuickItem* item);
 
     void clickItem(QQuickItem *item);
+    void pressAndHold(QQuickItem* item);
 
     void clickPoint(int posx, int posy);
     void pressAndHold(int posx, int posy);

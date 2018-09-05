@@ -310,6 +310,15 @@ void SailfishTest::clickItem(QQuickItem *item)
     clickPoint(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
 }
 
+void SailfishTest::pressAndHold(QQuickItem *item)
+{
+    if (!item) {
+        return;
+    }
+    const QPointF itemAbs = getAbsPosition(item);
+    pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
+}
+
 void SailfishTest::clickPoint(int posx, int posy)
 {
     QEventLoop loop;
