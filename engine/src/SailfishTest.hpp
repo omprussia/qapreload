@@ -33,8 +33,14 @@ public slots:
     QVariantList findItemsByClassName(const QString &className, QQuickItem* parentItem = nullptr);
     QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem* parentItem = nullptr);
     QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem* parentItem = nullptr);
+
     QQuickItem* findParentFlickable(QQuickItem* rootItem = nullptr);
     QVariantList findNestedFlickable(QQuickItem* parentItem = nullptr);
+
+    QVariantList openContextMenu(QQuickItem* item);
+
+    void clickContextMenuItem(QQuickItem* item, const QString &text, bool partial = true);
+    void clickContextMenuItem(QQuickItem* item, int index);
 
     QPointF getAbsPosition(QQuickItem* item) const;
 

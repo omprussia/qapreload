@@ -50,6 +50,45 @@ QVariantList SailfishTest::findNestedFlickable(QQuickItem *parentItem)
     return QAEngine::findNestedFlickable(parentItem);
 }
 
+void SailfishTest::clickContextMenuItem(QQuickItem *item, const QString &text, bool partial)
+{
+    const QVariantList contextMenuItems = openContextMenu(item);
+    for (const QVariant &cmItem : contextMenuItems) {
+        QQuickItem* item = cmItem.value<QQuickItem*>();
+        if ((partial && QAEngine::getText(item).contains(text)) || (!partial && QAEngine::getText(item) == text)) {
+            clickItem(item);
+            return;
+        }
+    }
+}
+
+void SailfishTest::clickContextMenuItem(QQuickItem *item, int index)
+{
+    const QVariantList contextMenuItems = openContextMenu(item);
+    if (index < 0 || index >= contextMenuItems.count()) {
+        return;
+    }
+
+    clickItem(contextMenuItems.at(index).value<QQuickItem*>());
+}
+
+QVariantList SailfishTest::openContextMenu(QQuickItem *item)
+{
+    if (!item) {
+        return QVariantList();
+    }
+    pressAndHold(item);
+    const QVariantList contextMenus = findItemsByClassName(QStringLiteral("ContextMenu"));
+    if (contextMenus.count() < 1) {
+        return QVariantList();
+    }
+    const QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), contextMenus.first().value<QQuickItem*>());
+    if (columns.count() < 1) {
+        return QVariantList();
+    }
+    return findItemsByClassName(QStringLiteral("MenuItem"), columns.first().value<QQuickItem*>());
+}
+
 QPointF SailfishTest::getAbsPosition(QQuickItem *item) const
 {
     return QAEngine::getAbsPosition(item);
