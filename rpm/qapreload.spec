@@ -14,7 +14,9 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Quick)
+BuildRequires:  qt5-tools
 BuildRequires:  qt5-qtdeclarative-devel-tools
+BuildRequires:  qt5-plugin-platform-minimal
 Requires:   qtpreloadengine
 
 %description
