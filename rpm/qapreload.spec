@@ -20,6 +20,15 @@ Requires:   qtpreloadengine
 %description
 Library for performing automatic testing QML applications.
 
+%package devel
+Summary:    Preload library for QA. plugin.qmltypes
+Group:      Qt/Qt
+BuildArch:  noarch
+Requires:   %{name}
+
+%description devel
+%{summary}.
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -41,5 +50,8 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 %defattr(-,root,root,-)
 %{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir
 %{_libdir}/qt5/qml/ru/omprussia/sailfishtest/libqaengine.so
-%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
 %{_libdir}/qtpreloadplugins/libqaengine.so
+
+%files devel
+%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir
+%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
