@@ -100,7 +100,7 @@ protected:
 
 private:
     friend class SailfishTest;
-    friend class LipstickTesthelper;
+    friend class LipstickTestHelper;
 
 
     QQmlEngine* getEngine();
