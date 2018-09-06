@@ -9,6 +9,10 @@
 #include <QPainter>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
+#include <QQmlEngine>
+
+#include <private/qv4engine_p.h>
+#include <private/qv8engine_p.h>
 
 QStringList SailfishTest::declarativeFunctions() const
 {
@@ -512,25 +516,47 @@ void SailfishTest::sleep(int msecs)
 
 void SailfishTest::assert(const QString &text)
 {
-    message(text);
+    QQmlEngine* engine = qmlEngine(this);
+    if (!engine) {
+        return;
+    }
+    QV4::ExecutionEngine* eEngine = QV8Engine::getV4(engine);
+    if (!eEngine) {
+        return;
+    }
+    const int argc = eEngine->currentContext->argc();
+    if (argc <= 0) {
+        return;
+    }
+    QJSValue v(eEngine, eEngine->currentContext->argument(0));
+    if (!v.isObject()) {
+        return;
+    }
+    TestResult* tr = qobject_cast<TestResult*>(v.toQObject());
+    if (!tr) {
+        return;
+    }
+    tr->success = false;
+    tr->message = text;
+    tr->raise();
 }
 
 void SailfishTest::message(const QString &text)
 {
-    qWarning() << text;
+    QAEngine::print(QStringLiteral("# %1").arg(text));
 }
 
 void SailfishTest::assertEqual(const QVariant &value1, const QVariant &value2, const QString &text)
 {
     if (!compareEqual(value1, value2)) {
-        assert(text.isEmpty() ? QStringLiteral("Assert: %1 != %2").arg(value1).arg(value2) : text);
+        assert(text.isEmpty() ? QStringLiteral("Assert: %1 != %2").arg(value1.toString(), value2.toString()) : text);
     }
 }
 
 void SailfishTest::assertNotEqual(const QVariant &value1, const QVariant &value2, const QString &text)
 {
     if (!compareNotEqual(value1, value2)) {
-        assert(text.isEmpty() ? QStringLiteral("Assert: %1 == %2").arg(value1).arg(value2) : text);
+        assert(text.isEmpty() ? QStringLiteral("Assert: %1 == %2").arg(value1.toString(), value2.toString()) : text);
     }
 }
 

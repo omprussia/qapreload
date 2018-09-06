@@ -27,6 +27,8 @@
 #include <private/qquickitem_p.h>
 #include "qpa/qwindowsysteminterface_p.h"
 
+#include <private/qv4engine_p.h>
+
 #include "SailfishTest.hpp"
 #include "LipstickTestHelper.hpp"
 
@@ -137,6 +139,13 @@ QVariant QAEngine::executeJS(const QString &jsCode, QQuickItem *item)
     bool isUndefined = false;
     const QVariant reply = expr.evaluate(&isUndefined);
     return isUndefined ? QVariant(QStringLiteral("undefined")) : reply.toString();
+}
+
+void QAEngine::print(const QString &text)
+{
+    QTextStream out(stderr, QIODevice::WriteOnly);
+    out << text << endl;
+    out.flush();
 }
 
 QQuickItem *QAEngine::getCurrentPage()
@@ -356,6 +365,7 @@ QAEngine *QAEngine::instance()
 {
     if (!s_instance) {
         s_instance = new QAEngine;
+        qRegisterMetaType<TestResult>();
     }
     return s_instance;
 }
@@ -534,8 +544,35 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
     const QStringList objectFunctions = test->declarativeFunctions();
 
     if (objectFunctions.contains(QStringLiteral("init"))) {
-        QMetaObject::invokeMethod(test, "init", Qt::QueuedConnection);
+        QAEngine::print(QStringLiteral("### CALLING init"));
+        QMetaObject::invokeMethod(test, "init", Qt::DirectConnection);
     }
+
+    QStringList testFunctions = objectFunctions.filter(QRegExp("test_\\d+"));
+    std::sort(testFunctions.begin(), testFunctions.end(), [](const QString &t1, const QString &t2) {
+        return t1.section(QChar('_'), 1).toInt() < t2.section(QChar('_'), 1).toInt();
+    });
+
+    int successCount = 0;
+    int failCount = 0;
+
+    QAEngine::print(QStringLiteral("### RUNNING TESTS"));
+    for (const QString &testFunction : testFunctions) {
+        QAEngine::print(QStringLiteral("## RUNNING TEST: %1").arg(testFunction));
+        TestResult tr(engine);
+        QMetaObject::invokeMethod(test, testFunction.toLatin1().constData(), Qt::DirectConnection, Q_ARG(QVariant, QVariant::fromValue(&tr)));
+        QAEngine::print(QStringLiteral("# TEST RESULT: %1").arg(tr.success ? QStringLiteral("Success") : QStringLiteral("Fail")));
+        if (tr.success) {
+            successCount++;
+        } else {
+            failCount++;
+            QAEngine::print(QStringLiteral("# TEST ERROR: %1").arg(tr.message));
+        }
+    }
+
+    QAEngine::print(QStringLiteral("### FINISHED TESTS"));
+    QAEngine::print(QStringLiteral("# SUCCESS: %1").arg(successCount));
+    QAEngine::print(QStringLiteral("# FAIL: %1").arg(failCount));
 
     object->deleteLater();
     engine->clearComponentCache();
@@ -608,4 +645,24 @@ QQmlEngine *QAEngine::getEngine()
         engine = qmlEngine(m_rootItem->childItems().first());
     }
     return engine;
+}
+
+TestResult::TestResult(QObject *parent)
+    : QObject(parent)
+    , m_engine(qobject_cast<QQmlEngine*>(parent))
+{
+
+}
+
+TestResult::TestResult(const TestResult &other)
+    : QObject(other.parent())
+{
+    success = other.success;
+    message = other.message;
+}
+
+void TestResult::raise()
+{
+    QV4::ExecutionEngine* eEngine = QV8Engine::getV4(m_engine);
+    eEngine->throwError(message);
 }

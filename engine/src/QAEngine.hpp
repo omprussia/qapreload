@@ -3,8 +3,32 @@
 
 #include <QObject>
 
-class QQuickItem;
 class QQmlEngine;
+class TestResult : public QObject
+{
+    Q_OBJECT
+public:
+    explicit TestResult(QObject* parent = nullptr);
+    TestResult(const TestResult &other);
+
+    Q_PROPERTY(bool success MEMBER success NOTIFY successChanged)
+    bool success = true;
+    Q_PROPERTY(QString message MEMBER message NOTIFY messageChanged)
+    QString message;
+
+public slots:
+    void raise();
+
+signals:
+    void successChanged();
+    void messageChanged();
+
+private:
+    QQmlEngine* m_engine;
+};
+Q_DECLARE_METATYPE(TestResult)
+
+class QQuickItem;
 class QDBusMessage;
 class QMouseEvent;
 class QTouchEvent;
@@ -38,6 +62,8 @@ public:
     static QVariantList findNestedFlickable(QQuickItem* parentItem = nullptr);
 
     static QVariant executeJS(const QString &jsCode, QQuickItem *item);
+
+    static void print(const QString &text);
 
 private slots:
     void dumpTree(const QDBusMessage &message);
