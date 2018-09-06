@@ -1,6 +1,7 @@
 #ifndef QAENGINE_HPP
 #define QAENGINE_HPP
 
+#include <QHash>
 #include <QObject>
 
 class QQmlEngine;
@@ -102,8 +103,8 @@ private:
     friend class SailfishTest;
     friend class LipstickTestHelper;
 
-
     QQmlEngine* getEngine();
+    TestResult* getTestResult(const QString& functionName);
 
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
@@ -122,6 +123,8 @@ private:
 
     QAMouseEngine *m_mouseEngine = nullptr;
     QAKeyEngine *m_keyEngine = nullptr;
+
+    QHash<QString, TestResult*> m_testResults;
 
 };
 

@@ -524,15 +524,8 @@ void SailfishTest::assert(const QString &text)
     if (!eEngine) {
         return;
     }
-    const int argc = eEngine->currentContext->argc();
-    if (argc <= 0) {
-        return;
-    }
-    QJSValue v(eEngine, eEngine->currentContext->argument(0));
-    if (!v.isObject()) {
-        return;
-    }
-    TestResult* tr = qobject_cast<TestResult*>(v.toQObject());
+    const QString functionName = eEngine->currentStackFrame().function;
+    TestResult* tr = QAEngine::instance()->getTestResult(functionName);
     if (!tr) {
         return;
     }

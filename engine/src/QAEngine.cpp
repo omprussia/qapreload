@@ -559,15 +559,20 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
     QAEngine::print(QStringLiteral("### RUNNING TESTS"));
     for (const QString &testFunction : testFunctions) {
         QAEngine::print(QStringLiteral("## RUNNING TEST: %1").arg(testFunction));
-        TestResult tr(engine);
-        QMetaObject::invokeMethod(test, testFunction.toLatin1().constData(), Qt::DirectConnection, Q_ARG(QVariant, QVariant::fromValue(&tr)));
-        QAEngine::print(QStringLiteral("# TEST RESULT: %1").arg(tr.success ? QStringLiteral("Success") : QStringLiteral("Fail")));
-        if (tr.success) {
+        TestResult* tr = new TestResult(engine);
+        m_testResults.insert(testFunction, tr);
+        QMetaObject::invokeMethod(test,
+                                  testFunction.toLatin1().constData(),
+                                  Qt::DirectConnection);
+        QAEngine::print(QStringLiteral("# TEST RESULT: %1").arg(tr->success ? QStringLiteral("Success") : QStringLiteral("Fail")));
+        if (tr->success) {
             successCount++;
         } else {
             failCount++;
-            QAEngine::print(QStringLiteral("# TEST ERROR: %1").arg(tr.message));
+            QAEngine::print(QStringLiteral("# ERROR MESSAGE: %1").arg(tr->message));
         }
+        m_testResults.remove(testFunction);
+        tr->deleteLater();
     }
 
     QAEngine::print(QStringLiteral("### FINISHED TESTS"));
@@ -645,6 +650,14 @@ QQmlEngine *QAEngine::getEngine()
         engine = qmlEngine(m_rootItem->childItems().first());
     }
     return engine;
+}
+
+TestResult *QAEngine::getTestResult(const QString &functionName)
+{
+    if (m_testResults.contains(functionName)) {
+        return m_testResults.value(functionName);
+    }
+    return nullptr;
 }
 
 TestResult::TestResult(QObject *parent)
