@@ -244,9 +244,15 @@ void QAMouseEngine::sendRelease(const QPointF &point)
 
 void QAMouseEngine::sendRelease(const QPointF &point, int delay)
 {
-    QTimer::singleShot(delay, this, [this, point](){
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    connect(&timer, &QTimer::timeout, [this, point]() {
         sendRelease(point);
     });
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start(delay);
+    loop.exec();
 }
 
 void QAMouseEngine::sendMove(const QPointF &point)
