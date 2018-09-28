@@ -1,5 +1,5 @@
-#ifndef QASERVICE_HPP
-#define QASERVICE_HPP
+#ifndef QADBUSSERVICE_HPP
+#define QADBUSSERVICE_HPP
 
 #include <QObject>
 #include <QtDBus>
@@ -8,13 +8,13 @@
 class QQuickItem;
 class QAAdaptor;
 class QJsonObject;
-class QAService : public QObject, public QDBusContext
+class QADBusService : public QObject, public QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "ru.omprussia.qaservice")
 public:
 
-    static QAService *instance();
+    static QADBusService *instance();
     static QString processName();
 
     static void sendMessageReply(const QDBusMessage &message, const QVariant &result);
@@ -45,14 +45,16 @@ private slots:
 
     void setEventFilterEnabled(bool enable);
 
+    int startSocket();
+
     void quit();
 
 private:
-    explicit QAService(QObject *parent = nullptr);
+    explicit QADBusService(QObject *parent = nullptr);
     QAAdaptor *m_adaptor = nullptr;
 
     int m_loadCount = 0;
 
 };
 
-#endif // QASERVICE_HPP
+#endif // QADBUSSERVICE_HPP

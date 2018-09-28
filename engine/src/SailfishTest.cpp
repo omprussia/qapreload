@@ -59,6 +59,12 @@
             Peek down.
 */
 
+SailfishTest::SailfishTest(QObject *parent)
+    : QObject(parent)
+{
+
+}
+
 QStringList SailfishTest::declarativeFunctions() const
 {
     auto mo = metaObject();

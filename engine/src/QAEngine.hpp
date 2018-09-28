@@ -53,6 +53,7 @@ public:
 
     static QString getText(QQuickItem *item);
     static QString className(QQuickItem* item);
+    static QString uniqueId(QQuickItem* item);
     static QPointF getAbsPosition(QQuickItem* item);
 
     static QQuickItem* findItemByObjectName(const QString &objectName, QQuickItem* parentItem = nullptr);
@@ -105,6 +106,7 @@ protected:
 private:
     friend class SailfishTest;
     friend class LipstickTestHelper;
+    friend class QASocketService;
 
     QQmlEngine* getEngine();
     TestResult* getTestResult(const QString& functionName);

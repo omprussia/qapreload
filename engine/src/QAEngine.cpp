@@ -1,5 +1,5 @@
 #include "QAEngine.hpp"
-#include "QAService.hpp"
+#include "QADBusService.hpp"
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
 #include "QAPendingEvent.hpp"
@@ -54,7 +54,7 @@ void QAEngine::ready()
     m_keyEngine = new QAKeyEngine(this);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
-    QAService::instance()->initialize();
+    QADBusService::instance()->initialize();
 
     const QStringList args = qApp->arguments();
     const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
@@ -92,14 +92,11 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
 {
     QJsonObject object;
 
-    const QString className = QString::fromLatin1(item->metaObject()->className()).section(QChar('_'), 0, 0);
-
-    const QString id = QStringLiteral("%1_0x%2").arg(className)
-                       .arg(reinterpret_cast<quintptr>(item),
-                       QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
-
-    object.insert(QStringLiteral("id"), QJsonValue(id));
+    const QString className = QAEngine::className(item);
     object.insert(QStringLiteral("classname"), QJsonValue(className));
+
+    const QString id = QAEngine::uniqueId(item);
+    object.insert(QStringLiteral("id"), QJsonValue(id));
 
     auto mo = item->metaObject();
     do {
@@ -206,7 +203,7 @@ void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
             qWarning() << Q_FUNC_INFO << "Saved empty image!";
         }
 
-        QAService::sendMessageReply(message, arr);
+        QADBusService::sendMessageReply(message, arr);
     });
 }
 
@@ -230,7 +227,7 @@ void QAEngine::onChildrenChanged()
 
     disconnect(m_rootItem, &QQuickItem::childrenChanged, this, &QAEngine::onChildrenChanged);
 
-    QAService::instance()->initialize();
+    QADBusService::instance()->initialize();
 }
 
 QString QAEngine::getText(QQuickItem *item)
@@ -257,6 +254,13 @@ QString QAEngine::getText(QQuickItem *item)
 QString QAEngine::className(QQuickItem *item)
 {
     return QString::fromLatin1(item->metaObject()->className()).section(QChar('_'), 0, 0);
+}
+
+QString QAEngine::uniqueId(QQuickItem *item)
+{
+    return QStringLiteral("%1_0x%2").arg(QAEngine::className(item))
+            .arg(reinterpret_cast<quintptr>(item),
+                 QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
 }
 
 QPointF QAEngine::getAbsPosition(QQuickItem *item)
@@ -411,7 +415,7 @@ void QAEngine::dumpTree(const QDBusMessage &message)
     QJsonDocument doc(tree);
     const QByteArray dump = doc.toJson(QJsonDocument::Compact);
 
-    QAService::sendMessageReply(message, QString::fromUtf8(dump));
+    QADBusService::sendMessageReply(message, QString::fromUtf8(dump));
 }
 
 void QAEngine::dumpCurrentPage(const QDBusMessage &message)
@@ -422,7 +426,7 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
 
     QQuickItem *currentPage = QAEngine::getCurrentPage();
     if (!currentPage) {
-        QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
+        QADBusService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
     }
 
@@ -430,14 +434,14 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
     QJsonDocument doc(tree);
     const QByteArray dump = doc.toJson(QJsonDocument::Compact);
 
-    QAService::sendMessageReply(message, QString::fromUtf8(dump));
+    QADBusService::sendMessageReply(message, QString::fromUtf8(dump));
 }
 
 void QAEngine::clickPoint(int posx, int posy, const QDBusMessage &message)
 {
     connect(m_mouseEngine->click(QPointF(posx, posy)),
             &QAPendingEvent::completed, [message](){
-        QAService::sendMessageReply(message, QVariantList());
+        QADBusService::sendMessageReply(message, QVariantList());
     });
 }
 
@@ -445,7 +449,7 @@ void QAEngine::pressAndHold(int posx, int posy, const QDBusMessage &message)
 {
     connect(m_mouseEngine->pressAndHold(QPointF(posx, posy)),
             &QAPendingEvent::completed, [message](){
-        QAService::sendMessageReply(message, QVariantList());
+        QADBusService::sendMessageReply(message, QVariantList());
     });
 }
 
@@ -453,7 +457,7 @@ void QAEngine::mouseMove(int startx, int starty, int stopx, int stopy, const QDB
 {
     connect(m_mouseEngine->move(QPointF(startx, starty), QPointF(stopx, stopy)),
             &QAPendingEvent::completed, [message](){
-        QAService::sendMessageReply(message, QVariantList());
+        QADBusService::sendMessageReply(message, QVariantList());
     });
 }
 
@@ -466,7 +470,7 @@ void QAEngine::grabCurrentPage(const QDBusMessage &message)
 {
     QQuickItem *currentPage = QAEngine::getCurrentPage();
     if (!currentPage) {
-        QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
+        QADBusService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
     }
 
@@ -477,7 +481,7 @@ void QAEngine::pressEnter(int count, const QDBusMessage &message)
 {
     connect(m_keyEngine->pressEnter(count),
             &QAPendingEvent::completed, [message](){
-        QAService::sendMessageReply(message, QVariantList());
+        QADBusService::sendMessageReply(message, QVariantList());
     });
 }
 
@@ -485,7 +489,7 @@ void QAEngine::pressBackspace(int count, const QDBusMessage &message)
 {
     connect(m_keyEngine->pressBackspace(count),
             &QAPendingEvent::completed, [message](){
-        QAService::sendMessageReply(message, QVariantList());
+        QADBusService::sendMessageReply(message, QVariantList());
     });
 }
 
@@ -493,7 +497,7 @@ void QAEngine::pressKeys(const QString &keys, const QDBusMessage &message)
 {
     connect(m_keyEngine->pressKeys(keys),
             &QAPendingEvent::completed, [message](){
-        QAService::sendMessageReply(message, QVariantList());
+        QADBusService::sendMessageReply(message, QVariantList());
     });
 }
 
@@ -511,11 +515,11 @@ void QAEngine::executeInPage(const QString &jsCode, const QDBusMessage &message)
 {
     QQuickItem *currentPage = QAEngine::getCurrentPage();
     if (!currentPage) {
-        QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
+        QADBusService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
     }
 
-    QAService::sendMessageReply(message, QAEngine::executeJS(jsCode, currentPage));
+    QADBusService::sendMessageReply(message, QAEngine::executeJS(jsCode, currentPage));
 }
 
 void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &message)
@@ -526,11 +530,11 @@ void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &messag
         trueItem = m_rootItem->childItems().first();
         engine = qmlEngine(trueItem);
         if (!engine) {
-            QAService::sendMessageError(message, QStringLiteral("window engine not found"));
+            QADBusService::sendMessageError(message, QStringLiteral("window engine not found"));
         }
     }
 
-    QAService::sendMessageReply(message, QAEngine::executeJS(jsCode, trueItem));
+    QADBusService::sendMessageReply(message, QAEngine::executeJS(jsCode, trueItem));
 }
 
 void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &message)
@@ -634,7 +638,7 @@ void QAEngine::setEventFilterEnabled(bool enable, const QDBusMessage &message)
         m_rootItem->window()->removeEventFilter(this);
     }
 
-    QAService::sendMessageReply(message, QVariantList());
+    QADBusService::sendMessageReply(message, QVariantList());
 }
 
 bool QAEngine::eventFilter(QObject *watched, QEvent *event)
