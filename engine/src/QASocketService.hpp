@@ -46,6 +46,8 @@ private slots:
     void clickBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void clearBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void submitBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
+    void getCurrentActivityBootstrap(QTcpSocket *socket);
+    void getPageSourceBootstrap(QTcpSocket *socket);
 
     void backBootstrap(QTcpSocket *socket);
     void forwardBootstrap(QTcpSocket *socket);
@@ -62,6 +64,8 @@ private slots:
     void executeBootstrap(QTcpSocket *socket, const QVariant &mobileArg, const QVariant &paramsArg);
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &sessionIdArg, const QVariant &Arg);
+    void startActivityBootstrap(QTcpSocket *socket, const QVariant &appPackage, const QVariant &appActivity, const QVariant &appWaitPackage, const QVariant &intentAction,
+                                const QVariant &intentCategory, const QVariant &intentFlags, const QVariant &optionalIntentArguments, const QVariant &dontStopAppOnReset, const QVariant &); //Segmentation fauilt
 
     void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false);
     void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false);

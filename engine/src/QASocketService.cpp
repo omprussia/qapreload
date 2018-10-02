@@ -385,6 +385,16 @@ void QASocketService::submitBootstrap(QTcpSocket *socket, const QVariant &elemen
     socketReply(socket, QString());
 }
 
+void QASocketService::getCurrentActivityBootstrap(QTcpSocket *socket)
+{
+    socketReply(socket, QString());
+}
+
+void QASocketService::getPageSourceBootstrap(QTcpSocket *socket)
+{
+    socketReply(socket, QString());
+}
+
 void QASocketService::backBootstrap(QTcpSocket *socket)
 {
     m_sailfishTest->goBack();
@@ -463,6 +473,11 @@ void QASocketService::performTouchBootstrap(QTcpSocket *socket, const QVariant &
 }
 
 void QASocketService::performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &sessionIdArg, const QVariant &Arg)
+{
+    socketReply(socket, QString());
+}
+
+void QASocketService::startActivityBootstrap(QTcpSocket *socket, const QVariant &appPackage, const QVariant &appActivity, const QVariant &appWaitPackage, const QVariant &intentAction, const QVariant &intentCategory, const QVariant &intentFlags, const QVariant &optionalIntentArguments, const QVariant &dontStopAppOnReset, const QVariant &)
 {
     socketReply(socket, QString());
 }
