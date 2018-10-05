@@ -25,7 +25,12 @@ private slots:
     void readSocket();
 
     void appConnectBootstrap(QTcpSocket *socket);
-    void getDeviceTimeBootstrap(QTcpSocket *socket, const QVariant &format = QVariant());
+    void activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
+    void closeAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
+    void queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
+    void backgroundBootstrap(QTcpSocket *socket, const QVariant &secondsArg);
+    void getClipboardBootstrap(QTcpSocket *socket, const QVariant &);
+    void setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg, const QVariant &);
     void findElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg);
     void findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, bool multiple = true);
     void getLocationBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
@@ -39,28 +44,29 @@ private slots:
     void elementDisplayedBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void elementSelectedBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void getSizeBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
-    void getNameBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
+//    void getNameBootstrap(QTcpSocket *socket, const QVariant &elementIdArg); not supported tag_name
     void setValueImmediateBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg);
     void replaceValueBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg);
     void setValueBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg);
     void clickBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void clearBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void submitBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
-    void getCurrentActivityBootstrap(QTcpSocket *socket);
     void getPageSourceBootstrap(QTcpSocket *socket);
-
     void backBootstrap(QTcpSocket *socket);
     void forwardBootstrap(QTcpSocket *socket);
+    void getOrientationBootstrap(QTcpSocket *socket);
+    void setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg);
+    void hideKeyboardBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &keyArg, const QVariant &keyCodeArg, const QVariant &keyNameArg);
+
+    void getCurrentActivityBootstrap(QTcpSocket *socket);
+    void implicitWaitBootstrap(QTcpSocket *socket, const QVariant &msecondArg); // ?
     void activeBootstrap(QTcpSocket *socket); //for functions switch_to.active_element
     void getAlertTextBootstrap(QTcpSocket *socket); //for functions switch_to.alert
     void isKeyboardShownBootstrap(QTcpSocket *socket);
     void isIMEActivatedBootstrap(QTcpSocket *socket);
-    void getOrientationBootstrap(QTcpSocket *socket);
-    void setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg);
     void keyeventBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &sessionIDArg, const QVariant &flagsArg);
     void longPressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg);
     void pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg);
-    void hideKeyboardBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &keyArg, const QVariant &keyCodeArg, const QVariant &keyNameArg);
     void executeBootstrap(QTcpSocket *socket, const QVariant &mobileArg, const QVariant &paramsArg);
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &sessionIdArg, const QVariant &Arg);

@@ -8,7 +8,8 @@
 #include <QQuickItemGrabResult>
 
 #include "QASocketService.hpp"
-#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QClipboard>
 
 #include <private/qquickwindow_p.h>
 
@@ -183,9 +184,80 @@ void QASocketService::appConnectBootstrap(QTcpSocket *socket)
     socketReply(socket, 8888);
 }
 
-void QASocketService::getDeviceTimeBootstrap(QTcpSocket *socket, const QVariant &format)
+void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
 {
-    socketReply(socket, QDateTime::currentDateTime().toString());
+    const QString appName = appIdArg.toString();
+    if (appName != qApp->arguments().first().section(QLatin1Char('/'), -1)) {
+        qWarning() << Q_FUNC_INFO << appName << "is not" << qApp->arguments().first().section(QLatin1Char('/'), -1);
+        socketReply(socket, QString(), 1);
+        return;
+    }
+    QAEngine::instance()->rootItem()->window()->raise();
+    socketReply(socket, QString());
+}
+
+void QASocketService::closeAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
+{
+    const QString appName = appIdArg.toString();
+    qDebug() << Q_FUNC_INFO << appName;
+    if (appName != qApp->arguments().first().section(QLatin1Char('/'), -1)) {
+        qWarning() << Q_FUNC_INFO << appName << "is not" << qApp->arguments().first().section(QLatin1Char('/'), -1);
+        socketReply(socket, false, 1);
+        return;
+    }
+    socketReply(socket, true);
+    qApp->quit();
+}
+
+void QASocketService::queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
+{
+    const QString appName = appIdArg.toString();
+    qDebug() << Q_FUNC_INFO << appName;
+    if (appName != qApp->arguments().first().section(QLatin1Char('/'), -1)) {
+        qWarning() << Q_FUNC_INFO << appName << "is not" << qApp->arguments().first().section(QLatin1Char('/'), -1);
+        socketReply(socket, QString(), 1);
+        return;
+    }
+    const bool isAppActive = QAEngine::instance()->rootItem()->window()->isActive();
+    socketReply(socket, isAppActive ? QString("RUNNING_IN_FOREGROUND") : QString("RUNNING_IN_BACKGROUND"));
+}
+
+void QASocketService::getClipboardBootstrap(QTcpSocket *socket, const QVariant &)
+{
+    socketReply(socket, QString::fromUtf8(qGuiApp->clipboard()->text().toUtf8().toBase64()));
+}
+
+void QASocketService::setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg, const QVariant &)
+{
+    qGuiApp->clipboard()->setText(contentArg.toString());
+    socketReply(socket, QString());
+}
+
+void QASocketService::implicitWaitBootstrap(QTcpSocket *socket, const QVariant &msecondArg)
+{
+    int msecs = msecondArg.toInt();
+
+    socketReply(socket, QString());
+}
+
+void QASocketService::backgroundBootstrap(QTcpSocket *socket, const QVariant &secondsArg)
+{
+    int msecs = secondsArg.toInt() * 1000;
+    qDebug() << Q_FUNC_INFO << msecs;
+    if (msecs > 0) {
+        QAEngine::instance()->rootItem()->window()->lower();
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        timer.start(msecs);
+        loop.exec();
+        QAEngine::instance()->rootItem()->window()->raise();
+    }
+    else {
+        QAEngine::instance()->rootItem()->window()->lower();
+    }
+    socketReply(socket, QString());
 }
 
 void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg)
@@ -340,11 +412,6 @@ void QASocketService::getSizeBootstrap(QTcpSocket *socket, const QVariant &eleme
     }
 }
 
-void QASocketService::getNameBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
-{
-    socketReply(socket, QString());
-}
-
 void QASocketService::setValueImmediateBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
 {
     qDebug() << Q_FUNC_INFO << valueArg << elementIdArg;
@@ -392,7 +459,9 @@ void QASocketService::getCurrentActivityBootstrap(QTcpSocket *socket)
 
 void QASocketService::getPageSourceBootstrap(QTcpSocket *socket)
 {
-    socketReply(socket, QString());
+    QQuickItem *currentPage = QAEngine::instance()->getCurrentPage();
+    QJsonObject reply = QAEngine::instance()->recursiveDumpTree(currentPage);
+    socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
 }
 
 void QASocketService::backBootstrap(QTcpSocket *socket)
@@ -423,7 +492,7 @@ void QASocketService::isKeyboardShownBootstrap(QTcpSocket *socket)
     if (!wp) {
         socketReply(socket, false, 1);
     }
-    socketReply(socket, QString());
+    socketReply(socket, true);
 }
 
 void QASocketService::isIMEActivatedBootstrap(QTcpSocket *socket)
@@ -431,13 +500,25 @@ void QASocketService::isIMEActivatedBootstrap(QTcpSocket *socket)
     socketReply(socket, true);
 }
 
+
 void QASocketService::getOrientationBootstrap(QTcpSocket *socket)
 {
-    socketReply(socket, QString());
+    const qreal width = QAEngine::instance()->rootItem()->width();
+    const qreal height = QAEngine::instance()->rootItem()->height();
+    socketReply(socket, height > width ? QString("PORTRAIT") : QString("LANDSCAPE"));
 }
 
 void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg)
 {
+    QScreen *screen = qApp->primaryScreen();
+    const QString orientation = orientationArg.toString();
+
+    if (orientation == "LANDSCAPE") {
+        qDebug() << Q_FUNC_INFO << orientation;
+    } else if (orientation == "PORTRAIT") {
+        qDebug() << Q_FUNC_INFO << orientation;
+    }
+    qDebug() << Q_FUNC_INFO << screen->orientation();
     socketReply(socket, QString());
 }
 
