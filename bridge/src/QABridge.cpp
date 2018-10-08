@@ -80,7 +80,11 @@ void QABridge::readSocket()
     }
 
     const QString action = object.value(QStringLiteral("action")).toVariant().toString();
-    const QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
+    QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
+    if (params.length() > 9) {
+        qWarning() << Q_FUNC_INFO << "Too many params for" << action;
+        params = params.mid(0, 9);
+    }
 
     const QString methodName = QStringLiteral("%1Bootstrap").arg(action);
 

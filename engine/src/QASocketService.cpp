@@ -162,7 +162,11 @@ void QASocketService::readSocket()
     }
 
     const QString action = object.value(QStringLiteral("action")).toVariant().toString();
-    const QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
+    QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
+    if (params.length() > 9) {
+        qWarning() << Q_FUNC_INFO << "Too many params for" << action;
+        params = params.mid(0, 9);
+    }
 
     QGenericArgument arguments[9] = { QGenericArgument() };
     for (int i = 0; i < params.length(); i++) {
