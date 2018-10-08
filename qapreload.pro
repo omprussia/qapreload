@@ -1,4 +1,6 @@
 TEMPLATE = subdirs
-SUBDIRS = engine
+SUBDIRS = \
+    engine \
+    bridge
 
 OTHER_FILES += rpm/qapreload.spec
