@@ -547,21 +547,21 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
     }
     if (!engine) {
         if (message.isDelayedReply()) {
-            QAService::sendMessageError(message, QStringLiteral("window engine not found"));
+            QADBusService::sendMessageError(message, QStringLiteral("window engine not found"));
         }
         return;
     }
     QQmlComponent component(engine, QUrl::fromLocalFile(fileName));
     if (!component.isReady()) {
         if (message.isDelayedReply()) {
-            QAService::sendMessageError(message, component.errorString());
+            QADBusService::sendMessageError(message, component.errorString());
         }
         return;
     }
     QObject *object = component.create(qmlEngine(trueItem)->rootContext());
     if (!object) {
         if (message.isDelayedReply()) {
-            QAService::sendMessageError(message, component.errorString());
+            QADBusService::sendMessageError(message, component.errorString());
         }
         return;
     }
@@ -614,7 +614,7 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
     engine->clearComponentCache();
 
     if (message.isDelayedReply()) {
-        QAService::sendMessageReply(message, QString("done!"));
+        QADBusService::sendMessageReply(message, QString("done!"));
     }
 }
 
