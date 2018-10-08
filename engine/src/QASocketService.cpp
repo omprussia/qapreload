@@ -188,11 +188,6 @@ void QASocketService::readSocket()
                               arguments[8]);
 }
 
-void QASocketService::appConnectBootstrap(QTcpSocket *socket)
-{
-    socketReply(socket, 8888);
-}
-
 void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
 {
     const QString appName = appIdArg.toString();

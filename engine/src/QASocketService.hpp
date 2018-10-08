@@ -23,7 +23,6 @@ private slots:
     void newConnection();
     void readSocket();
 
-    void appConnectBootstrap(QTcpSocket *socket);
     void activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
     void closeAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
     void queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
