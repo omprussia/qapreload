@@ -55,6 +55,18 @@ void QAEngine::ready()
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
     QAService::instance()->initialize();
+
+    const QStringList args = qApp->arguments();
+    const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
+    if (testArgIndex < 0) {
+        return;
+    }
+    if (testArgIndex == args.length() - 1) {
+        return;
+    }
+    const QString testName = args.at(testArgIndex + 1);
+    loadSailfishTest(testName, QDBusMessage());
+    qApp->quit();
 }
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
@@ -521,17 +533,23 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
         engine = qmlEngine(trueItem);
     }
     if (!engine) {
-        QAService::sendMessageError(message, QStringLiteral("window engine not found"));
+        if (message.isDelayedReply()) {
+            QAService::sendMessageError(message, QStringLiteral("window engine not found"));
+        }
         return;
     }
     QQmlComponent component(engine, QUrl::fromLocalFile(fileName));
     if (!component.isReady()) {
-        QAService::sendMessageError(message, component.errorString());
+        if (message.isDelayedReply()) {
+            QAService::sendMessageError(message, component.errorString());
+        }
         return;
     }
     QObject *object = component.create(qmlEngine(trueItem)->rootContext());
     if (!object) {
-        QAService::sendMessageError(message, component.errorString());
+        if (message.isDelayedReply()) {
+            QAService::sendMessageError(message, component.errorString());
+        }
         return;
     }
     SailfishTest* test = qobject_cast<SailfishTest*>(object);
@@ -582,7 +600,9 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
     object->deleteLater();
     engine->clearComponentCache();
 
-    QAService::sendMessageReply(message, QString("done!"));
+    if (message.isDelayedReply()) {
+        QAService::sendMessageReply(message, QString("done!"));
+    }
 }
 
 void QAEngine::clearComponentCache()
