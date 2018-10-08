@@ -2,10 +2,9 @@
 #define QASOCKETSERVICE_HPP
 
 #include <QObject>
-#include <QQuickItem>
-#include <QTcpServer>
-#include <QTcpSocket>
 
+class QTcpServer;
+class QTcpSocket;
 class QQuickItem;
 class SailfishTest;
 class QASocketService: public QObject
@@ -87,7 +86,6 @@ private:
     void grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground = false);
 
     QTcpServer *m_server = nullptr;
-    QHash<QString, QQuickItem*> m_items;
 
     SailfishTest *m_sailfishTest = nullptr;
 };

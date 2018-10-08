@@ -3,8 +3,12 @@
 #include "SailfishTest.hpp"
 #include "qaservice_adaptor.h"
 
+#include <QTcpServer>
+#include <QTcpSocket>
+
 #include <QPainter>
 #include <QPixmap>
+#include <QQuickItem>
 #include <QQuickItemGrabResult>
 
 #include "QASocketService.hpp"
@@ -14,6 +18,7 @@
 #include <private/qquickwindow_p.h>
 
 static QASocketService *s_instance = nullptr;
+static QHash<QString, QQuickItem*> s_items;
 
 QASocketService::QASocketService(QObject *parent)
     : QObject(parent)
@@ -51,7 +56,7 @@ void QASocketService::elementReply(QTcpSocket *socket, const QVariantList &eleme
             continue;
         }
         const QString uId = QAEngine::uniqueId(item);
-        m_items.insert(uId, item);
+        s_items.insert(uId, item);
 
         QVariantMap element;
         element.insert(QStringLiteral("ELEMENT"), uId);
@@ -293,9 +298,9 @@ void QASocketService::getLocationBootstrap(QTcpSocket *socket, const QVariant &e
 {
     QJsonObject reply;
     const QString elementId = elementIdArg.toString();
-    qDebug() << Q_FUNC_INFO << m_items.value(elementId);
-    if (m_items.contains(elementId)) {
-        QQuickItem *item = m_items.value(elementId);
+    qDebug() << Q_FUNC_INFO << s_items.value(elementId);
+    if (s_items.contains(elementId)) {
+        QQuickItem *item = s_items.value(elementId);
         const QPointF absPoint = QAEngine::getAbsPosition(item);
         reply.insert(QStringLiteral("centerx"), absPoint.x() + item->width() / 2);
         reply.insert(QStringLiteral("centery"), absPoint.y() + item->height() / 2);
@@ -313,9 +318,9 @@ void QASocketService::getLocationInViewBootstrap(QTcpSocket *socket, const QVari
 {
     QJsonObject reply;
     const QString elementId = elementIdArg.toString();
-    qDebug() << Q_FUNC_INFO << m_items.value(elementId);
-    if (m_items.contains(elementId)) {
-        QQuickItem *item = m_items.value(elementId);
+    qDebug() << Q_FUNC_INFO << s_items.value(elementId);
+    if (s_items.contains(elementId)) {
+        QQuickItem *item = s_items.value(elementId);
         reply.insert(QStringLiteral("centerx"), item->x() + item->width() / 2);
         reply.insert(QStringLiteral("centery"), item->y() + item->height() / 2);
         reply.insert(QStringLiteral("x"), item->x());
@@ -333,8 +338,8 @@ void QASocketService::getAttributeBootstrap(QTcpSocket *socket, const QVariant &
     const QString elementId = elementIdArg.toString();
     const QString attribute = attributeArg.toString();
     qDebug() << Q_FUNC_INFO << elementId << attribute;
-    if (m_items.contains(elementId)) {
-        const QVariant reply = m_items.value(elementId)->property(attribute.toLatin1().constData());
+    if (s_items.contains(elementId)) {
+        const QVariant reply = s_items.value(elementId)->property(attribute.toLatin1().constData());
         socketReply(socket, reply);
     } else {
         socketReply(socket, QString());
@@ -346,8 +351,8 @@ void QASocketService::getPropertyBootstrap(QTcpSocket *socket, const QVariant &a
     const QString elementId = elementIdArg.toString();
     const QString attribute = attributeArg.toString();
     qDebug() << Q_FUNC_INFO << elementId << attribute;
-    if (m_items.contains(elementId)) {
-        const QVariant reply = m_items.value(elementId)->property(attribute.toLatin1().constData());
+    if (s_items.contains(elementId)) {
+        const QVariant reply = s_items.value(elementId)->property(attribute.toLatin1().constData());
         socketReply(socket, reply);
     } else {
         socketReply(socket, QString());
@@ -358,8 +363,8 @@ void QASocketService::getTextBootstrap(QTcpSocket *socket, const QVariant &eleme
 {
     const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId;
-    if (m_items.contains(elementId)) {
-        socketReply(socket, QAEngine::getText(m_items.value(elementId)));
+    if (s_items.contains(elementId)) {
+        socketReply(socket, QAEngine::getText(s_items.value(elementId)));
     } else {
         socketReply(socket, QString());
     }
@@ -369,8 +374,8 @@ void QASocketService::getElementScreenshotBootstrap(QTcpSocket *socket, const QV
 {
     const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId;
-    if (m_items.contains(elementId)) {
-        QQuickItem *item = m_items.value(elementId);
+    if (s_items.contains(elementId)) {
+        QQuickItem *item = s_items.value(elementId);
         grabScreenshot(socket, item);
     } else {
         socketReply(socket, QString(), 1);
@@ -401,9 +406,9 @@ void QASocketService::getSizeBootstrap(QTcpSocket *socket, const QVariant &eleme
 {
     QJsonObject reply;
     const QString elementId = elementIdArg.toString();
-    qDebug() << Q_FUNC_INFO << m_items.value(elementId);
-    if (m_items.contains(elementId)) {
-        QQuickItem *item = m_items.value(elementId);
+    qDebug() << Q_FUNC_INFO << s_items.value(elementId);
+    if (s_items.contains(elementId)) {
+        QQuickItem *item = s_items.value(elementId);
         reply.insert(QStringLiteral("width"), item->width());
         reply.insert(QStringLiteral("height"), item->height());
         socketReply(socket, reply);
@@ -424,8 +429,8 @@ void QASocketService::setAttribute(QTcpSocket *socket, const QVariant &attribute
     const QString value = valueArg.toString();
     const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << attribute << value << elementId;
-    if (m_items.contains(elementId)) {
-        m_items.value(elementId)->setProperty(attribute.toLatin1().constData(), value);
+    if (s_items.contains(elementId)) {
+        s_items.value(elementId)->setProperty(attribute.toLatin1().constData(), value);
         socketReply(socket, QString());
     } else {
         socketReply(socket, QString(), 1);
@@ -567,8 +572,8 @@ void QASocketService::clickBootstrap(QTcpSocket *socket, const QVariant &element
 {
     const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId;
-    if (m_items.contains(elementId)) {
-        QQuickItem *item = m_items.value(elementId);
+    if (s_items.contains(elementId)) {
+        QQuickItem *item = s_items.value(elementId);
         m_sailfishTest->clickItem(item);
         socketReply(socket, QString());
     } else {
