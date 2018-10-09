@@ -1,0 +1,54 @@
+/*!
+\qmlmodule ru.omprussia.sailfishtest 1.0
+\title SailfishTest
+
+This module includes the following types:
+
+*/
+
+/*!
+\page index.html
+\title SailfishTest
+\brief Provides types to access SailfishTest from QML
+
+The SailfishTest is testing framework for testing Sailfish OS applications. 
+It supports test automation, aggregation of tests into test suites and allows you to access to application for automate testing process. 
+All public methods are runs in the QML namespace.
+
+This documentation assumes that you have at least a basic understanding of Page Object Model (POM) | Design Pattern and its concepts.
+
+\section2 Requirements and Support
+In addition to SailfishTest general requirements:
+
+\list
+\li Sailfish OS Emulator or Sailfish OS device.
+\li Correctly configured your platform with the ability to run QML tests.
+\endlist
+
+\section2 Basic Setup and Process of use
+For testing Sailfish OS application need these simple requirements:
+
+\list
+\li If you use real device, need to ensure that Developer mode is turned on device.
+\li Install qapreload package on Emulator/Device and make sure that package was installed.
+\li Reboot Emulator/Device and run you QML tests with following commands:
+\endlist
+
+\code application --run-sailfish-test /path_to_your_tests.qml
+\endcode
+
+\section2 QML Types
+
+This module includes the following types:
+
+\generatelist{qmltypesbymodule ru.omprussia.sailfishtest}
+
+\section2 Further Reading
+
+\list
+
+  \li \l{Examples}
+
+\endlist
+
+*/

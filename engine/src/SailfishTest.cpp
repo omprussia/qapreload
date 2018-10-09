@@ -14,6 +14,51 @@
 #include <private/qv4engine_p.h>
 #include <private/qv8engine_p.h>
 
+/*!
+    \qmltype SailfishTest
+    \inqmlmodule ru.omprussia.sailfishtest
+    \brief Provides classes for Sailfish OS applications testing.
+
+    SailfishTest is intended to provide access for testing Sailfish OS applications.
+    SailfishTest allows developers to build and run streamlined and application-specific functional UI tests,
+    containing a compact API to create tests and use its execution engine to automate and run those tests on real devices.
+
+    Property values and method arguments are automatically converted between QML/Qt. There is
+    limited control over this process for UI testing. For unit testing it is recommended to use C++ and
+    the Qt Test module.
+
+*/
+
+/*!
+    \qmlproperty enum SailfishTest::SwipeDirection
+
+    \section2 This enum type describes possible values of swipe directions.
+
+    \value SwipeDirectionUp
+            Swipe up.
+    \value SwipeDirectionLeft
+            Swipe to the left.
+    \value SwipeDirectionRight
+            Swipe to the right.
+    \value SwipeDirectionDown
+            Swipe down.
+*/
+
+/*!
+    \qmlproperty enum SailfishTest::PeekDirection
+
+    \section2 This enum type describes possible value of peek directions.
+
+    \value PeekDirectionUp
+            Peek up.
+    \value PeekDirectionLeft
+            Peek to the left.
+    \value PeekDirectionRight
+            Peek to the right.
+    \value PeekDirectionDown
+            Peek down.
+*/
+
 QStringList SailfishTest::declarativeFunctions() const
 {
     auto mo = metaObject();
@@ -24,35 +69,87 @@ QStringList SailfishTest::declarativeFunctions() const
     return objectFunctions.toList();
 }
 
+/*!
+    \qmlmethod QQuickItem SailfishTest::findItemByObjectName(const QString &objectName, QQuickItem* parentItem)
+
+    Search for single item, starting from the \a parentItem. The located items will be returned as pointer to QQuickItem.
+    The function return an item whose objectName attribute matches the \a objectName.
+
+*/
+
 QQuickItem *SailfishTest::findItemByObjectName(const QString &objectName, QQuickItem* parentItem)
 {
     return QAEngine::findItemByObjectName(objectName, parentItem);
 }
+
+/*!
+    \qmlmethod QVariantList SailfishTest::findItemsByClassName(const QString &className, QQuickItem *parentItem)
+
+    Search for multiple items, starting from the \a parentItem. The located elements will be returned as array of QQuickItem.
+    The function returns array of items whose class name matches \a className.
+
+*/
 
 QVariantList SailfishTest::findItemsByClassName(const QString &className, QQuickItem *parentItem)
 {
     return QAEngine::findItemsByClassName(className, parentItem);
 }
 
+/*!
+    \qmlmethod QVariantList SailfishTest::findItemsByText(const QString &text, bool partial, QQuickItem *parentItem)
+
+    Search for multiple items, starting from the \a parentItem. The located elements will be returned as array of QQuickItem.
+    The function returns array of items whose visible text matches the \a text considering \a partial value.
+
+*/
+
 QVariantList SailfishTest::findItemsByText(const QString &text, bool partial, QQuickItem *parentItem)
 {
     return QAEngine::findItemsByText(text, partial, parentItem);
 }
+
+/*!
+    \qmlmethod QVariantList SailfishTest::findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem)
+
+    Search for multiple items, starting from the \a parentItem. The located elements will be returned as array of QQuickItem.
+    The function returns array of items whose property \a propertyName text exact matches to \a propertyValue.
+
+*/
 
 QVariantList SailfishTest::findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem)
 {
     return QAEngine::findItemsByProperty(propertyName, propertyValue, parentItem);
 }
 
+/*!
+    \qmlmethod QQuickItem* SailfishTest::findParentFlickable(QQuickItem *rootItem)
+
+    The function searches through parents of \a rootItem, returns Flickable item or null.
+
+*/
+
 QQuickItem* SailfishTest::findParentFlickable(QQuickItem *rootItem)
 {
     return QAEngine::findParentFlickable(rootItem);
 }
 
+/*!
+    \qmlmethod QVariantList SailfishTest::findNestedFlickable(QQuickItem *parentItem)
+
+    The function searches through childs of \a parentItem, returns first Flickable item or null.
+*/
+
 QVariantList SailfishTest::findNestedFlickable(QQuickItem *parentItem)
 {
     return QAEngine::findNestedFlickable(parentItem);
 }
+
+/*!
+    \qmlmethod void SailfishTest::clickContextMenuItem(QQuickItem *item, const QString &text, bool partial)
+
+    The function open context menu of \a item and click element with \a text.
+    If \a partial equal true context menu item text only contains searched \a text value, else it should match exact.
+*/
 
 void SailfishTest::clickContextMenuItem(QQuickItem *item, const QString &text, bool partial)
 {
@@ -66,6 +163,12 @@ void SailfishTest::clickContextMenuItem(QQuickItem *item, const QString &text, b
     }
 }
 
+/*!
+    \qmlmethod void SailfishTest::clickContextMenuItem(QQuickItem *item, int index)
+
+    The function open context menu of \a item and click item with \a index.
+*/
+
 void SailfishTest::clickContextMenuItem(QQuickItem *item, int index)
 {
     const QVariantList contextMenuItems = openContextMenu(item);
@@ -75,6 +178,12 @@ void SailfishTest::clickContextMenuItem(QQuickItem *item, int index)
 
     clickItem(contextMenuItems.at(index).value<QQuickItem*>());
 }
+
+/*!
+    \qmlmethod QVariantList SailfishTest::openContextMenu(QQuickItem *item)
+
+    The function returns array of menu items inside context menu \a item.
+*/
 
 QVariantList SailfishTest::openContextMenu(QQuickItem *item)
 {
@@ -93,10 +202,23 @@ QVariantList SailfishTest::openContextMenu(QQuickItem *item)
     return findItemsByClassName(QStringLiteral("MenuItem"), columns.first().value<QQuickItem*>());
 }
 
+/*!
+    \qmlmethod QPointF SailfishTest::getAbsPosition(QQuickItem *item)
+
+    Determine location of \a item on the application window.
+    The element's coordinates are returned as QPointF value.
+*/
+
 QPointF SailfishTest::getAbsPosition(QQuickItem *item) const
 {
     return QAEngine::getAbsPosition(item);
 }
+
+/*!
+    \qmlmethod void SailfishTest::enterCode(const QString &code)
+
+    This function can be used to enter \a code on special pages with keypad.
+*/
 
 void SailfishTest::enterCode(const QString &code)
 {
@@ -123,10 +245,25 @@ void SailfishTest::enterCode(const QString &code)
     }
 }
 
+/*!
+    \qmlmethod QQuickItem SailfishTest::getCurrentPage()
+
+    The function returns current page item.
+
+*/
+
 QQuickItem *SailfishTest::getCurrentPage()
 {
     return QAEngine::instance()->getCurrentPage();
 }
+
+/*!
+    \qmlmethod void SailfishTest::pullDownTo(const QString &text)
+
+    PullDownMenu is the menu is positioned above the content of the view and is accessed by dragging the view down.
+
+    The function scrolling view to the top, if not at the top already, and click to the item with \a text.
+*/
 
 void SailfishTest::pullDownTo(const QString &text)
 {
@@ -173,8 +310,16 @@ void SailfishTest::pullDownTo(const QString &text)
     const int dragY = 100;
     const int dragYEnd = dragY - itemAbs.y() + item->height();
 
-    mouseMove(dragX, dragY, dragX, dragYEnd);
+    mouseSwipe(dragX, dragY, dragX, dragYEnd);
 }
+
+/*!
+    \qmlmethod void SailfishTest::pullDownTo(int index)
+
+    PullDownMenu is the menu is positioned above the content of the view and is accessed by dragging the view down.
+
+    The function scrolling view to the top, if not at the top already, and click to the item with \a index.
+*/
 
 void SailfishTest::pullDownTo(int index)
 {
@@ -221,8 +366,16 @@ void SailfishTest::pullDownTo(int index)
     const int dragY = 100;
     const int dragYEnd = dragY - itemAbs.y() + item->height();
 
-    mouseMove(dragX, dragY, dragX, dragYEnd);
+    mouseSwipe(dragX, dragY, dragX, dragYEnd);
 }
+
+/*!
+    \qmlmethod void SailfishTest::pushUpTo(const QString &text)
+
+    PushUpMenu is the menu is positioned at the end of the content in the view and is accessed by dragging the view past the end of the content.
+
+    The function scrolling view to the bottom, if not at the bottom already, and click to the item with \a text.
+*/
 
 void SailfishTest::pushUpTo(const QString &text)
 {
@@ -269,8 +422,16 @@ void SailfishTest::pushUpTo(const QString &text)
     const int dragY = page->height() - 100;
     const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
 
-    mouseMove(dragX, dragY, dragX, dragYEnd);
+    mouseSwipe(dragX, dragY, dragX, dragYEnd);
 }
+
+/*!
+    \qmlmethod void SailfishTest::pushUpTo(int index)
+
+    PushUpMenu is the menu is positioned at the end of the content in the view and is accessed by dragging the view past the end of the content.
+
+    The function scrolling view to the bottom, if not at the bottom already, and click to the item with \a index.
+*/
 
 void SailfishTest::pushUpTo(int index)
 {
@@ -317,8 +478,14 @@ void SailfishTest::pushUpTo(int index)
     const int dragY = page->height() - 100;
     const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
 
-    mouseMove(dragX, dragY, dragX, dragYEnd);
+    mouseSwipe(dragX, dragY, dragX, dragYEnd);
 }
+
+/*!
+    \qmlmethod void SailfishTest::scrollToItem(QQuickItem *item)
+
+    The function scrolling view to the \a item.
+*/
 
 void SailfishTest::scrollToItem(QQuickItem *item)
 {
@@ -333,16 +500,23 @@ void SailfishTest::scrollToItem(QQuickItem *item)
     QPointF itemAbs = getAbsPosition(item);
     if (itemAbs.y() < 0) {
         while (itemAbs.y() < 0) {
-            mouseMove(rootItem->width() / 2, rootItem->height() * 0.05, rootItem->width() / 2, rootItem->height() * 0.95);
+            mouseSwipe(rootItem->width() / 2, rootItem->height() * 0.05, rootItem->width() / 2, rootItem->height() * 0.95);
             itemAbs = getAbsPosition(item);
         }
     } else if (itemAbs.y() > rootItem->height()) {
         while (itemAbs.y() > rootItem->height()) {
-            mouseMove(rootItem->width() / 2, rootItem->height() * 0.95, rootItem->width() / 2, rootItem->height() * 0.05);
+            mouseSwipe(rootItem->width() / 2, rootItem->height() * 0.95, rootItem->width() / 2, rootItem->height() * 0.05);
             itemAbs = getAbsPosition(item);
         }
     }
 }
+
+/*!
+    \qmlmethod void SailfishTest::clickItem(QQuickItem *item)
+
+    The function simulates clicking a mouse button on an \a item.
+    The position of the click is defined by center of \a item.
+*/
 
 void SailfishTest::clickItem(QQuickItem *item)
 {
@@ -353,6 +527,12 @@ void SailfishTest::clickItem(QQuickItem *item)
     clickPoint(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
 }
 
+/*!
+    \qmlmethod void SailfishTest::pressAndHold(QQuickItem *item)
+
+    The function simulates clicking and holding a mouse button on an \a item.
+*/
+
 void SailfishTest::pressAndHold(QQuickItem *item)
 {
     if (!item) {
@@ -361,6 +541,15 @@ void SailfishTest::pressAndHold(QQuickItem *item)
     const QPointF itemAbs = getAbsPosition(item);
     pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
 }
+
+/*!
+    \qmlmethod void SailfishTest::clickPoint(int posx, int posy)
+
+    The function simulates clicking a mouse button with on an window coordinates.
+    The position of the click is defined by \a posx and \a posy.
+    The position given by arguments is transformed into window coordinates and then delivered.
+
+*/
 
 void SailfishTest::clickPoint(int posx, int posy)
 {
@@ -374,6 +563,13 @@ void SailfishTest::clickPoint(int posx, int posy)
     loop.exec();
 }
 
+/*!
+    \qmlmethod void SailfishTest::pressAndHold(int posx, int posy)
+
+    The function simulates clicking and holding a mouse button on an window coordinates.
+    The position of the click is defined by \a posx and \a posy.
+*/
+
 void SailfishTest::pressAndHold(int posx, int posy)
 {
     QEventLoop loop;
@@ -382,7 +578,14 @@ void SailfishTest::pressAndHold(int posx, int posy)
     loop.exec();
 }
 
-void SailfishTest::mouseMove(int startx, int starty, int stopx, int stopy)
+/*!
+    \qmlmethod void SailfishTest::mouseSwipe(int startx, int starty, int stopx, int stopy)
+
+    The function press then moves the mouse pointer to the position given by coordinates on screen, and releasing press at the end.
+    The position given by \a startx, \a starty, \a stopx, \a stopy is transformed into window coordinates and then delivered.
+*/
+
+void SailfishTest::mouseSwipe(int startx, int starty, int stopx, int stopy)
 {
     QEventLoop loop;
     QTimer timer;
@@ -394,6 +597,13 @@ void SailfishTest::mouseMove(int startx, int starty, int stopx, int stopy)
     connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     loop.exec();
 }
+
+/*!
+    \qmlmethod void SailfishTest::mouseDrag(int startx, int starty, int stopx, int stopy, int delay)
+
+    The function simulates long press then dragging the mouse on an item with button pressed.
+    The initial drag position is defined by \a startx and \a starty, and drop point is defined by \a stopx and \a stopy.
+*/
 
 void SailfishTest::mouseDrag(int startx, int starty, int stopx, int stopy, int delay)
 {
@@ -409,10 +619,24 @@ void SailfishTest::mouseDrag(int startx, int starty, int stopx, int stopy, int d
     loop.exec();
 }
 
+/*!
+    \qmlmethod void SailfishTest::goBack()
+
+    The function navigates back to the previous page.
+    This function simulates click to 10, 10 coordinates, you should be sure there is PageStackIndicator with back action on page.
+*/
+
 void SailfishTest::goBack()
 {
     clickPoint(10, 10);
 }
+
+/*!
+    \qmlmethod void SailfishTest::goForward()
+    This function simulates click to window.widt - 10, 10 coordinates, you should be sure there is PageStackIndicator with forward action on page.
+
+    The function navigates forward to the next page.
+*/
 
 void SailfishTest::goForward()
 {
@@ -420,69 +644,116 @@ void SailfishTest::goForward()
     clickPoint(rootItem->width() - 10, 10);
 }
 
+/*!
+    \qmlmethod void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
+
+    The function simulates generic swipe gesture with \a direction.
+
+*/
+
 void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
 {
     QQuickItem* rootItem = QAEngine::instance()->m_rootItem;
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case SwipeDirectionUp:
-        mouseMove(rootRect.center().x(), rootRect.center().y(), rootRect.center().x(), 0);
+        mouseSwipe(rootRect.center().x(), rootRect.center().y(), rootRect.center().x(), 0);
         break;
     case SwipeDirectionLeft:
-        mouseMove(rootRect.center().x(), rootRect.center().y(), 0, rootRect.center().y());
+        mouseSwipe(rootRect.center().x(), rootRect.center().y(), 0, rootRect.center().y());
         break;
     case SwipeDirectionRight:
-        mouseMove(rootRect.center().x(), rootRect.center().y(), rootRect.width(), rootRect.center().y());
+        mouseSwipe(rootRect.center().x(), rootRect.center().y(), rootRect.width(), rootRect.center().y());
         break;
     case SwipeDirectionDown:
-        mouseMove(rootRect.center().x(), rootRect.center().y(), rootRect.center().x(), rootRect.height());
+        mouseSwipe(rootRect.center().x(), rootRect.center().y(), rootRect.center().x(), rootRect.height());
         break;
     default:
         break;
     }
 }
 
+/*!
+    \qmlmethod void SailfishTest::peek(SailfishTest::PeekDirection direction)
+
+    The function simulates generic peek gesture with \a direction.
+
+*/
 void SailfishTest::peek(SailfishTest::PeekDirection direction)
 {
     QQuickItem* rootItem = QAEngine::instance()->m_rootItem;
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case PeekDirectionUp:
-        mouseMove(rootRect.center().x(), rootRect.height(), rootRect.center().x(), 0);
+        mouseSwipe(rootRect.center().x(), rootRect.height(), rootRect.center().x(), 0);
         break;
     case PeekDirectionLeft:
-        mouseMove(rootRect.width(), rootRect.center().y(), 0, rootRect.center().y());
+        mouseSwipe(rootRect.width(), rootRect.center().y(), 0, rootRect.center().y());
         break;
     case PeekDirectionRight:
-        mouseMove(0, rootRect.center().y(), rootRect.height(), rootRect.center().y());
+        mouseSwipe(0, rootRect.center().y(), rootRect.height(), rootRect.center().y());
         break;
     case PeekDirectionDown:
-        mouseMove(rootRect.center().x(), 0, rootRect.center().x(), rootRect.height());
+        mouseSwipe(rootRect.center().x(), 0, rootRect.center().x(), rootRect.height());
         break;
     default:
         break;
     }
 }
 
+/*!
+    \qmlmethod void SailfishTest::pressEnter(int count)
+
+    This function can be used to send enter key on special pages with \a count.
+*/
+
 void SailfishTest::pressEnter(int count)
 {
     QAEngine::instance()->m_keyEngine->pressEnter(count);
 }
+
+/*!
+    \qmlmethod void SailfishTest::pressBackspace(int count)
+
+    This function can be used to send backspace key on special pages with \a count.
+*/
 
 void SailfishTest::pressBackspace(int count)
 {
     QAEngine::instance()->m_keyEngine->pressBackspace(count);
 }
 
+/*!
+    \qmlmethod void SailfishTest::pressKeys(const QString &keys)
+
+    This function can be used to send \a keys on special pages, you can use any UTF-8 character.
+*/
+
 void SailfishTest::pressKeys(const QString &keys)
 {
     QAEngine::instance()->m_keyEngine->pressKeys(keys);
 }
 
+/*!
+    \qmlmethod void SailfishTest::clearFocus()
+
+    This function can be used to clear the focus object to hide keyboard from page.
+
+*/
+
 void SailfishTest::clearFocus()
 {
     QAEngine::instance()->clearFocus();
 }
+
+/*!
+    \qmlmethod void SailfishTest::saveScreenshot(const QString &location, bool fillBackground)
+
+    The function saves the screenshot to the file with the given \a location.
+
+    Use function with \a fillBackground to fill screenshot with a black background.
+
+*/
 
 void SailfishTest::saveScreenshot(const QString &location, bool fillBackground)
 {
@@ -504,6 +775,12 @@ void SailfishTest::saveScreenshot(const QString &location, bool fillBackground)
     loop.exec();
 }
 
+/*!
+    \qmlmethod void SailfishTest::sleep(int msecs)
+
+    Sleeps for \a msecs milliseconds without processing Qt events.
+*/
+
 void SailfishTest::sleep(int msecs)
 {
     QEventLoop loop;
@@ -511,6 +788,31 @@ void SailfishTest::sleep(int msecs)
     timer.setSingleShot(true);
     connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     timer.start(msecs);
+    loop.exec();
+}
+
+/*!
+    \qmlmethod void SailfishTest::waitForPageChange()
+
+    Use the function to wait until the current page will be changed.
+*/
+
+void SailfishTest::waitForPageChange()
+{
+    QQuickItem* pageStack = QAEngine::getPageStack();
+    if (!pageStack) {
+        return;
+    }
+
+    if (!pageStack->property("busy").toBool()) {
+        return;
+    }
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setInterval(800);
+    connect(pageStack, SIGNAL(busyChanged()), &timer, SLOT(start()));
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     loop.exec();
 }
 
@@ -539,12 +841,30 @@ void SailfishTest::message(const QString &text)
     QAEngine::print(QStringLiteral("# %1").arg(text));
 }
 
+/*!
+    \qmlmethod void SailfishTest::assertEqual(const QVariant &value1, const QVariant &value2, const QString &text)
+
+    The function checks that \a value1 and \a value2 are equal.
+    If the values do not compare equal, the test will fail.
+
+    Use \a text to generate useful default error message.
+*/
+
 void SailfishTest::assertEqual(const QVariant &value1, const QVariant &value2, const QString &text)
 {
     if (!compareEqual(value1, value2)) {
         assert(text.isEmpty() ? QStringLiteral("Assert: %1 != %2").arg(value1.toString(), value2.toString()) : text);
     }
 }
+
+/*!
+    \qmlmethod void SailfishTest::assertNotEqual(const QVariant &value1, const QVariant &value2, const QString &text)
+
+    The function checks that \a value1 and \a value2 are not equal.
+    If the values do compare equal, the test will fail.
+
+    Use \a text to generate useful default error message.
+*/
 
 void SailfishTest::assertNotEqual(const QVariant &value1, const QVariant &value2, const QString &text)
 {
@@ -553,12 +873,30 @@ void SailfishTest::assertNotEqual(const QVariant &value1, const QVariant &value2
     }
 }
 
+/*!
+    \qmlmethod void SailfishTest::assertTrue(bool value, const QString &text)
+
+    The function checks that \a value is true.
+    If the value do compare false, the test will fail.
+
+    Use \a text to generate useful default error message.
+*/
+
 void SailfishTest::assertTrue(bool value, const QString &text)
 {
     if (!compareTrue(value)) {
         assert(text.isEmpty() ? QStringLiteral("Assert: %1 is False").arg(value) : text);
     }
 }
+
+/*!
+    \qmlmethod void SailfishTest::assertFalse(bool value, const QString &text)
+
+    The function checks that \a value is false.
+    If the value do compare true, the test will fail.
+
+    Use \a text to generate useful default error message.
+*/
 
 void SailfishTest::assertFalse(bool value, const QString &text)
 {
@@ -567,20 +905,44 @@ void SailfishTest::assertFalse(bool value, const QString &text)
     }
 }
 
+/*!
+    \qmlmethod void SailfishTest::compareEqual(const QVariant &value1, const QVariant &value2)
+
+    The function checks that \a value1 and \a value2 are equal and returns bool value.
+*/
+
 bool SailfishTest::compareEqual(const QVariant &value1, const QVariant &value2)
 {
     return value1 == value2;
 }
+
+/*!
+    \qmlmethod void SailfishTest::compareNotEqual(const QVariant &value1, const QVariant &value2)
+
+    The function checks that \a value1 and \a value2 are not equal and returns bool value.
+*/
 
 bool SailfishTest::compareNotEqual(const QVariant &value1, const QVariant &value2)
 {
     return value1 != value2;
 }
 
+/*!
+    \qmlmethod void SailfishTest::compareTrue(bool value)
+
+    The function checks that \a value1 is True, and returns bool value.
+*/
+
 bool SailfishTest::compareTrue(bool value)
 {
     return value;
 }
+
+/*!
+    \qmlmethod void SailfishTest::compareFalse(bool value)
+
+    The function checks that \a value1 is False, and returns bool value.
+*/
 
 bool SailfishTest::compareFalse(bool value)
 {

@@ -1,0 +1,65 @@
+/*!
+\title Examples
+\page examples.html example
+
+There is a example which demonstrate how to use SailfishTest.
+
+\section2 Calling a some tests for jolla-settings.
+
+This code snippet should be written to test.qml and run as follows: jolla-settings --run-sailfish-test test.qml
+
+\code
+import QtQuick 2.0
+import Sailfish.Silica 1.0
+import ru.omprussia.sailfishtest 1.0
+
+SailfishTest {
+
+        function init() {
+        }
+
+        // Verify that the 24-hour clock setting is used.
+        function test_1() {
+                var item = findItemsByText("Time and date")[1]
+                scrollToItem(item)
+                clickItem(item)
+                waitForPageChange()
+                var use24 = findItemsByClassName("Use24HourClockSettingDisplay")[0]
+                saveScreenshot('/home/nemo/DateTime.png', false)
+                assertTrue(use24.checked)
+        }
+
+        // Verifying the creation and deletion of a folder in the storage.
+        function test_2() {
+                goBack()
+                waitForPageChange()
+                var storage = findItemsByText("Storage")[1]
+                scrollToItem(storage)
+                clickItem(storage)
+                waitForPageChange()
+                var userData = findItemsByText("User data")[0]
+                console.log(userData)
+                clickItem(userData)
+                waitForPageChange()
+                pullDownTo("File manager")
+                waitForPageChange()
+                mouseMove(100, 200, 100, 1000) // pullDownTo is not working for dynamic puley menus
+                var newFolder = findItemsByText("New folder")[0]
+                clickItem(newFolder)
+                waitForPageChange()
+                pressKeys("Test")
+                clearFocus()
+                goForward()
+                waitForPageChange()
+                var testDir = findItemsByText("Test")[0]
+                scrollToItem(testDir)
+                clickContextMenuItem(testDir, "Delete")
+                sleep(6000)
+                var testDir2 = findItemsByText("Test")
+                assertEqual(testDir2.length, 0)
+        }
+
+}
+\endcode
+
+*/

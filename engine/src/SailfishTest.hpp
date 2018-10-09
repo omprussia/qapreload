@@ -61,7 +61,7 @@ public slots:
 
     void clickPoint(int posx, int posy);
     void pressAndHold(int posx, int posy);
-    void mouseMove(int startx, int starty, int stopx, int stopy);
+    void mouseSwipe(int startx, int starty, int stopx, int stopy);
     void mouseDrag(int startx, int starty, int stopx, int stopy, int delay = 1200);
 
     void goBack();
@@ -79,6 +79,7 @@ public slots:
     void saveScreenshot(const QString &location, bool fillBackground = true);
 
     void sleep(int msecs);
+    void waitForPageChange();
 
     void assert(const QString &text);
     void message(const QString &text);

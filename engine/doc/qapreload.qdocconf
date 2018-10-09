@@ -1,0 +1,33 @@
+project         = SailfishTest
+description     = SailfishTest QML Plugin Testing Framework Reference Documentation
+versionsym      =
+version         = 1.0
+url             = NDA
+
+sourcedirs += src ../src
+
+qhp.projects = SailfishTestPlugin
+
+qhp.SailfishTestPlugin.file = qapreload.qhp
+qhp.SailfishTestPlugin.namespace = ru.omprussia.sailfishtest.1.0
+qhp.SailfishTestPlugin.virtualFolder = qapreload
+qhp.SailfishTestPlugin.indexTitle = SailfishTest
+qhp.SailfishTestPlugin.indexRoot =
+
+qhp.SailfishTestPlugin.filterAttributes = ru.omprussia.sailfishtest 1.0
+
+qhp.SailfishTestPlugin.subprojects = manual qmltypes
+qhp.SailfishTestPlugin.subprojects.manual.type = manual
+qhp.SailfishTestPlugin.subprojects.manual.indexTitle = SailfishTest
+qhp.SailfishTestPlugin.subprojects.qmltypes.title = QML Types
+qhp.SailfishTestPlugin.subprojects.qmltypes.indexTitle = SailfishTest
+qhp.SailfishTestPlugin.subprojects.qmltypes.selectors = qmlclass
+qhp.SailfishTestPlugin.subprojects.qmltypes.sortPages = true
+
+HTML.footer += \
+    "<div class=\"footer\">\n" \
+    "  <p><acronym title=\"Copyright\">&copy;</acronym> Open Mobile Platform </p>\n" \
+    "  <p>All rights reserved.</p>\n" \
+    "</div>\n"
+
+navigation.homepage = "SailfishTest"

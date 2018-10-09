@@ -36,3 +36,14 @@ DBUS_ADAPTORS += qa_dbus_adaptor
 qml.files = qmldir
 qml.path = /usr/lib/qt5/qml/ru/omprussia/sailfishtest
 INSTALLS += qml
+
+CONFIG += mer-qdoc-template
+MER_QDOC.project = qapreload
+MER_QDOC.config = doc/qapreload.qdocconf
+MER_QDOC.style = offline
+MER_QDOC.path = /usr/share/doc/qapreload
+
+OTHER_FILES += \
+    doc/src/index.qdoc
+
+
