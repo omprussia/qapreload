@@ -254,7 +254,7 @@ void SailfishTest::enterCode(const QString &code)
 
 QQuickItem *SailfishTest::getCurrentPage()
 {
-    return QAEngine::instance()->getCurrentPage();
+    return QAEngine::getCurrentPage();
 }
 
 /*!

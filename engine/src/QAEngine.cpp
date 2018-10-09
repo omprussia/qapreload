@@ -420,7 +420,7 @@ void QAEngine::dumpCurrentPage(const QDBusMessage &message)
         return;
     }
 
-    QQuickItem *currentPage = getCurrentPage();
+    QQuickItem *currentPage = QAEngine::getCurrentPage();
     if (!currentPage) {
         QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
@@ -464,7 +464,7 @@ void QAEngine::grabWindow(const QDBusMessage &message)
 
 void QAEngine::grabCurrentPage(const QDBusMessage &message)
 {
-    QQuickItem *currentPage = getCurrentPage();
+    QQuickItem *currentPage = QAEngine::getCurrentPage();
     if (!currentPage) {
         QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
@@ -509,7 +509,7 @@ void QAEngine::clearFocus()
 
 void QAEngine::executeInPage(const QString &jsCode, const QDBusMessage &message)
 {
-    QQuickItem *currentPage = getCurrentPage();
+    QQuickItem *currentPage = QAEngine::getCurrentPage();
     if (!currentPage) {
         QAService::sendMessageError(message, QStringLiteral("currentPage not found"));
         return;
