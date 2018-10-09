@@ -62,6 +62,9 @@ public:
     static QQuickItem* findParentFlickable(QQuickItem* rootItem = nullptr);
     static QVariantList findNestedFlickable(QQuickItem* parentItem = nullptr);
 
+    static QQuickItem* getCurrentPage();
+    static QQuickItem* getPageStack();
+
     static QVariant executeJS(const QString &jsCode, QQuickItem *item);
 
     static void print(const QString &text);
@@ -108,9 +111,6 @@ private:
 
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
-
-
-    QQuickItem* getCurrentPage();
 
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);

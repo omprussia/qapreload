@@ -17,6 +17,7 @@ BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  qt5-tools
 BuildRequires:  qt5-qtdeclarative-devel-tools
 BuildRequires:  qt5-plugin-platform-minimal
+BuildRequires:  mer-qdoc-template
 Requires:   qtpreloadengine
 
 %description
@@ -30,6 +31,14 @@ Requires:   %{name}
 
 %description devel
 %{summary}.
+
+%package doc
+Summary:    SailfishTest plugin documentation
+Group:      System/Libraries
+
+%description doc
+%{summary}.
+
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -57,3 +66,9 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 %files devel
 %{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir
 %{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
+
+%files doc
+%defattr(-,root,root,-)
+%dir %{_datadir}/doc/qapreload
+%{_datadir}/doc/qapreload/qapreload.qch
+

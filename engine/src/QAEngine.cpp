@@ -162,13 +162,9 @@ void QAEngine::print(const QString &text)
 
 QQuickItem *QAEngine::getCurrentPage()
 {
-    QQuickItem *pageStack = m_rootItem->property("pageStack").value<QQuickItem*>();
+    QQuickItem *pageStack = getPageStack();
     if (!pageStack) {
-        pageStack = m_rootItem->childItems().first()->property("pageStack").value<QQuickItem*>();
-        if (!pageStack) {
-            qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
-            return nullptr;
-        }
+        return nullptr;
     }
 
     QQuickItem *currentPage = pageStack->property("currentPage").value<QQuickItem*>();
@@ -178,6 +174,19 @@ QQuickItem *QAEngine::getCurrentPage()
     }
 
     return currentPage;
+}
+
+QQuickItem *QAEngine::getPageStack()
+{
+    QQuickItem *pageStack = QAEngine::instance()->rootItem()->property("pageStack").value<QQuickItem*>();
+    if (!pageStack) {
+        pageStack = QAEngine::instance()->rootItem()->childItems().first()->property("pageStack").value<QQuickItem*>();
+        if (!pageStack) {
+            qWarning() << Q_FUNC_INFO << "Cannot find PageStack!";
+            return nullptr;
+        }
+    }
+    return pageStack;
 }
 
 void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
