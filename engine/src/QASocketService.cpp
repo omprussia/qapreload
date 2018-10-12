@@ -175,7 +175,7 @@ void QASocketService::readSocket()
 
     QMetaObject::invokeMethod(this,
                               QStringLiteral("%1Bootstrap").arg(action).toLatin1().constData(),
-                              Qt::QueuedConnection,
+                              Qt::DirectConnection,
                               Q_ARG(QTcpSocket*, socket),
                               arguments[0],
                               arguments[1],
@@ -273,7 +273,7 @@ void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &s
 
     QMetaObject::invokeMethod(this,
                               QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
-                              Qt::QueuedConnection,
+                              Qt::DirectConnection,
                               Q_ARG(QTcpSocket*, socket),
                               Q_ARG(QString, selector));
 }
@@ -287,7 +287,7 @@ void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &
 
     QMetaObject::invokeMethod(this,
                               QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
-                              Qt::QueuedConnection,
+                              Qt::DirectConnection,
                               Q_ARG(QTcpSocket*, socket),
                               Q_ARG(QString, selector),
                               Q_ARG(bool, multiple));
@@ -547,8 +547,55 @@ void QASocketService::hideKeyboardBootstrap(QTcpSocket *socket, const QVariant &
     socketReply(socket, QString());
 }
 
-void QASocketService::executeBootstrap(QTcpSocket *socket, const QVariant &mobileArg, const QVariant &paramsArg)
+void QASocketService::executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
 {
+    const QString command = commandArg.toString().replace(QString(":"), QString("_"));
+
+    qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
+
+    const QVariantList params = paramsArg.toList();
+    QGenericArgument arguments[9] = { QGenericArgument() };
+    for (int i = 0; i < params.length(); i++) {
+        arguments[i] = Q_ARG(QVariant, params[i]);
+    }
+
+    bool handled = QMetaObject::invokeMethod(this,
+                              QStringLiteral("executeCommand_%1").arg(command).toLatin1().constData(),
+                              Qt::DirectConnection,
+                              Q_ARG(QTcpSocket*, socket),
+                              arguments[0],
+                              arguments[1],
+                              arguments[2],
+                              arguments[3],
+                              arguments[4],
+                              arguments[5],
+                              arguments[6],
+                              arguments[7],
+                              arguments[8]);
+
+    if (!handled) {
+        qWarning() << Q_FUNC_INFO << command << "not handled!";
+        socketReply(socket, QString());
+    }
+}
+
+void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
+{
+    const QString command = commandArg.toString().replace(QString(":"), QString("_"));
+    qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_pullDownTo(QTcpSocket *socket, const QVariant &destinationArg)
+{
+    qDebug() << Q_FUNC_INFO << destinationArg;
+    if (destinationArg.type() == QMetaType::QString) {
+        const QString name = destinationArg.toString();
+        m_sailfishTest->pullDownTo(name);
+    } else {
+        const int index = destinationArg.toInt();
+        m_sailfishTest->pullDownTo(index);
+    }
     socketReply(socket, QString());
 }
 

@@ -5,6 +5,7 @@
 #include <QtDBus>
 #include <QDBusContext>
 
+class QABridgeInterface;
 class QQuickItem;
 class QAAdaptor;
 class QJsonObject;
@@ -52,6 +53,7 @@ private slots:
 private:
     explicit QADBusService(QObject *parent = nullptr);
     QAAdaptor *m_adaptor = nullptr;
+    QABridgeInterface *m_bridgeIface = nullptr;
 
     int m_loadCount = 0;
 

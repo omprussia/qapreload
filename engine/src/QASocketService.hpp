@@ -65,7 +65,12 @@ private slots:
     void keyeventBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &sessionIDArg, const QVariant &flagsArg);
     void longPressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg);
     void pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg);
-    void executeBootstrap(QTcpSocket *socket, const QVariant &mobileArg, const QVariant &paramsArg);
+
+    void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
+    void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
+
+    void executeCommand_pullDownTo(QTcpSocket* socket, const QVariant &destinationArg);
+
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &sessionIdArg, const QVariant &Arg);
     void startActivityBootstrap(QTcpSocket *socket, const QVariant &appPackage, const QVariant &appActivity, const QVariant &appWaitPackage, const QVariant &intentAction,

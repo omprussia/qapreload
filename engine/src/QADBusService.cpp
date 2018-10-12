@@ -2,6 +2,7 @@
 #include "QADBusService.hpp"
 #include "QASocketService.hpp"
 #include "qaservice_adaptor.h"
+#include "qabridge_interface.h"
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -59,13 +60,9 @@ void QADBusService::initialize()
     m_adaptor = new QAAdaptor(this);
     emit m_adaptor->engineLoaded(QAEngine::isLoaded());
 
-    QDBusMessage applicationReady = QDBusMessage::createMethodCall(
-                QStringLiteral("ru.omprussia.qatestrunner"),
-                QStringLiteral("/ru/omprussia/qatestrunner"),
-                QStringLiteral("ru.omprussia.qatestrunner"),
-                QStringLiteral("ApplicationReady"));
-    applicationReady.setArguments({s_processName});
-    QDBusConnection::sessionBus().call(applicationReady, QDBus::NoBlock);
+    m_bridgeIface = new QABridgeInterface(DBUS_SERVICE_NAME, DBUS_PATH_NAME, QDBusConnection::systemBus(), this);
+    m_bridgeIface->ApplicationReady(s_processName);
+    qDebug() << Q_FUNC_INFO << s_processName << m_bridgeIface->lastError().message();
 }
 
 QADBusService *QADBusService::instance()

@@ -35,6 +35,11 @@ qa_dbus_adaptor.source_flags = -c QAAdaptor
 qa_dbus_adaptor.header_flags = -c QAAdaptor
 DBUS_ADAPTORS += qa_dbus_adaptor
 
+bridge_dbus_interface.files = ../dbus/ru.omprussia.qabridge.xml
+bridge_dbus_interface.source_flags = -c QABridgeInterface
+bridge_dbus_interface.header_flags = -c QABridgeInterface -i ../dbus/dbus_qabridge_include.h
+DBUS_INTERFACES += bridge_dbus_interface
+
 qml.files = qmldir
 qml.path = /usr/lib/qt5/qml/ru/omprussia/sailfishtest
 INSTALLS += qml
