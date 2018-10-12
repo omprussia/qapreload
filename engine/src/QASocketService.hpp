@@ -72,7 +72,10 @@ private slots:
     void executeCommand_pullDownTo(QTcpSocket* socket, const QVariant &destinationArg);
 
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
-    void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &sessionIdArg, const QVariant &Arg);
+    void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &, const QVariant &);
+
+    void processTouchActionList(const QVariant &actionListArg);
+
     void startActivityBootstrap(QTcpSocket *socket, const QVariant &appPackage, const QVariant &appActivity, const QVariant &appWaitPackage, const QVariant &intentAction,
                                 const QVariant &intentCategory, const QVariant &intentFlags, const QVariant &optionalIntentArguments, const QVariant &dontStopAppOnReset, const QVariant &); //Segmentation fauilt
 

@@ -600,13 +600,47 @@ void QASocketService::executeCommand_pullDownTo(QTcpSocket *socket, const QVaria
 }
 
 void QASocketService::performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg)
-{
+{    
+    processTouchActionList(paramsArg);
+
     socketReply(socket, QString());
 }
 
-void QASocketService::performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &sessionIdArg, const QVariant &Arg)
+void QASocketService::performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &, const QVariant &)
 {
+    for (const QVariant &actionListArg : paramsArg.toList()) {
+        processTouchActionList(actionListArg);
+    }
+
     socketReply(socket, QString());
+}
+
+void QASocketService::processTouchActionList(const QVariant &actionListArg)
+{
+    int startX = 0;
+    int startY = 0;
+    int endX = 0;
+    int endY = 0;
+    int delay = 0;
+
+    const QVariantList actions = actionListArg.toList();
+    for (const QVariant &actionArg : actions) {
+        const QVariantMap action = actionArg.toMap();
+        const QString actionName = action.value(QStringLiteral("action")).toString();
+        const QVariantMap options = action.value(QStringLiteral("options")).toMap();
+
+        if (actionName == QStringLiteral("wait")) {
+            delay = options.value(QStringLiteral("ms")).toInt();
+        } else if (actionName == QStringLiteral("press")) {
+            startX = options.value(QStringLiteral("x")).toInt();
+            startY = options.value(QStringLiteral("y")).toInt();
+        } else if (actionName == QStringLiteral("moveTo")) {
+            endX = options.value(QStringLiteral("x")).toInt();
+            endY = options.value(QStringLiteral("y")).toInt();
+        } else if (actionName == QStringLiteral("release")) {
+            m_sailfishTest->mouseDrag(startX, startY, endX, endY, delay);
+        }
+    }
 }
 
 void QASocketService::startActivityBootstrap(QTcpSocket *socket, const QVariant &appPackage, const QVariant &appActivity, const QVariant &appWaitPackage, const QVariant &intentAction, const QVariant &intentCategory, const QVariant &intentFlags, const QVariant &optionalIntentArguments, const QVariant &dontStopAppOnReset, const QVariant &)
