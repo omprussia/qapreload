@@ -20,6 +20,7 @@ BuildRequires:  pkgconfig(libshadowutils)
 BuildRequires:  pkgconfig(packagekitqt5)
 BuildRequires:  pkgconfig(contentaction5)
 BuildRequires:  pkgconfig(connman-qt5)
+BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  qt5-tools
 BuildRequires:  qt5-qtdeclarative-devel-tools
 BuildRequires:  qt5-plugin-platform-minimal

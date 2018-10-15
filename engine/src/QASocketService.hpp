@@ -61,6 +61,10 @@ private slots:
     void activeBootstrap(QTcpSocket *socket); //for functions switch_to.active_element
     void getAlertTextBootstrap(QTcpSocket *socket); //for functions switch_to.alert
     void isKeyboardShownBootstrap(QTcpSocket *socket);
+    void activateIMEEngineBootstrap(QTcpSocket *socket, const QVariant &engine);
+    void availableIMEEnginesBootstrap(QTcpSocket *socket);
+    void getActiveIMEEngineBootstrap(QTcpSocket *socket);
+    void deactivateIMEEngineBootstrap(QTcpSocket *socket);
     void isIMEActivatedBootstrap(QTcpSocket *socket);
     void keyeventBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &sessionIDArg, const QVariant &flagsArg);
     void longPressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg);

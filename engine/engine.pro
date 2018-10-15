@@ -2,6 +2,8 @@ TEMPLATE = lib
 QT = core dbus quick quick-private core-private
 CONFIG += plugin
 CONFIG += c++11
+CONFIG += link_pkgconfig
+PKGCONFIG += mlite5
 
 SOURCES += \
     src/engine.cpp \

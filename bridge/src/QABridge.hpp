@@ -60,10 +60,6 @@ private slots:
     void compareImagesBootstrap(QTcpSocket *socket, const QVariant &matchFeatures, const QVariant &firstImage, const QVariant &secondImage, const QVariant &, const QVariant &, const QVariant &);
     void setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant &connectionType);
     void getNetworkConnectionBootstrap(QTcpSocket *socket);
-    void activateIMEEngineBootstrap(QTcpSocket *socket, const QVariant &engine);
-    void availableIMEEnginesBootstrap(QTcpSocket *socket);
-    void getActiveIMEEngineBootstrap(QTcpSocket *socket);
-    void deactivateIMEEngineBootstrap(QTcpSocket *socket);
     void getStringsBootstrap(QTcpSocket *socket, const QVariant &language, const QVariant &stringFile);
     void endCoverageBootstrap(QTcpSocket *socket, const QVariant &intent, const QVariant &path);
     void resetBootstrap(QTcpSocket *socket);

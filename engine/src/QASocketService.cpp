@@ -17,6 +17,8 @@
 
 #include <private/qquickwindow_p.h>
 
+#include <mlite5/MGConfItem>
+
 static QASocketService *s_instance = nullptr;
 static QHash<QString, QQuickItem*> s_items;
 
@@ -501,6 +503,39 @@ void QASocketService::isKeyboardShownBootstrap(QTcpSocket *socket)
         socketReply(socket, false, 1);
     }
     socketReply(socket, ime->isVisible());
+}
+
+void QASocketService::availableIMEEnginesBootstrap(QTcpSocket *socket)
+{
+    MGConfItem enabled(QStringLiteral("/sailfish/text_input/enabled_layouts"));
+    socketReply(socket, enabled.value().toStringList());
+}
+
+void QASocketService::activateIMEEngineBootstrap(QTcpSocket *socket, const QVariant &engine)
+{
+    const QString layout = engine.toString();
+    qDebug() << Q_FUNC_INFO << layout;
+    MGConfItem enabled(QStringLiteral("/sailfish/text_input/enabled_layouts"));
+    if (!enabled.value().toStringList().contains(layout)) {
+        socketReply(socket, QString());
+        return;
+    }
+
+    MGConfItem active(QStringLiteral("/sailfish/text_input/active_layout"));
+    active.set(layout);
+
+    socketReply(socket, QString());
+}
+
+void QASocketService::getActiveIMEEngineBootstrap(QTcpSocket *socket)
+{
+    MGConfItem active(QStringLiteral("/sailfish/text_input/active_layout"));
+    socketReply(socket, active.value().toString());
+}
+
+void QASocketService::deactivateIMEEngineBootstrap(QTcpSocket *socket)
+{
+    socketReply(socket, QString());
 }
 
 void QASocketService::isIMEActivatedBootstrap(QTcpSocket *socket)

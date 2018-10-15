@@ -371,17 +371,6 @@ void QABridge::getNetworkConnectionBootstrap(QTcpSocket *socket)
     socketReply(socket, getNetworkConnection());
 }
 
-void QABridge::availableIMEEnginesBootstrap(QTcpSocket *socket)
-{
-    socketReply(socket, QString());
-}
-
-void QABridge::activateIMEEngineBootstrap(QTcpSocket *socket, const QVariant &engine)
-{
-    qDebug() << Q_FUNC_INFO << engine;
-    socketReply(socket, QString());
-}
-
 void QABridge::getStringsBootstrap(QTcpSocket *socket, const QVariant &language, const QVariant &stringFile)
 {
     qDebug() << Q_FUNC_INFO << language << stringFile;
@@ -391,16 +380,6 @@ void QABridge::getStringsBootstrap(QTcpSocket *socket, const QVariant &language,
 void QABridge::endCoverageBootstrap(QTcpSocket *socket, const QVariant &intent, const QVariant &path)
 {
     qDebug() << Q_FUNC_INFO << intent << path;
-    socketReply(socket, QString());
-}
-
-void QABridge::getActiveIMEEngineBootstrap(QTcpSocket *socket)
-{
-    socketReply(socket, QString());
-}
-
-void QABridge::deactivateIMEEngineBootstrap(QTcpSocket *socket)
-{
     socketReply(socket, QString());
 }
 
