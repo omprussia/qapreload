@@ -15,6 +15,15 @@ class QABridge : public QObject
 public:
     explicit QABridge(QObject *parent = nullptr);
 
+    enum NetworkConnection {
+        NetworkConnectionNone = 0,
+        NetworkConnectionAirplane = 1,
+        NetworkConnectionWifi = 2,
+        NetworkConnectionData = 4,
+        NetworkConnectionAll = 6
+    };
+    Q_ENUM(NetworkConnection)
+
 public slots:
     void start();
 
@@ -79,6 +88,7 @@ private slots:
 
 private:
     void connectAppSocket(const QString &appName);
+    int getNetworkConnection() const;
 
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0);
     bool compressFolder(QString sourceFolder, QString prefex);

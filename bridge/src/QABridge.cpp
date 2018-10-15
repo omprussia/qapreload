@@ -23,6 +23,8 @@
 #include <Transaction>
 #include <Daemon>
 
+#include <connman-qt5/networkmanager.h>
+
 #include <systemd/sd-daemon.h>
 
 QABridge::QABridge(QObject *parent)
@@ -317,12 +319,56 @@ void QABridge::resetBootstrap(QTcpSocket *socket)
 
 void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant &connectionType)
 {
+    const int networkConnectionType = connectionType.toInt();
+    qDebug() << Q_FUNC_INFO << networkConnectionType;
+
+    NetworkManager* nm = NetworkManager::instance();
+    if (nm->getTechnologies().isEmpty()) {
+        QEventLoop loop;
+        connect(nm, &NetworkManager::technologiesChanged, &loop, &QEventLoop::quit);
+        loop.exec();
+    }
+
+    qDebug() << Q_FUNC_INFO << "Offline:" << nm->offlineMode();
+
+    if (!nm->offlineMode() && (networkConnectionType & NetworkConnectionAirplane) == NetworkConnectionAirplane) {
+        qDebug() << "SetOffline";
+        nm->setOfflineMode(true);
+        socketReply(socket, QString());
+        return;
+    }
+
+    if (nm->offlineMode() && (networkConnectionType & NetworkConnectionAirplane) == 0) {
+        qDebug() << "SetOnline";
+        nm->setOfflineMode(false);
+
+        QEventLoop loop;
+        connect(nm, &NetworkManager::stateChanged, &loop, &QEventLoop::quit);
+        loop.exec();
+    }
+
+    NetworkTechnology* wifiTech = nm->getTechnology(QStringLiteral("wifi"));
+    if (wifiTech) {
+        qDebug() << "Wifi powered:" << wifiTech->powered();
+        wifiTech->setPowered((networkConnectionType & NetworkConnectionWifi) == NetworkConnectionWifi);
+    } else {
+        qDebug() << "Wifi not available";
+    }
+
+    NetworkTechnology* cellularTech = nm->getTechnology(QStringLiteral("cellular"));
+    if (cellularTech) {
+        qDebug() << "Data powered:" << cellularTech->powered();
+        cellularTech->setPowered((networkConnectionType & NetworkConnectionData) == NetworkConnectionData);
+    } else {
+        qDebug() << "Data not available";
+    }
+
     socketReply(socket, QString());
 }
 
 void QABridge::getNetworkConnectionBootstrap(QTcpSocket *socket)
 {
-    socketReply(socket, QString());
+    socketReply(socket, getNetworkConnection());
 }
 
 void QABridge::availableIMEEnginesBootstrap(QTcpSocket *socket)
@@ -370,7 +416,11 @@ void QABridge::getSettingsBootstrap(QTcpSocket *socket)
 
 void QABridge::getDeviceTimeBootstrap(QTcpSocket *socket, const QVariant &format)
 {
-    socketReply(socket, QDateTime::currentDateTime().toString());
+    const QString dateFormat = format.toString();
+    const QString time = dateFormat.isEmpty()
+            ? QDateTime::currentDateTime().toString(Qt::TextDate)
+            : QDateTime::currentDateTime().toString(dateFormat);
+    socketReply(socket, time);
 }
 
 void QABridge::startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments)
@@ -703,6 +753,29 @@ void QABridge::connectAppSocket(const QString &appName)
     if (m_connectAppName == appName && m_connectLoop->isRunning()) {
         m_connectLoop->quit();
     }
+}
+
+int QABridge::getNetworkConnection() const
+{
+    NetworkManager* nm = NetworkManager::instance();
+    if (nm->getTechnologies().isEmpty()) {
+        QEventLoop loop;
+        connect(nm, &NetworkManager::technologiesChanged, &loop, &QEventLoop::quit);
+        loop.exec();
+    }
+    if (nm->offlineMode()) {
+        return NetworkConnectionAirplane;
+    }
+    int connection = NetworkConnectionNone;
+    for (NetworkTechnology* tech : nm->getTechnologies()) {
+        if (tech->powered() && tech->type() == QStringLiteral("wifi")) {
+            connection |= NetworkConnectionWifi;
+        }
+        if (tech->powered() && tech->type() == QStringLiteral("cellular")) {
+            connection |= NetworkConnectionData;
+        }
+    }
+    return connection;
 }
 
 void QABridge::socketReply(QTcpSocket *socket, const QVariant &value, int status)

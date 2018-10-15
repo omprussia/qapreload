@@ -388,26 +388,26 @@ void QASocketService::getScreenshotBootstrap(QTcpSocket *socket)
 
 void QASocketService::elementEnabledBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
 {
-    getAttributeBootstrap(socket, "enabled", elementIdArg);
+    getAttributeBootstrap(socket, QStringLiteral("enabled"), elementIdArg);
 }
 
 void QASocketService::elementDisplayedBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
 {
-    getAttributeBootstrap(socket, "visible", elementIdArg);
+    getAttributeBootstrap(socket, QStringLiteral("visible"), elementIdArg);
 }
 
 void QASocketService::elementSelectedBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
 {
-    getAttributeBootstrap(socket, "checked", elementIdArg);
+    getAttributeBootstrap(socket, QStringLiteral("checked"), elementIdArg);
 }
 
 void QASocketService::getSizeBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
 {
-    QJsonObject reply;
     const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << s_items.value(elementId);
     if (s_items.contains(elementId)) {
         QQuickItem *item = s_items.value(elementId);
+        QJsonObject reply;
         reply.insert(QStringLiteral("width"), item->width());
         reply.insert(QStringLiteral("height"), item->height());
         socketReply(socket, reply);
@@ -419,7 +419,7 @@ void QASocketService::getSizeBootstrap(QTcpSocket *socket, const QVariant &eleme
 void QASocketService::setValueImmediateBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
 {
     qDebug() << Q_FUNC_INFO << valueArg << elementIdArg;
-    setAttribute(socket, "text", valueArg.toList().first(), elementIdArg);
+    setAttribute(socket, QStringLiteral("text"), valueArg.toList().first(), elementIdArg);
 }
 
 void QASocketService::setAttribute(QTcpSocket *socket, const QVariant &attributeArg, const QVariant &valueArg, const QVariant &elementIdArg)
@@ -439,7 +439,7 @@ void QASocketService::setAttribute(QTcpSocket *socket, const QVariant &attribute
 void QASocketService::replaceValueBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
 {
     qDebug() << Q_FUNC_INFO << valueArg << elementIdArg;
-    setAttribute(socket, "text", valueArg.toList().first(), elementIdArg);
+    setAttribute(socket, QStringLiteral("text"), valueArg.toList().first(), elementIdArg);
 }
 
 void QASocketService::setValueBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
@@ -458,7 +458,11 @@ void QASocketService::submitBootstrap(QTcpSocket *socket, const QVariant &elemen
 
 void QASocketService::getCurrentActivityBootstrap(QTcpSocket *socket)
 {
-    socketReply(socket, QString());
+    QQuickItem* currentPage = QAEngine::instance()->getCurrentPage();
+    const QString currentPageName = QStringLiteral("%1_%2")
+            .arg(QString::fromLatin1(currentPage->metaObject()->className()).section(QChar('_'), 0, 0))
+            .arg(currentPage->property("objectName").toString());
+    socketReply(socket, currentPageName);
 }
 
 void QASocketService::getPageSourceBootstrap(QTcpSocket *socket)
@@ -492,37 +496,37 @@ void QASocketService::getAlertTextBootstrap(QTcpSocket *socket)
 
 void QASocketService::isKeyboardShownBootstrap(QTcpSocket *socket)
 {
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(QAEngine::instance()->rootItem()->window());
-    if (!wp) {
+    QInputMethod* ime = qApp->inputMethod();
+    if (!ime) {
         socketReply(socket, false, 1);
     }
-    socketReply(socket, true);
+    socketReply(socket, ime->isVisible());
 }
 
 void QASocketService::isIMEActivatedBootstrap(QTcpSocket *socket)
 {
-    socketReply(socket, true);
+    socketReply(socket, qApp->inputMethod() ? true : false);
 }
 
 
 void QASocketService::getOrientationBootstrap(QTcpSocket *socket)
 {
-    const qreal width = QAEngine::instance()->rootItem()->width();
-    const qreal height = QAEngine::instance()->rootItem()->height();
-    socketReply(socket, height > width ? QString("PORTRAIT") : QString("LANDSCAPE"));
+    QQuickItem* item = QAEngine::instance()->rootItem();
+    if (!qmlEngine(item)) {
+        item = item->childItems().first();
+    }
+    const int deviceOrientation = item->property("deviceOrientation").toInt();
+    socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QString("LANDSCAPE") : QString("PORTRAIT"));
 }
 
 void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg)
 {
-    QScreen *screen = qApp->primaryScreen();
-    const QString orientation = orientationArg.toString();
-
-    if (orientation == "LANDSCAPE") {
-        qDebug() << Q_FUNC_INFO << orientation;
-    } else if (orientation == "PORTRAIT") {
-        qDebug() << Q_FUNC_INFO << orientation;
+    QQuickItem* item = QAEngine::instance()->rootItem();
+    if (!qmlEngine(item)) {
+        item = item->childItems().first();
     }
-    qDebug() << Q_FUNC_INFO << screen->orientation();
+    const QString orientation = orientationArg.toString();
+    item->setProperty("deviceOrientation", orientation == QStringLiteral("LANDSCAPE") ? 2 : 1);
     socketReply(socket, QString());
 }
 
@@ -663,7 +667,7 @@ void QASocketService::clickBootstrap(QTcpSocket *socket, const QVariant &element
 
 void QASocketService::clearBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
 {
-    setAttribute(socket, "text", "", elementIdArg);
+    setAttribute(socket, QStringLiteral("text"), QString(""), elementIdArg);
 }
 
 void QASocketService::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple)
