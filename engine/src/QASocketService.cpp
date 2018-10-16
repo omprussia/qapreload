@@ -385,7 +385,7 @@ void QASocketService::getElementScreenshotBootstrap(QTcpSocket *socket, const QV
 
 void QASocketService::getScreenshotBootstrap(QTcpSocket *socket)
 {
-    grabScreenshot(socket, QAEngine::instance()->rootItem(), true);
+    grabScreenshot(socket, QAEngine::getApplicationWindow(), true);
 }
 
 void QASocketService::elementEnabledBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
@@ -546,20 +546,14 @@ void QASocketService::isIMEActivatedBootstrap(QTcpSocket *socket)
 
 void QASocketService::getOrientationBootstrap(QTcpSocket *socket)
 {
-    QQuickItem* item = QAEngine::instance()->rootItem();
-    if (!qmlEngine(item)) {
-        item = item->childItems().first();
-    }
+    QQuickItem* item = QAEngine::getApplicationWindow();
     const int deviceOrientation = item->property("deviceOrientation").toInt();
     socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QStringLiteral("LANDSCAPE") : QStringLiteral("PORTRAIT"));
 }
 
 void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg)
 {
-    QQuickItem* item = QAEngine::instance()->rootItem();
-    if (!qmlEngine(item)) {
-        item = item->childItems().first();
-    }
+    QQuickItem* item = QAEngine::getApplicationWindow();
     const QString orientation = orientationArg.toString();
     item->setProperty("deviceOrientation", orientation == QStringLiteral("LANDSCAPE") ? 2 : 1);
     socketReply(socket, QString());

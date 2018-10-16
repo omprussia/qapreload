@@ -386,6 +386,11 @@ QVariantList QAEngine::findNestedFlickable(QQuickItem *parentItem)
     return items;
 }
 
+QQuickItem *QAEngine::getApplicationWindow()
+{
+    return QAEngine::instance()->applicationWindow();
+}
+
 QAEngine *QAEngine::instance()
 {
     if (!s_instance) {
@@ -409,9 +414,20 @@ QQuickItem* QAEngine::rootItem()
     return m_rootItem;
 }
 
+QQuickItem *QAEngine::applicationWindow()
+{
+    if (!m_applicationWindow) {
+        m_applicationWindow = QAEngine::instance()->rootItem();
+        if (!qmlEngine(m_applicationWindow)) {
+            m_applicationWindow = m_applicationWindow->childItems().first();
+        }
+    }
+    return m_applicationWindow;
+}
+
 void QAEngine::dumpTree(const QDBusMessage &message)
 {
-    QJsonObject tree = recursiveDumpTree(m_rootItem);
+    QJsonObject tree = recursiveDumpTree(QAEngine::instance()->rootItem());
     QJsonDocument doc(tree);
     const QByteArray dump = doc.toJson(QJsonDocument::Compact);
 
@@ -463,7 +479,7 @@ void QAEngine::mouseMove(int startx, int starty, int stopx, int stopy, const QDB
 
 void QAEngine::grabWindow(const QDBusMessage &message)
 {
-    sendGrabbedObject(m_rootItem, message);
+    sendGrabbedObject(QAEngine::getApplicationWindow(), message);
 }
 
 void QAEngine::grabCurrentPage(const QDBusMessage &message)
