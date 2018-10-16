@@ -225,7 +225,7 @@ void QASocketService::queryAppStateBootstrap(QTcpSocket *socket, const QVariant 
         return;
     }
     const bool isAppActive = QAEngine::instance()->rootItem()->window()->isActive();
-    socketReply(socket, isAppActive ? QString("RUNNING_IN_FOREGROUND") : QString("RUNNING_IN_BACKGROUND"));
+    socketReply(socket, isAppActive ? QStringLiteral("RUNNING_IN_FOREGROUND") : QStringLiteral("RUNNING_IN_BACKGROUND"));
 }
 
 void QASocketService::getClipboardBootstrap(QTcpSocket *socket, const QVariant &)
@@ -268,7 +268,7 @@ void QASocketService::backgroundBootstrap(QTcpSocket *socket, const QVariant &se
 
 void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg)
 {
-    const QString strategy = strategyArg.toString().replace(QString(" "), QString(""));
+    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
     const QString selector = selectorArg.toString();
 
     qDebug() << Q_FUNC_INFO << socket << strategy << selector;
@@ -282,7 +282,7 @@ void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &s
 
 void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, bool multiple)
 {
-    const QString strategy = strategyArg.toString().replace(QString(" "), QString(""));
+    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
     const QString selector = selectorArg.toString();
 
     qDebug() << Q_FUNC_INFO << socket << strategy << selector << multiple;
@@ -551,7 +551,7 @@ void QASocketService::getOrientationBootstrap(QTcpSocket *socket)
         item = item->childItems().first();
     }
     const int deviceOrientation = item->property("deviceOrientation").toInt();
-    socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QString("LANDSCAPE") : QString("PORTRAIT"));
+    socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QStringLiteral("LANDSCAPE") : QStringLiteral("PORTRAIT"));
 }
 
 void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg)
@@ -588,7 +588,7 @@ void QASocketService::hideKeyboardBootstrap(QTcpSocket *socket, const QVariant &
 
 void QASocketService::executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
 {
-    const QString command = commandArg.toString().replace(QString(":"), QString("_"));
+    const QString command = commandArg.toString().replace(QChar(':'), QChar('_'));
 
     qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
 
@@ -620,7 +620,7 @@ void QASocketService::executeBootstrap(QTcpSocket *socket, const QVariant &comma
 
 void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
 {
-    const QString command = commandArg.toString().replace(QString(":"), QString("_"));
+    const QString command = commandArg.toString().replace(QChar(':'), QChar('_'));
     qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
     socketReply(socket, QString());
 }
@@ -702,7 +702,7 @@ void QASocketService::clickBootstrap(QTcpSocket *socket, const QVariant &element
 
 void QASocketService::clearBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
 {
-    setAttribute(socket, QStringLiteral("text"), QString(""), elementIdArg);
+    setAttribute(socket, QStringLiteral("text"), QString(), elementIdArg);
 }
 
 void QASocketService::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple)

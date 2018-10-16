@@ -263,7 +263,7 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appId)
     connect(tx, &PackageKit::Transaction::finished, [&loop, socket, this](PackageKit::Transaction::Exit status, uint) {
         qDebug() << Q_FUNC_INFO << "Status is:" << status;
         if (loop.isRunning()) {
-            socketReply(socket, QString("NOT_INSTALLED"));
+            socketReply(socket, QStringLiteral("NOT_INSTALLED"));
             loop.quit();
         }
     });
@@ -271,7 +271,7 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appId)
         qDebug() << Q_FUNC_INFO << packageID;
         if (m_appPort.value(appName, 0) == 0) {
             qDebug() << Q_FUNC_INFO << m_appPort.value(appName) << "AppState is: NOT_RUNNING";
-            socketReply(socket, QString("NOT_RUNNING"));
+            socketReply(socket, QStringLiteral("NOT_RUNNING"));
             loop.quit();
         }
 
@@ -454,13 +454,12 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 
     const QString methodName = QStringLiteral("%1Bootstrap").arg(action);
 
-    QGenericArgument arguments[9] = { QGenericArgument() };
-    for (int i = 0; i < params.length(); i++) {
-        arguments[i] = Q_ARG(QVariant, params[i]);
-    }
-
     for (int i = metaObject()->methodOffset(); i < metaObject()->methodOffset() + metaObject()->methodCount(); i++) {
         if (metaObject()->method(i).name() == methodName.toLatin1()) {
+            QGenericArgument arguments[9] = { QGenericArgument() };
+            for (int i = 0; i < params.length(); i++) {
+                arguments[i] = Q_ARG(QVariant, params[i]);
+            }
             QMetaObject::invokeMethod(this,
                                       methodName.toLatin1().constData(),
                                       Qt::DirectConnection,
@@ -489,7 +488,7 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 
 void QABridge::getCurrentContextBootstrap(QTcpSocket *socket)
 {
-    socketReply(socket, QString("NATIVE_APP"));
+    socketReply(socket, QStringLiteral("NATIVE_APP"));
 }
 
 void QABridge::getContextsBootstrap(QTcpSocket *socket)
