@@ -73,7 +73,9 @@ private slots:
     void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
     void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
 
-    void executeCommand_pullDownTo(QTcpSocket* socket, const QVariant &destinationArg);
+    void executeCommand_app_pullDownTo(QTcpSocket* socket, const QVariant &destinationArg);
+    void executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant& paramsArg);
+    void executeCommand_app_js(QTcpSocket* socket, const QVariant& elementIdArg, const QVariant& jsCodeArg);
 
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &, const QVariant &);

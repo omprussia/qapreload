@@ -412,6 +412,40 @@ void QABridge::stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &
     socketReply(socket, QString());
 }
 
+void QABridge::executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
+{
+    const QString command = commandArg.toString();
+    const QStringList commandPair = command.split(QChar(':'));
+    if (commandPair.length() != 2) {
+        socketReply(socket, QString());
+        return;
+    }
+    if (commandPair.first() != QStringLiteral("system")) {
+        QJsonObject json;
+        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
+        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("execute")));
+        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QVariantList({command, paramsArg})));
+        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+    }
+}
+
+void QABridge::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
+{
+    const QString command = commandArg.toString();
+    const QStringList commandPair = command.split(QChar(':'));
+    if (commandPair.length() != 2) {
+        socketReply(socket, QString());
+        return;
+    }
+    if (commandPair.first() != QStringLiteral("system")) {
+        QJsonObject json;
+        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
+        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("executeAsync")));
+        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QVariantList({command, paramsArg})));
+        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+    }
+}
+
 void QABridge::ApplicationReady(const QString &appName)
 {
     qDebug() << Q_FUNC_INFO << appName;

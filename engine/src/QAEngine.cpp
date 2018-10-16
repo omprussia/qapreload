@@ -147,6 +147,9 @@ QVariant QAEngine::executeJS(const QString &jsCode, QQuickItem *item)
     QQmlExpression expr(qmlEngine(item)->rootContext(), item, jsCode);
     bool isUndefined = false;
     const QVariant reply = expr.evaluate(&isUndefined);
+    if (expr.hasError()) {
+        qWarning() << Q_FUNC_INFO << expr.error().toString();
+    }
     return isUndefined ? QVariant(QStringLiteral("undefined")) : reply.toString();
 }
 

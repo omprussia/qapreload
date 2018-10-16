@@ -2,6 +2,7 @@
 #include "QAKeyEngine.hpp"
 #include "SailfishTest.hpp"
 #include "qaservice_adaptor.h"
+#include "QASocketService.hpp"
 
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -11,9 +12,10 @@
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
 
-#include "QASocketService.hpp"
 #include <QGuiApplication>
 #include <QClipboard>
+#include <QQmlExpression>
+#include <QQmlEngine>
 
 #include <private/qquickwindow_p.h>
 
@@ -76,6 +78,10 @@ void QASocketService::elementReply(QTcpSocket *socket, const QVariantList &eleme
 
 void QASocketService::socketReply(QTcpSocket *socket, const QVariant &value, int status)
 {
+    if (!socket) {
+        return;
+    }
+
     QJsonObject reply;
     reply.insert(QStringLiteral("status"), status);
     reply.insert(QStringLiteral("value"), QJsonValue::fromVariant(value));
@@ -250,8 +256,8 @@ void QASocketService::backgroundBootstrap(QTcpSocket *socket, const QVariant &se
 {
     int msecs = secondsArg.toInt() * 1000;
     qDebug() << Q_FUNC_INFO << msecs;
+    QAEngine::instance()->rootItem()->window()->lower();
     if (msecs > 0) {
-        QAEngine::instance()->rootItem()->window()->lower();
         QEventLoop loop;
         QTimer timer;
         timer.setSingleShot(true);
@@ -259,9 +265,6 @@ void QASocketService::backgroundBootstrap(QTcpSocket *socket, const QVariant &se
         timer.start(msecs);
         loop.exec();
         QAEngine::instance()->rootItem()->window()->raise();
-    }
-    else {
-        QAEngine::instance()->rootItem()->window()->lower();
     }
     socketReply(socket, QString());
 }
@@ -615,11 +618,36 @@ void QASocketService::executeBootstrap(QTcpSocket *socket, const QVariant &comma
 void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
 {
     const QString command = commandArg.toString().replace(QChar(':'), QChar('_'));
+
     qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
+
+    const QVariantList params = paramsArg.toList();
+    QGenericArgument arguments[9] = { QGenericArgument() };
+    for (int i = 0; i < params.length(); i++) {
+        arguments[i] = Q_ARG(QVariant, params[i]);
+    }
+
+    bool handled = QMetaObject::invokeMethod(this,
+                              QStringLiteral("executeCommand_%1").arg(command).toLatin1().constData(),
+                              Qt::QueuedConnection,
+                              Q_ARG(QTcpSocket*, nullptr),
+                              arguments[0],
+                              arguments[1],
+                              arguments[2],
+                              arguments[3],
+                              arguments[4],
+                              arguments[5],
+                              arguments[6],
+                              arguments[7],
+                              arguments[8]);
+
+    if (!handled) {
+        qWarning() << Q_FUNC_INFO << command << "not handled!";
+    }
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_pullDownTo(QTcpSocket *socket, const QVariant &destinationArg)
+void QASocketService::executeCommand_app_pullDownTo(QTcpSocket *socket, const QVariant &destinationArg)
 {
     qDebug() << Q_FUNC_INFO << destinationArg;
     if (destinationArg.type() == QMetaType::QString) {
@@ -629,6 +657,67 @@ void QASocketService::executeCommand_pullDownTo(QTcpSocket *socket, const QVaria
         const int index = destinationArg.toInt();
         m_sailfishTest->pullDownTo(index);
     }
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant& paramsArg)
+{
+    const QString elementId = elementIdArg.toString();
+    QObject* object = QAEngine::getApplicationWindow()->window();
+    if (s_items.contains(elementId)) {
+        object = s_items.value(elementId);
+    }
+
+    const QVariantList params = paramsArg.toList();
+    QGenericArgument arguments[10] = { QGenericArgument() };
+    for (int i = 0; i < params.length(); i++) {
+        arguments[i] = Q_ARG(QVariant, params[i]);
+    }
+
+    QVariant reply;
+
+    QMetaObject::invokeMethod(object,
+                              methodArg.toString().toLatin1().constData(),
+                              Qt::DirectConnection,
+                              Q_RETURN_ARG(QVariant, reply),
+                              arguments[0],
+                              arguments[1],
+                              arguments[2],
+                              arguments[3],
+                              arguments[4],
+                              arguments[5],
+                              arguments[6],
+                              arguments[7],
+                              arguments[8],
+                              arguments[9]);
+    socketReply(socket, reply);
+}
+
+void QASocketService::executeCommand_app_js(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &jsCodeArg)
+{
+    const QString elementId = elementIdArg.toString();
+    const QString jsCode = jsCodeArg.toString();
+
+    QQuickItem* item = QAEngine::getApplicationWindow();
+    QObject* object = item->window();
+    if (s_items.contains(elementId)) {
+        item = s_items.value(elementId);
+    }
+
+    if (!qmlEngine(item)) {
+        qWarning() << Q_FUNC_INFO << "No Engine for" << item;
+        socketReply(socket, QString());
+        return;
+    }
+
+    QQmlExpression expr(qmlEngine(QAEngine::getApplicationWindow())->rootContext(), object, jsCode);
+    bool isUndefined = false;
+    const QVariant reply = expr.evaluate(&isUndefined);
+    if (expr.hasError()) {
+        qWarning() << Q_FUNC_INFO << expr.error().toString();
+    }
+
+    qDebug() << Q_FUNC_INFO << reply;
     socketReply(socket, QString());
 }
 

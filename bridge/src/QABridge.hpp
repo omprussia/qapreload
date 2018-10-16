@@ -76,6 +76,9 @@ private slots:
     void startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments);
     void stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments);
 
+    void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
+    void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
+
     void ApplicationReady(const QString &appName);
 
 private slots:
