@@ -660,6 +660,115 @@ void QASocketService::executeCommand_app_pullDownTo(QTcpSocket *socket, const QV
     socketReply(socket, QString());
 }
 
+void QASocketService::executeCommand_app_pushUpTo(QTcpSocket *socket, const QVariant &destinationArg)
+{
+    qDebug() << Q_FUNC_INFO << destinationArg;
+    if (destinationArg.type() == QMetaType::QString) {
+        const QString name = destinationArg.toString();
+        m_sailfishTest->pushUpTo(name);
+    } else {
+        const int index = destinationArg.toInt();
+        m_sailfishTest->pushUpTo(index);
+    }
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QVariant& elementIdArg, const QVariant &destinationArg)
+{
+    const QString elementId = elementIdArg.toString();
+    qDebug() << Q_FUNC_INFO << elementId << destinationArg;
+    if (s_items.contains(elementId)) {
+        if (destinationArg.type() == QMetaType::QString) {
+            const QString name = destinationArg.toString();
+            m_sailfishTest->clickContextMenuItem(s_items.value(elementId), name);
+        } else {
+            const int index = destinationArg.toInt();
+            m_sailfishTest->clickContextMenuItem(s_items.value(elementId), index);
+        }
+    }
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket)
+{
+    m_sailfishTest->waitForPageChange();
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_swipe(QTcpSocket *socket, const QVariant &directionArg)
+{
+    const QString directionString = directionArg.toString();
+    SailfishTest::SwipeDirection direction = SailfishTest::SwipeDirectionDown;
+    if (directionString == QStringLiteral("down")) {
+        direction = SailfishTest::SwipeDirectionDown;
+    } else if (directionString == QStringLiteral("up")) {
+        direction = SailfishTest::SwipeDirectionUp;
+    } else if (directionString == QStringLiteral("left")) {
+        direction = SailfishTest::SwipeDirectionLeft;
+    } else if (directionString == QStringLiteral("right")) {
+        direction = SailfishTest::SwipeDirectionRight;
+    }
+    m_sailfishTest->swipe(direction);
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_peek(QTcpSocket *socket, const QVariant &directionArg)
+{
+    const QString directionString = directionArg.toString();
+    SailfishTest::PeekDirection direction = SailfishTest::PeekDirectionDown;
+    if (directionString == QStringLiteral("down")) {
+        direction = SailfishTest::PeekDirectionDown;
+    } else if (directionString == QStringLiteral("up")) {
+        direction = SailfishTest::PeekDirectionUp;
+    } else if (directionString == QStringLiteral("left")) {
+        direction = SailfishTest::PeekDirectionLeft;
+    } else if (directionString == QStringLiteral("right")) {
+        direction = SailfishTest::PeekDirectionRight;
+    }
+    m_sailfishTest->peek(direction);
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_goBack(QTcpSocket *socket)
+{
+    m_sailfishTest->goBack();
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_goForward(QTcpSocket *socket)
+{
+    m_sailfishTest->goForward();
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_enterCode(QTcpSocket *socket, const QVariant &codeArg)
+{
+    m_sailfishTest->enterCode(codeArg.toString());
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_touch_pressAndHold(QTcpSocket *socket, const QVariant &posxArg, const QVariant &posyArg)
+{
+    m_sailfishTest->pressAndHold(posxArg.toInt(), posyArg.toInt());
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_touch_mouseSwipe(QTcpSocket *socket, const QVariant &posxArg, const QVariant &posyArg, const QVariant &stopxArg, const QVariant &stopyArg)
+{
+    m_sailfishTest->mouseSwipe(posxArg.toInt(), posyArg.toInt(), stopxArg.toInt(), stopyArg.toInt());
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_scrollToItem(QTcpSocket *socket, const QVariant &elementIdArg)
+{
+    const QString elementId = elementIdArg.toString();
+    qDebug() << Q_FUNC_INFO << elementId;
+    if (s_items.contains(elementId)) {
+        m_sailfishTest->scrollToItem(s_items.value(elementId));
+    }
+    socketReply(socket, QString());
+}
+
 void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant& paramsArg)
 {
     const QString elementId = elementIdArg.toString();
