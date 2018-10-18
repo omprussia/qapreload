@@ -870,6 +870,12 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
             endY = options.value(QStringLiteral("y")).toInt();
         } else if (actionName == QStringLiteral("release")) {
             m_sailfishTest->mouseDrag(startX, startY, endX, endY, delay);
+        } else if (actionName == QStringLiteral("longPress")) {
+            const QString elementId = options.value(QStringLiteral("element")).toString();
+            if (!s_items.contains(elementId)) {
+                continue;
+            }
+            m_sailfishTest->pressAndHold(s_items.value(elementId));
         }
     }
 }
