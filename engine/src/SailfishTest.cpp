@@ -659,7 +659,7 @@ void SailfishTest::goForward()
 
 void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
 {
-    QQuickItem* rootItem = QAEngine::getApplicationWindow();
+    QQuickItem* rootItem = QAEngine::instance()->rootItem();
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case SwipeDirectionUp:
@@ -687,7 +687,7 @@ void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
 */
 void SailfishTest::peek(SailfishTest::PeekDirection direction)
 {
-    QQuickItem* rootItem = QAEngine::getApplicationWindow();
+    QQuickItem* rootItem = QAEngine::instance()->rootItem();
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case PeekDirectionUp:
@@ -763,7 +763,7 @@ void SailfishTest::clearFocus()
 
 void SailfishTest::saveScreenshot(const QString &location, bool fillBackground)
 {
-    QQuickItem* item = QAEngine::getApplicationWindow();
+    QQuickItem* item = QAEngine::instance()->rootItem();
     QSharedPointer<QQuickItemGrabResult> grabber = item->grabToImage();
     QEventLoop loop;
     connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, fillBackground, location, &loop]() {

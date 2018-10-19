@@ -390,7 +390,7 @@ void QASocketService::getElementScreenshotBootstrap(QTcpSocket *socket, const QV
 
 void QASocketService::getScreenshotBootstrap(QTcpSocket *socket)
 {
-    grabScreenshot(socket, QAEngine::getApplicationWindow(), true);
+    grabScreenshot(socket, QAEngine::instance()->rootItem(), true);
 }
 
 void QASocketService::elementEnabledBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
