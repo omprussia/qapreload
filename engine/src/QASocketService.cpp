@@ -90,8 +90,10 @@ void QASocketService::socketReply(QTcpSocket *socket, const QVariant &value, int
 
     qWarning().noquote() << data;
 
-    socket->write(data);
-    socket->flush();
+    qWarning() << Q_FUNC_INFO << "Written:" << socket->write(data) <<
+        socket->waitForBytesWritten() <<
+        socket->errorString();
+    socket->close();
 }
 
 void QASocketService::grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground)

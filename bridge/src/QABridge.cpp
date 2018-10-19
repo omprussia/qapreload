@@ -736,15 +736,11 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
     }
 
     qDebug() << Q_FUNC_INFO << "Reading from app socket";
-    if (!appSocket.waitForReadyRead()) {
-        qWarning() << Q_FUNC_INFO << "Error reading socket" << appSocket.errorString();
-        socketReply(socket, QString());
-        return;
+    QByteArray appReplyData;
+    while (appSocket.waitForReadyRead(3000)) {
+        appReplyData.append(appSocket.readAll());
     }
-    const QByteArray appReplyData = appSocket.readAll();
     qDebug() << Q_FUNC_INFO << appReplyData;
-
-    appSocket.close();
 
     socket->write(appReplyData);
     qWarning() << Q_FUNC_INFO << "Writing to appium socket:" <<
