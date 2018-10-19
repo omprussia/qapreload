@@ -728,16 +728,13 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
         qWarning() << Q_FUNC_INFO << "Can't connect to app socket:" << m_appPort.value(appName);
     }
     qWarning() << Q_FUNC_INFO << "Writing to app socket:" <<
-                  appSocket.write(data);
-    if (!appSocket.waitForBytesWritten()) {
-        qWarning() << Q_FUNC_INFO << "Error writing socket" << appSocket.errorString();
-        socketReply(socket, QString());
-        return;
-    }
+    appSocket.write(data) <<
+    appSocket.waitForBytesWritten();
 
     qDebug() << Q_FUNC_INFO << "Reading from app socket";
     QByteArray appReplyData;
-    while (appSocket.waitForReadyRead(3000)) {
+    while (appSocket.state() == QTcpSocket::ConnectedState) {
+        appSocket.waitForReadyRead(3000);
         appReplyData.append(appSocket.readAll());
     }
     qDebug() << Q_FUNC_INFO << appReplyData;
