@@ -62,6 +62,9 @@
         <method name="setEventFilterEnabled">
             <arg name="enable" type="b" direction="in" />
         </method>
+        <method name="startSocket">
+            <arg name="appPort" type="i" direction="out" />
+        </method>
         <signal name="engineLoaded">
             <arg name="loaded" type="b"/>
         </signal>

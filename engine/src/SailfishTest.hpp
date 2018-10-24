@@ -26,6 +26,8 @@ public:
     };
     Q_ENUM(PeekDirection)
 
+    explicit SailfishTest(QObject *parent = nullptr);
+
     QStringList declarativeFunctions() const;
 
 public slots:

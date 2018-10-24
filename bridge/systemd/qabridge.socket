@@ -1,0 +1,10 @@
+[Unit]
+Description=qabridge activation socket
+After=dbus.service
+Before=qabridge.service
+
+[Socket]
+ListenStream=0.0.0.0:8888
+
+[Install]
+WantedBy=sockets.target

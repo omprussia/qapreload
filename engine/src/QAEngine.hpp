@@ -51,8 +51,12 @@ public:
     Q_PROPERTY(QQuickItem* rootItem READ rootItem CONSTANT)
     QQuickItem* rootItem();
 
+    Q_PROPERTY(QQuickItem* applicationWindow READ applicationWindow CONSTANT)
+    QQuickItem* applicationWindow();
+
     static QString getText(QQuickItem *item);
     static QString className(QQuickItem* item);
+    static QString uniqueId(QQuickItem* item);
     static QPointF getAbsPosition(QQuickItem* item);
 
     static QQuickItem* findItemByObjectName(const QString &objectName, QQuickItem* parentItem = nullptr);
@@ -62,6 +66,7 @@ public:
     static QQuickItem* findParentFlickable(QQuickItem* rootItem = nullptr);
     static QVariantList findNestedFlickable(QQuickItem* parentItem = nullptr);
 
+    static QQuickItem* getApplicationWindow();
     static QQuickItem* getCurrentPage();
     static QQuickItem* getPageStack();
 
@@ -105,6 +110,7 @@ protected:
 private:
     friend class SailfishTest;
     friend class LipstickTestHelper;
+    friend class QASocketService;
 
     QQmlEngine* getEngine();
     TestResult* getTestResult(const QString& functionName);
@@ -119,6 +125,7 @@ private:
 
     explicit QAEngine(QObject *parent = nullptr);
 
+    QQuickItem* m_applicationWindow = nullptr;
     QQuickItem *m_rootItem = nullptr;
 
     QAMouseEngine *m_mouseEngine = nullptr;

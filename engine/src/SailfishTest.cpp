@@ -59,6 +59,12 @@
             Peek down.
 */
 
+SailfishTest::SailfishTest(QObject *parent)
+    : QObject(parent)
+{
+
+}
+
 QStringList SailfishTest::declarativeFunctions() const
 {
     auto mo = metaObject();
@@ -496,7 +502,7 @@ void SailfishTest::scrollToItem(QQuickItem *item)
     if (!flickable) {
         return;
     }
-    QQuickItem* rootItem = QAEngine::instance()->m_rootItem;
+    QQuickItem* rootItem = QAEngine::getApplicationWindow();
     QPointF itemAbs = getAbsPosition(item);
     if (itemAbs.y() < 0) {
         while (itemAbs.y() < 0) {
@@ -640,7 +646,7 @@ void SailfishTest::goBack()
 
 void SailfishTest::goForward()
 {
-    QQuickItem* rootItem = QAEngine::instance()->m_rootItem;
+    QQuickItem* rootItem = QAEngine::getApplicationWindow();
     clickPoint(rootItem->width() - 10, 10);
 }
 
@@ -653,7 +659,7 @@ void SailfishTest::goForward()
 
 void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
 {
-    QQuickItem* rootItem = QAEngine::instance()->m_rootItem;
+    QQuickItem* rootItem = QAEngine::instance()->rootItem();
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case SwipeDirectionUp:
@@ -681,7 +687,7 @@ void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
 */
 void SailfishTest::peek(SailfishTest::PeekDirection direction)
 {
-    QQuickItem* rootItem = QAEngine::instance()->m_rootItem;
+    QQuickItem* rootItem = QAEngine::instance()->rootItem();
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case PeekDirectionUp:

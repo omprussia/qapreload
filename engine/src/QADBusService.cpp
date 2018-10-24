@@ -1,6 +1,8 @@
 #include "QAEngine.hpp"
-#include "QAService.hpp"
+#include "QADBusService.hpp"
+#include "QASocketService.hpp"
 #include "qaservice_adaptor.h"
+#include "qabridge_interface.h"
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -12,7 +14,7 @@
 
 #define METHOD_NAME_HERE funcName(Q_FUNC_INFO)
 
-static QAService *s_instance = nullptr;
+static QADBusService *s_instance = nullptr;
 static QString s_processName;
 
 QByteArray funcName(const char *line)
@@ -24,7 +26,7 @@ QByteArray funcName(const char *line)
     return name;
 }
 
-void QAService::initialize()
+void QADBusService::initialize()
 {
     if (m_adaptor) {
         return;
@@ -58,35 +60,31 @@ void QAService::initialize()
     m_adaptor = new QAAdaptor(this);
     emit m_adaptor->engineLoaded(QAEngine::isLoaded());
 
-    QDBusMessage applicationReady = QDBusMessage::createMethodCall(
-                QStringLiteral("ru.omprussia.qatestrunner"),
-                QStringLiteral("/ru/omprussia/qatestrunner"),
-                QStringLiteral("ru.omprussia.qatestrunner"),
-                QStringLiteral("ApplicationReady"));
-    applicationReady.setArguments({s_processName});
-    QDBusConnection::sessionBus().call(applicationReady, QDBus::NoBlock);
+    m_bridgeIface = new QABridgeInterface(DBUS_SERVICE_NAME, DBUS_PATH_NAME, QDBusConnection::systemBus(), this);
+    m_bridgeIface->ApplicationReady(s_processName);
+    qDebug() << Q_FUNC_INFO << s_processName << m_bridgeIface->lastError().message();
 }
 
-QAService *QAService::instance()
+QADBusService *QADBusService::instance()
 {
     if (!s_instance) {
-        s_instance = new QAService(qApp);
+        s_instance = new QADBusService(qApp);
     }
     return s_instance;
 }
 
-QString QAService::processName()
+QString QADBusService::processName()
 {
     return s_processName;
 }
 
-QAService::QAService(QObject *parent)
+QADBusService::QADBusService(QObject *parent)
     : QObject(parent)
 {
 
 }
 
-QString QAService::dumpTree()
+QString QADBusService::dumpTree()
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -96,7 +94,7 @@ QString QAService::dumpTree()
     return QString();
 }
 
-QString QAService::dumpCurrentPage()
+QString QADBusService::dumpCurrentPage()
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -106,7 +104,7 @@ QString QAService::dumpCurrentPage()
     return QString();
 }
 
-QByteArray QAService::grabWindow()
+QByteArray QADBusService::grabWindow()
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -116,7 +114,7 @@ QByteArray QAService::grabWindow()
     return QByteArray();
 }
 
-QByteArray QAService::grabCurrentPage()
+QByteArray QADBusService::grabCurrentPage()
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -126,7 +124,7 @@ QByteArray QAService::grabCurrentPage()
     return QByteArray();
 }
 
-void QAService::clickPoint(int posx, int posy)
+void QADBusService::clickPoint(int posx, int posy)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -137,7 +135,7 @@ void QAService::clickPoint(int posx, int posy)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::pressAndHold(int posx, int posy)
+void QADBusService::pressAndHold(int posx, int posy)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -148,7 +146,7 @@ void QAService::pressAndHold(int posx, int posy)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::mouseMove(int startx, int starty, int stopx, int stopy)
+void QADBusService::mouseMove(int startx, int starty, int stopx, int stopy)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -161,7 +159,7 @@ void QAService::mouseMove(int startx, int starty, int stopx, int stopy)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::pressKeys(const QString &keys)
+void QADBusService::pressKeys(const QString &keys)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -171,14 +169,14 @@ void QAService::pressKeys(const QString &keys)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::clearFocus()
+void QADBusService::clearFocus()
 {
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection);
 }
 
-QString QAService::executeInPage(const QString &jsCode)
+QString QADBusService::executeInPage(const QString &jsCode)
 {
     qWarning() << Q_FUNC_INFO << jsCode;
     setDelayedReply(true);
@@ -190,7 +188,7 @@ QString QAService::executeInPage(const QString &jsCode)
     return QString();
 }
 
-QString QAService::executeInWindow(const QString &jsCode)
+QString QADBusService::executeInWindow(const QString &jsCode)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -201,7 +199,7 @@ QString QAService::executeInWindow(const QString &jsCode)
     return QString();
 }
 
-QString QAService::loadSailfishTest(const QString &fileName)
+QString QADBusService::loadSailfishTest(const QString &fileName)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -212,14 +210,14 @@ QString QAService::loadSailfishTest(const QString &fileName)
     return QString();
 }
 
-void QAService::clearComponentCache()
+void QADBusService::clearComponentCache()
 {
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
                               Qt::QueuedConnection);
 }
 
-void QAService::setEventFilterEnabled(bool enable)
+void QADBusService::setEventFilterEnabled(bool enable)
 {
     QMetaObject::invokeMethod(QAEngine::instance(),
                               METHOD_NAME_HERE,
@@ -228,13 +226,20 @@ void QAService::setEventFilterEnabled(bool enable)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::quit()
+int QADBusService::startSocket()
+{
+    qWarning() << Q_FUNC_INFO;
+    QASocketService *socket = QASocketService::instance();
+    return socket->serverPort();
+}
+
+void QADBusService::quit()
 {
     emit m_adaptor->engineLoaded(false);
     qApp->quit();
 }
 
-void QAService::pressEnter(int count)
+void QADBusService::pressEnter(int count)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -244,7 +249,7 @@ void QAService::pressEnter(int count)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::pressBackspace(int count)
+void QADBusService::pressBackspace(int count)
 {
     setDelayedReply(true);
     QMetaObject::invokeMethod(QAEngine::instance(),
@@ -254,13 +259,13 @@ void QAService::pressBackspace(int count)
                               Q_ARG(QDBusMessage, message()));
 }
 
-void QAService::sendMessageReply(const QDBusMessage &message, const QVariant &result)
+void QADBusService::sendMessageReply(const QDBusMessage &message, const QVariant &result)
 {
     const QDBusMessage replyMessage = message.createReply(result);
     QDBusConnection::sessionBus().send(replyMessage);
 }
 
-void QAService::sendMessageError(const QDBusMessage &message, const QString &errorString)
+void QADBusService::sendMessageError(const QDBusMessage &message, const QString &errorString)
 {
     const QDBusError error(QDBusError::Failed, errorString);
     const QDBusMessage errorMessage = message.createErrorReply(error);
