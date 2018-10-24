@@ -96,6 +96,9 @@ private slots:
     void executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant& paramsArg);
     void executeCommand_app_js(QTcpSocket* socket, const QVariant& elementIdArg, const QVariant& jsCodeArg);
 
+    void executeCommand_app_dumpCurrentPage(QTcpSocket* socket);
+    void executeCommand_app_dumpTree(QTcpSocket* socket);
+
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &, const QVariant &);
 

@@ -832,6 +832,20 @@ void QASocketService::executeCommand_app_js(QTcpSocket *socket, const QVariant &
     socketReply(socket, QString());
 }
 
+void QASocketService::executeCommand_app_dumpCurrentPage(QTcpSocket *socket)
+{
+    QQuickItem *currentPage = QAEngine::instance()->getCurrentPage();
+    QJsonObject reply = QAEngine::instance()->recursiveDumpTree(currentPage);
+    socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
+}
+
+void QASocketService::executeCommand_app_dumpTree(QTcpSocket *socket)
+{
+    QQuickItem *rootItem = QAEngine::instance()->rootItem();
+    QJsonObject reply = QAEngine::instance()->recursiveDumpTree(rootItem);
+    socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
+}
+
 void QASocketService::performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg)
 {    
     processTouchActionList(paramsArg);
