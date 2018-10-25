@@ -453,7 +453,13 @@ void QASocketService::replaceValueBootstrap(QTcpSocket *socket, const QVariant &
 void QASocketService::setValueBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
 {
     qDebug() << Q_FUNC_INFO << valueArg << elementIdArg;
-    QAEngine::instance()->m_keyEngine->pressKeys(valueArg.toStringList().join(""));
+    QQuickItem *item = s_items.value(elementIdArg.toString());
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+    m_sailfishTest->clickItem(item);
+    m_sailfishTest->pressKeys(valueArg.toStringList().join(""));
     socketReply(socket, QString());
 }
 
