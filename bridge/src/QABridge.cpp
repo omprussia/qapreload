@@ -427,6 +427,34 @@ void QABridge::executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, 
         json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("execute")));
         json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QVariantList({command, paramsArg})));
         forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        return;
+    }
+
+    qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
+
+    const QVariantList params = paramsArg.toList();
+    QGenericArgument arguments[9] = { QGenericArgument() };
+    for (int i = 0; i < params.length(); i++) {
+        arguments[i] = Q_ARG(QVariant, params[i]);
+    }
+
+    bool handled = QMetaObject::invokeMethod(this,
+                              QStringLiteral("executeCommand_%1").arg(commandPair.last()).toLatin1().constData(),
+                              Qt::DirectConnection,
+                              Q_ARG(QTcpSocket*, socket),
+                              arguments[0],
+                              arguments[1],
+                              arguments[2],
+                              arguments[3],
+                              arguments[4],
+                              arguments[5],
+                              arguments[6],
+                              arguments[7],
+                              arguments[8]);
+
+    if (!handled) {
+        qWarning() << Q_FUNC_INFO << command << "not handled!";
+        socketReply(socket, QString());
     }
 }
 
@@ -445,6 +473,22 @@ void QABridge::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &command
         json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QVariantList({command, paramsArg})));
         forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
     }
+}
+
+void QABridge::executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
+{
+    const QString executable = executableArg.toString();
+    const QStringList params = paramsArg.toStringList();
+
+    QProcess p;
+    p.start(executable, params);
+    p.waitForFinished();
+
+    const QString stdout = QString::fromUtf8(p.readAllStandardOutput());
+    const QString stderr = QString::fromUtf8(p.readAllStandardError());
+    qDebug() << Q_FUNC_INFO << "stdout:" << stdout;
+    qDebug() << Q_FUNC_INFO << "stderr:" << stderr;
+    socketReply(socket, stdout);
 }
 
 void QABridge::ApplicationReady(const QString &appName)

@@ -79,6 +79,8 @@ private slots:
     void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
     void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
 
+    void executeCommand_shell(QTcpSocket* socket, const QVariant &executableArg, const QVariant &paramsArg);
+
     void ApplicationReady(const QString &appName);
 
 private slots:
