@@ -184,7 +184,7 @@ void QASocketService::readSocket()
         arguments[i] = Q_ARG(QVariant, params[i]);
     }
 
-    QMetaObject::invokeMethod(this,
+    bool handled = QMetaObject::invokeMethod(this,
                               QStringLiteral("%1Bootstrap").arg(action).toLatin1().constData(),
                               Qt::DirectConnection,
                               Q_ARG(QTcpSocket*, socket),
@@ -197,6 +197,10 @@ void QASocketService::readSocket()
                               arguments[6],
                               arguments[7],
                               arguments[8]);
+
+    if (!handled) {
+        socketReply(socket, QStringLiteral("Not implemented"), 9);
+    }
 }
 
 void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
