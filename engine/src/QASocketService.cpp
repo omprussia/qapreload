@@ -89,10 +89,11 @@ void QASocketService::socketReply(QTcpSocket *socket, const QVariant &value, int
     const QByteArray data = QJsonDocument(reply).toJson(QJsonDocument::Compact);
 
     qWarning().noquote() << data;
+    const QString socketError = socket->error() == QTcpSocket::UnknownSocketError ? QStringLiteral("OK") : socket->errorString();
 
     qWarning() << Q_FUNC_INFO << "Written:" << socket->write(data) <<
         socket->waitForBytesWritten() <<
-        socket->error() == QTcpSocket::UnknownSocketError ? "OK" : socket->errorString();
+        socketError;
     socket->close();
 }
 
