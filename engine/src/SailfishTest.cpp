@@ -539,13 +539,13 @@ void SailfishTest::clickItem(QQuickItem *item)
     The function simulates clicking and holding a mouse button on an \a item.
 */
 
-void SailfishTest::pressAndHold(QQuickItem *item)
+void SailfishTest::pressAndHold(QQuickItem *item, int delay)
 {
     if (!item) {
         return;
     }
     const QPointF itemAbs = getAbsPosition(item);
-    pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
+    pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2, delay);
 }
 
 /*!
@@ -576,10 +576,10 @@ void SailfishTest::clickPoint(int posx, int posy)
     The position of the click is defined by \a posx and \a posy.
 */
 
-void SailfishTest::pressAndHold(int posx, int posy)
+void SailfishTest::pressAndHold(int posx, int posy, int delay)
 {
     QEventLoop loop;
-    connect(QAEngine::instance()->m_mouseEngine->pressAndHold(QPointF(posx, posy)),
+    connect(QAEngine::instance()->m_mouseEngine->pressAndHold(QPointF(posx, posy), delay),
             &QAPendingEvent::completed, &loop, &QEventLoop::quit);
     loop.exec();
 }

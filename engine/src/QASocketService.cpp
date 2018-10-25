@@ -879,7 +879,7 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
     int startY = 0;
     int endX = 0;
     int endY = 0;
-    int delay = 0;
+    int delay = 800;
 
     const QVariantList actions = actionListArg.toList();
     for (const QVariant &actionArg : actions) {
@@ -902,7 +902,7 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
             if (!s_items.contains(elementId)) {
                 continue;
             }
-            m_sailfishTest->pressAndHold(s_items.value(elementId));
+            m_sailfishTest->pressAndHold(s_items.value(elementId), delay);
         }
     }
 }
