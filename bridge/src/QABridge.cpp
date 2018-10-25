@@ -123,6 +123,7 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QVariant &appPackag
         qWarning() << Q_FUNC_INFO << "Socket already known:" << m_appSocket.value(socket);
     }
     m_appSocket.insert(socket, appName);
+    m_appPort.insert(appName, 0);
 }
 
 void QABridge::appConnectBootstrap(QTcpSocket *socket)
@@ -133,7 +134,6 @@ void QABridge::appConnectBootstrap(QTcpSocket *socket)
     qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
 
     if (m_appPort.value(appName) == 0) {
-        m_connectAppName = appName;
         QTimer maxTimer;
         connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
         maxTimer.start(30000);
@@ -141,7 +141,6 @@ void QABridge::appConnectBootstrap(QTcpSocket *socket)
         m_connectLoop->exec();
         qDebug() << Q_FUNC_INFO << "Exiting eventloop connect";
         maxTimer.stop();
-        m_connectAppName.clear();
     }
 
     qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
@@ -151,6 +150,8 @@ void QABridge::appConnectBootstrap(QTcpSocket *socket)
 void QABridge::appDisconnectBootstrap(QTcpSocket *socket)
 {
     const QString appName = m_appSocket.value(socket);
+    m_appPort.remove(appName);
+    m_appSocket.remove(socket);
     qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
     socketReply(socket, QString());
 }
@@ -450,11 +451,7 @@ void QABridge::ApplicationReady(const QString &appName)
 {
     qDebug() << Q_FUNC_INFO << appName;
 
-    if (m_connectAppName != appName) {
-        return;
-    }
-
-    if (!m_connectLoop->isRunning()) {
+    if (!m_appPort.contains(appName)) {
         return;
     }
 
@@ -755,7 +752,7 @@ void QABridge::connectAppSocket(const QString &appName)
     m_appPort.insert(appName, reply.value());
     qDebug() << Q_FUNC_INFO << appName << reply.value();
 
-    if (m_connectAppName == appName && m_connectLoop->isRunning()) {
+    if (m_appPort.value(appName) != 0 && m_connectLoop->isRunning()) {
         m_connectLoop->quit();
     }
 }
