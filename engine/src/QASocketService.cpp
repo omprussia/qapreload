@@ -92,7 +92,7 @@ void QASocketService::socketReply(QTcpSocket *socket, const QVariant &value, int
 
     qWarning() << Q_FUNC_INFO << "Written:" << socket->write(data) <<
         socket->waitForBytesWritten() <<
-        socket->errorString();
+        socket->error() == QTcpSocket::UnknownSocketError ? "OK" : socket->errorString();
     socket->close();
 }
 
