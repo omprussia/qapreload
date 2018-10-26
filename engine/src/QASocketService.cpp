@@ -173,34 +173,35 @@ void QASocketService::readSocket()
     }
 
     const QString action = object.value(QStringLiteral("action")).toVariant().toString();
-    QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
-    if (params.length() > 9) {
-        qWarning() << Q_FUNC_INFO << "Too many params for" << action;
-        params = params.mid(0, 9);
+    const QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
+
+    const QString methodName = QStringLiteral("%1Bootstrap").arg(action);
+
+    for (int i = metaObject()->methodOffset(); i < metaObject()->methodOffset() + metaObject()->methodCount(); i++) {
+        if (metaObject()->method(i).name() == methodName.toLatin1()) {
+            const QMetaMethod method = metaObject()->method(i);
+            QGenericArgument arguments[9] = { QGenericArgument() };
+            for (int i = 0; i < method.parameterCount() - 1; i++) {
+                arguments[i] = Q_ARG(QVariant, params[i]);
+            }
+            QMetaObject::invokeMethod(this,
+                                      methodName.toLatin1().constData(),
+                                      Qt::DirectConnection,
+                                      Q_ARG(QTcpSocket*, socket),
+                                      arguments[0],
+                                      arguments[1],
+                                      arguments[2],
+                                      arguments[3],
+                                      arguments[4],
+                                      arguments[5],
+                                      arguments[6],
+                                      arguments[7],
+                                      arguments[8]);
+            return;
+        }
     }
 
-    QGenericArgument arguments[9] = { QGenericArgument() };
-    for (int i = 0; i < params.length(); i++) {
-        arguments[i] = Q_ARG(QVariant, params[i]);
-    }
-
-    bool handled = QMetaObject::invokeMethod(this,
-                              QStringLiteral("%1Bootstrap").arg(action).toLatin1().constData(),
-                              Qt::DirectConnection,
-                              Q_ARG(QTcpSocket*, socket),
-                              arguments[0],
-                              arguments[1],
-                              arguments[2],
-                              arguments[3],
-                              arguments[4],
-                              arguments[5],
-                              arguments[6],
-                              arguments[7],
-                              arguments[8]);
-
-    if (!handled) {
-        socketReply(socket, QStringLiteral("Not implemented"), 9);
-    }
+    socketReply(socket, QStringLiteral("Not implemented"), 9);
 }
 
 void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
@@ -242,12 +243,12 @@ void QASocketService::queryAppStateBootstrap(QTcpSocket *socket, const QVariant 
     socketReply(socket, isAppActive ? QStringLiteral("RUNNING_IN_FOREGROUND") : QStringLiteral("RUNNING_IN_BACKGROUND"));
 }
 
-void QASocketService::getClipboardBootstrap(QTcpSocket *socket, const QVariant &)
+void QASocketService::getClipboardBootstrap(QTcpSocket *socket)
 {
     socketReply(socket, QString::fromUtf8(qGuiApp->clipboard()->text().toUtf8().toBase64()));
 }
 
-void QASocketService::setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg, const QVariant &)
+void QASocketService::setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg)
 {
     qGuiApp->clipboard()->setText(contentArg.toString());
     socketReply(socket, QString());
@@ -291,19 +292,19 @@ void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &s
                               Q_ARG(QString, selector));
 }
 
-void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, bool multiple)
+void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg)
 {
     const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
     const QString selector = selectorArg.toString();
 
-    qDebug() << Q_FUNC_INFO << socket << strategy << selector << multiple;
+    qDebug() << Q_FUNC_INFO << socket << strategy << selector;
 
     QMetaObject::invokeMethod(this,
                               QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
                               Qt::DirectConnection,
                               Q_ARG(QTcpSocket*, socket),
                               Q_ARG(QString, selector),
-                              Q_ARG(bool, multiple));
+                              Q_ARG(bool, true));
 }
 
 void QASocketService::getLocationBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
@@ -581,12 +582,12 @@ void QASocketService::keyeventBootstrap(QTcpSocket *socket, const QVariant &keyc
     socketReply(socket, QString());
 }
 
-void QASocketService::longPressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg)
+void QASocketService::longPressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg)
 {
     socketReply(socket, QString());
 }
 
-void QASocketService::pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg)
+void QASocketService::pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg)
 {
     socketReply(socket, QString());
 }
@@ -865,7 +866,7 @@ void QASocketService::performTouchBootstrap(QTcpSocket *socket, const QVariant &
     socketReply(socket, QString());
 }
 
-void QASocketService::performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &, const QVariant &)
+void QASocketService::performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg)
 {
     for (const QVariant &actionListArg : paramsArg.toList()) {
         processTouchActionList(actionListArg);
@@ -906,11 +907,6 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
             m_sailfishTest->pressAndHold(s_items.value(elementId), delay);
         }
     }
-}
-
-void QASocketService::startActivityBootstrap(QTcpSocket *socket, const QVariant &appPackage, const QVariant &appActivity, const QVariant &appWaitPackage, const QVariant &intentAction, const QVariant &intentCategory, const QVariant &intentFlags, const QVariant &optionalIntentArguments, const QVariant &dontStopAppOnReset, const QVariant &)
-{
-    socketReply(socket, QString());
 }
 
 void QASocketService::clickBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)

@@ -37,10 +37,12 @@ private slots:
     void appConnectBootstrap(QTcpSocket *socket);
     void appDisconnectBootstrap(QTcpSocket* socket, const QVariant &autoLaunchArg);
 
-    void installAppBootstrap(QTcpSocket *socket, const QVariant &appPathArg, const QVariant &, const QVariant &, const QVariant &);
-    void activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &, const QVariant &, const QVariant &);
-    void terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId, const QVariant &, const QVariant &, const QVariant &);
-    void removeAppBootstrap(QTcpSocket *socket, const QVariant &appNameArg, const QVariant &, const QVariant &, const QVariant &);
+    void startActivityBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &paramsArg);
+
+    void installAppBootstrap(QTcpSocket *socket, const QVariant &appPathArg);
+    void activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
+    void terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId);
+    void removeAppBootstrap(QTcpSocket *socket, const QVariant &appNameArg);
     void isAppInstalledBootstrap(QTcpSocket *socket, const QVariant &appNameArg);
     void queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appId);
     void pushFileBootstrap(QTcpSocket *socket, const QVariant &pathArg, const QVariant &dataArg);
@@ -56,8 +58,8 @@ private slots:
     void pullFolderBootstrap(QTcpSocket *socket, const QVariant &pathArg);
     void implicitWaitBootstrap(QTcpSocket *socket, const QVariant &msecondArg);
     void asyncScriptTimeoutBootstrap(QTcpSocket *socket, const QVariant &msecondArg);
-    void timeoutsBootstrap(QTcpSocket *socket, const QVariant &, const QVariant &, const QVariant &, const QVariant &msecondArg, const QVariant &);
-    void compareImagesBootstrap(QTcpSocket *socket, const QVariant &matchFeatures, const QVariant &firstImage, const QVariant &secondImage, const QVariant &, const QVariant &, const QVariant &);
+    void timeoutsBootstrap(QTcpSocket *socket, const QVariant &, const QVariant &, const QVariant &, const QVariant &msecondArg);
+    void compareImagesBootstrap(QTcpSocket *socket, const QVariant &matchFeatures, const QVariant &firstImage, const QVariant &secondImage);
     void setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant &connectionType);
     void getNetworkConnectionBootstrap(QTcpSocket *socket);
     void getStringsBootstrap(QTcpSocket *socket, const QVariant &language, const QVariant &stringFile);

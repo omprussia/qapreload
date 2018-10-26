@@ -170,7 +170,18 @@ void QABridge::appDisconnectBootstrap(QTcpSocket *socket, const QVariant &autoLa
     socketReply(socket, QString());
 }
 
-void QABridge::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &, const QVariant &, const QVariant &)
+void QABridge::startActivityBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &paramsArg)
+{
+    const QString appName = appIdArg.toString();
+    const QStringList arguments = paramsArg.toStringList();
+    qDebug() << Q_FUNC_INFO << appName << arguments;
+    ContentAction::Action action = ContentAction::Action::launcherAction(QStringLiteral("%1.desktop").arg(appName), arguments);
+    action.trigger();
+
+    socketReply(socket, QVariant());
+}
+
+void QABridge::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
 {
     const QString appName = m_appSocket.value(socket);
     qDebug() << Q_FUNC_INFO << appName;
@@ -188,7 +199,7 @@ void QABridge::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg
     socketReply(socket, QString());
 }
 
-void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId, const QVariant &, const QVariant &, const QVariant &)
+void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId)
 {
     const QString appName = m_appSocket.value(socket);
     qDebug() << Q_FUNC_INFO << appName;
@@ -205,7 +216,7 @@ void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId, 
     }
 }
 
-void QABridge::installAppBootstrap(QTcpSocket *socket, const QVariant &appPathArg, const QVariant &argument1, const QVariant &sessionId, const QVariant &)
+void QABridge::installAppBootstrap(QTcpSocket *socket, const QVariant &appPathArg)
 {
     const QString appPath = appPathArg.toString();
     qDebug() << Q_FUNC_INFO << appPath;
@@ -220,7 +231,7 @@ void QABridge::installAppBootstrap(QTcpSocket *socket, const QVariant &appPathAr
     loop.exec();
 }
 
-void QABridge::removeAppBootstrap(QTcpSocket *socket, const QVariant &appNameArg, const QVariant &, const QVariant &, const QVariant &)
+void QABridge::removeAppBootstrap(QTcpSocket *socket, const QVariant &appNameArg)
 {
     const QString appName = appNameArg.toString();
     qDebug() << Q_FUNC_INFO << appName;
@@ -555,8 +566,9 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 
     for (int i = metaObject()->methodOffset(); i < metaObject()->methodOffset() + metaObject()->methodCount(); i++) {
         if (metaObject()->method(i).name() == methodName.toLatin1()) {
+            const QMetaMethod method = metaObject()->method(i);
             QGenericArgument arguments[9] = { QGenericArgument() };
-            for (int i = 0; i < params.length(); i++) {
+            for (int i = 0; i < method.parameterCount() - 1; i++) {
                 arguments[i] = Q_ARG(QVariant, params[i]);
             }
             QMetaObject::invokeMethod(this,
@@ -717,12 +729,12 @@ void QABridge::asyncScriptTimeoutBootstrap(QTcpSocket *socket, const QVariant &m
     socketReply(socket, QString());
 }
 
-void QABridge::timeoutsBootstrap(QTcpSocket *socket, const QVariant &, const QVariant &, const QVariant &, const QVariant &msecondArg, const QVariant &)
+void QABridge::timeoutsBootstrap(QTcpSocket *socket, const QVariant &, const QVariant &, const QVariant &, const QVariant &msecondArg)
 {
     socketReply(socket, QString());
 }
 
-void QABridge::compareImagesBootstrap(QTcpSocket *socket, const QVariant &matchFeatures, const QVariant &firstImage, const QVariant &secondImage, const QVariant &, const QVariant &, const QVariant &)
+void QABridge::compareImagesBootstrap(QTcpSocket *socket, const QVariant &matchFeatures, const QVariant &firstImage, const QVariant &secondImage)
 {
     socketReply(socket, QString());
 }

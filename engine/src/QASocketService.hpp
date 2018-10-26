@@ -27,10 +27,10 @@ private slots:
     void closeAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
     void queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
     void backgroundBootstrap(QTcpSocket *socket, const QVariant &secondsArg);
-    void getClipboardBootstrap(QTcpSocket *socket, const QVariant &);
-    void setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg, const QVariant &);
+    void getClipboardBootstrap(QTcpSocket *socket);
+    void setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg);
     void findElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg);
-    void findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, bool multiple = true);
+    void findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg);
     void getLocationBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void getLocationInViewBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void getAttributeBootstrap(QTcpSocket *socket, const QVariant &attributeArg, const QVariant &elementIdArg);
@@ -67,8 +67,8 @@ private slots:
     void deactivateIMEEngineBootstrap(QTcpSocket *socket);
     void isIMEActivatedBootstrap(QTcpSocket *socket);
     void keyeventBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &sessionIDArg, const QVariant &flagsArg);
-    void longPressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg);
-    void pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg, const QVariant &sessionIDArg, const QVariant &paramArg);
+    void longPressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg);
+    void pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg);
 
     void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
     void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
@@ -100,12 +100,9 @@ private slots:
     void executeCommand_app_dumpTree(QTcpSocket* socket);
 
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
-    void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg, const QVariant &, const QVariant &);
+    void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg);
 
     void processTouchActionList(const QVariant &actionListArg);
-
-    void startActivityBootstrap(QTcpSocket *socket, const QVariant &appPackage, const QVariant &appActivity, const QVariant &appWaitPackage, const QVariant &intentAction,
-                                const QVariant &intentCategory, const QVariant &intentFlags, const QVariant &optionalIntentArguments, const QVariant &dontStopAppOnReset, const QVariant &); //Segmentation fauilt
 
     void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false);
     void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false);
