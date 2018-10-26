@@ -303,10 +303,20 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appId)
 void QABridge::launchAppBootstrap(QTcpSocket *socket)
 {
     const QString appName = m_appSocket.value(socket);
+    m_appPort.insert(appName, 0);
     qDebug() << Q_FUNC_INFO << appName;
     QStringList arguments;
     ContentAction::Action action = ContentAction::Action::launcherAction(QStringLiteral("%1.desktop").arg(appName), arguments);
     action.trigger();
+
+    QTimer maxTimer;
+    connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
+    maxTimer.start(30000);
+    qDebug() << Q_FUNC_INFO << "Starting eventloop connect";
+    m_connectLoop->exec();
+    qDebug() << Q_FUNC_INFO << "Exiting eventloop connect";
+    maxTimer.stop();
+
     socketReply(socket, QString());
 }
 
