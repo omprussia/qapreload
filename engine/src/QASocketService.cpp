@@ -225,6 +225,7 @@ void QASocketService::closeAppBootstrap(QTcpSocket *socket, const QVariant &appI
         return;
     }
     socketReply(socket, true);
+    stopListen();
     qApp->quit();
 }
 

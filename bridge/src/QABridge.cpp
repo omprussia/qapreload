@@ -147,9 +147,23 @@ void QABridge::appConnectBootstrap(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void QABridge::appDisconnectBootstrap(QTcpSocket *socket)
+void QABridge::appDisconnectBootstrap(QTcpSocket *socket, const QVariant &autoLaunchArg)
 {
     const QString appName = m_appSocket.value(socket);
+
+    if (m_appPort.value(appName) == 0) {
+        socketReply(socket, QString());
+        return;
+    }
+
+    if (autoLaunchArg.toBool()) {
+        QJsonObject json;
+        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
+        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("closeApp")));
+        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
+        sendToAppSocket(appName, QJsonDocument(json).toJson(QJsonDocument::Compact));
+    }
+
     m_appPort.remove(appName);
     m_appSocket.remove(socket);
     qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
@@ -763,10 +777,21 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
         return;
     }
 
+    QByteArray appReplyData = sendToAppSocket(appName, data);
+    qDebug() << Q_FUNC_INFO << appReplyData;
+
+    socket->write(appReplyData);
+    qWarning() << Q_FUNC_INFO << "Writing to appium socket:" <<
+                  socket->waitForBytesWritten();
+}
+
+QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &data)
+{
     QTcpSocket appSocket;
     appSocket.connectToHost(QHostAddress(QHostAddress::LocalHost), m_appPort.value(appName));
     if (!appSocket.isOpen()) {
         qWarning() << Q_FUNC_INFO << "Can't connect to app socket:" << m_appPort.value(appName);
+        return QByteArray();
     }
     qWarning() << Q_FUNC_INFO << "Writing to app socket:" <<
     appSocket.write(data) <<
@@ -778,11 +803,8 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
         appSocket.waitForReadyRead(3000);
         appReplyData.append(appSocket.readAll());
     }
-    qDebug() << Q_FUNC_INFO << appReplyData;
 
-    socket->write(appReplyData);
-    qWarning() << Q_FUNC_INFO << "Writing to appium socket:" <<
-                  socket->waitForBytesWritten();
+    return appReplyData;
 }
 
 void QABridge::connectAppSocket(const QString &appName)

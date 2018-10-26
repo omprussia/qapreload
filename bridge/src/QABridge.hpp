@@ -35,7 +35,7 @@ private slots:
 
     void initializeBootstrap(QTcpSocket *socket, const QVariant &appPackageArg);
     void appConnectBootstrap(QTcpSocket *socket);
-    void appDisconnectBootstrap(QTcpSocket* socket);
+    void appDisconnectBootstrap(QTcpSocket* socket, const QVariant &autoLaunchArg);
 
     void installAppBootstrap(QTcpSocket *socket, const QVariant &appPathArg, const QVariant &, const QVariant &, const QVariant &);
     void activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &, const QVariant &, const QVariant &);
@@ -88,6 +88,7 @@ private slots:
     void forwardToApp(QTcpSocket *socket, const QByteArray &data);
 
 private:
+    QByteArray sendToAppSocket(const QString &appName, const QByteArray &data);
     void connectAppSocket(const QString &appName);
     int getNetworkConnection() const;
 
