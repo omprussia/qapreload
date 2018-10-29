@@ -79,6 +79,7 @@ private slots:
     void executeCommand_app_clickContextMenuItem(QTcpSocket* socket, const QVariant &elementIdArg, const QVariant &destinationArg);
 
     void executeCommand_app_waitForPageChange(QTcpSocket* socket);
+    void executeCommand_app_waitForPropertyChange(QTcpSocket* socket, const QVariant &elementArg, const QVariant &propertyArg, const QVariant &valueArg);
 
     void executeCommand_app_swipe(QTcpSocket* socket, const QVariant& directionArg);
     void executeCommand_app_peek(QTcpSocket* socket, const QVariant& directionArg);

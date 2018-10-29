@@ -822,6 +822,50 @@ void SailfishTest::waitForPageChange()
     loop.exec();
 }
 
+void SailfishTest::waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value)
+{
+    if (!item) {
+        qWarning() << "item is null" << item;
+        return;
+    }
+    int propertyIndex = item->metaObject()->indexOfProperty(propertyName.toLatin1().constData());
+    if (propertyIndex < 0) {
+        qWarning() << Q_FUNC_INFO << item << "property" << propertyName << "is not valid!";
+        return;
+    }
+    const QMetaProperty prop = item->metaObject()->property(propertyIndex);
+    if (!prop.hasNotifySignal()) {
+        qWarning() << Q_FUNC_INFO << item << "property" << propertyName << "have on notifySignal!";
+        return;
+    }
+    QEventLoop loop;
+    item->setProperty("SailfishTestEventLoop", QVariant::fromValue(&loop));
+    item->setProperty("SailfishTestPropertyName", propertyName);
+    item->setProperty("SailfishTestPropertyValue", value);
+    const QMetaMethod propertyChanged = metaObject()->method(metaObject()->indexOfSlot("onPropertyChanged()"));
+    connect(item, prop.notifySignal(), this, propertyChanged);
+    loop.exec();
+    disconnect(item, prop.notifySignal(), this, propertyChanged);
+}
+
+void SailfishTest::onPropertyChanged()
+{
+    QObject *item = sender();
+    QEventLoop *loop = item->property("SailfishTestEventLoop").value<QEventLoop*>();
+    if (!loop) {
+        return;
+    }
+    const QString propertyName = item->property("SailfishTestPropertyName").toString();
+    const QVariant propertyValue = item->property("SailfishTestPropertyValue");
+    if (!propertyValue.isValid()) {
+        loop->quit();
+    }
+    const QVariant property = item->property(propertyName.toLatin1().constData());
+    if (property == propertyValue) {
+        loop->quit();
+    }
+}
+
 void SailfishTest::assert(const QString &text)
 {
     QQmlEngine* engine = qmlEngine(this);

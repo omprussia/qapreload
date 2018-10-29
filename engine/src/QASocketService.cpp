@@ -710,6 +710,19 @@ void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
+void QASocketService::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QVariant &elementArg, const QVariant &propertyArg, const QVariant &valueArg)
+{
+    const QString elementId = elementArg.toString();
+    if (!s_items.contains(elementId)) {
+        qWarning() << Q_FUNC_INFO << "Element" << elementId << "is unknown!";
+        socketReply(socket, QString());
+        return;
+    }
+    const QString propertyName = propertyArg.toString();
+    m_sailfishTest->waitForPropertyChange(s_items.value(elementId), propertyName, valueArg);
+    socketReply(socket, QString());
+}
+
 void QASocketService::executeCommand_app_swipe(QTcpSocket *socket, const QVariant &directionArg)
 {
     const QString directionString = directionArg.toString();

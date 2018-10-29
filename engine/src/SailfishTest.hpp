@@ -82,6 +82,7 @@ public slots:
 
     void sleep(int msecs);
     void waitForPageChange();
+    void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value);
 
     void assert(const QString &text);
     void message(const QString &text);
@@ -95,6 +96,9 @@ public slots:
     bool compareNotEqual(const QVariant &value1, const QVariant &value2);
     bool compareTrue(bool value);
     bool compareFalse(bool value);
+
+private slots:
+    void onPropertyChanged();
 };
 
 #endif // SAILFISHTEST_HPP

@@ -48,6 +48,18 @@ Usage:
 
 `driver.execute_script("app:waitForPageChange")`
 
+### app:waitForPropertyChange
+
+synchronously wait for element property value change
+
+Usage:
+
+`driver.execute_script("app:waitForPropertyChange", "ContextMenu_0x12345678", "opened", true)`
+
+`"ContextMenu_0x12345678"` is element.id, you should find element before using this method
+
+You can use None as property value to wait for any property change, or exact value to watch for.
+
 ### app:swipe
 
 perform swipe action in selected direction
