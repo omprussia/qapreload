@@ -1,6 +1,6 @@
 # qapreload
 
-## execute_command custom methods list
+## execute_script custom methods list
 
 ### app:pullDownTo
 
@@ -8,11 +8,11 @@ perform pulldown action on view. if view is not at beginning it will scroll to t
 
 Usage:
 
-`driver.execute_command("app:pullDownTo", "some text label")`
+`driver.execute_script("app:pullDownTo", "some text label")`
 
 or
 
-`driver.execute_command("app:pullDownTo", index)`
+`driver.execute_script("app:pullDownTo", index)`
 
 ### app:pushUpTo
 
@@ -20,11 +20,11 @@ perform pushup action on view. if view is not at end it will scroll to end, then
 
 Usage:
 
-`driver.execute_command("app:pushUpTo", "some text label")`
+`driver.execute_script("app:pushUpTo", "some text label")`
 
 or
 
-`driver.execute_command("app:pushUpTo", index)`
+`driver.execute_script("app:pushUpTo", index)`
 
 ### app:clickContextMenuItem
 
@@ -32,11 +32,11 @@ perform context menu click on item
 
 Usage:
 
-`driver.execute_command("app:clickContextMenuItem", "ContextMenu_0x12345678", "some text label")`
+`driver.execute_script("app:clickContextMenuItem", "ContextMenu_0x12345678", "some text label")`
 
 or
 
-`driver.execute_command("app:clickContextMenuItem", "ContextMenu_0x12345678", index)`
+`driver.execute_script("app:clickContextMenuItem", "ContextMenu_0x12345678", index)`
 
 `"ContextMenu_0x12345678"` is element.id, you should find element before using this method
 
@@ -46,7 +46,7 @@ synchronously wait for page change
 
 Usage:
 
-`driver.execute_command("app:waitForPageChange")`
+`driver.execute_script("app:waitForPageChange")`
 
 ### app:swipe
 
@@ -54,7 +54,7 @@ perform swipe action in selected direction
 
 Usage:
 
-`driver.execute_command("app:swipe", "left")`
+`driver.execute_script("app:swipe", "left")`
 
 Allowed directions are: left, right, top, bottom
 
@@ -64,7 +64,7 @@ perform peek action in selected direction
 
 Usage:
 
-`driver.execute_command("app:peek", "left")`
+`driver.execute_script("app:peek", "left")`
 
 Allowed directions are: left, right, top, bottom
 
@@ -74,7 +74,7 @@ perform back navigation action on current page
 
 Usage:
 
-`driver.execute_command("app:goBack")`
+`driver.execute_script("app:goBack")`
 
 ### app:goForward
 
@@ -82,7 +82,7 @@ perform back navigation action on current page
 
 Usage:
 
-`driver.execute_command("app:goForward")`
+`driver.execute_script("app:goForward")`
 
 ### app:enterCode
 
@@ -90,7 +90,7 @@ type code on KeyPad item. You can use `#` for confirm action and `*` for cancel 
 
 Usage:
 
-`driver.execute_command("app:enterCode", "12345#")`
+`driver.execute_script("app:enterCode", "12345#")`
 
 ### touch:pressAndHold
 
@@ -98,7 +98,7 @@ perform press and hold touch action on choosen coordinates
 
 Usage:
 
-`driver.execute_command("touch:pressAndHold", 20, 40)`
+`driver.execute_script("touch:pressAndHold", 20, 40)`
 
 ### touch:mouseSwipe
 
@@ -106,7 +106,7 @@ perform mouse swipe touch action from one point to another
 
 Usage:
 
-`driver.execute_command("touch:mouseSwipe", 20, 40, 60, 80)`
+`driver.execute_script("touch:mouseSwipe", 20, 40, 60, 80)`
 
 ### app:scrollToItem
 
@@ -114,7 +114,7 @@ perform scroll on view to some item
 
 Usage:
 
-`driver.execute_command("app:scrollToItem", "ContextMenu_0x12345678")`
+`driver.execute_script("app:scrollToItem", "ContextMenu_0x12345678")`
 
 `"ContextMenu_0x12345678"` is element.id, you should find element before using this method
 
@@ -124,7 +124,7 @@ invoke meta method on element
 
 Usage:
 
-`driver.execute_command("app:method", "MyItem_0x12345678", "myFunction", ["some", "args", 15])`
+`driver.execute_script("app:method", "MyItem_0x12345678", "myFunction", ["some", "args", 15])`
 
 `"MyItem_0x12345678"` is element.id, you should find element before using this method
 
@@ -134,7 +134,7 @@ execute js code in element context
 
 Usage:
 
-`driver.execute_command("app:js", "MyItem_0x12345678", "function() { return "hello!"; }"`
+`driver.execute_script("app:js", "MyItem_0x12345678", "function() { return "hello!"; }"`
 
 `"MyItem_0x12345678"` is element.id, you should find element before using this method
 
@@ -144,7 +144,7 @@ dump current page items tree
 
 Usage:
 
-`driver.execute_command("app:dumpCurrentPage""`
+`driver.execute_script("app:dumpCurrentPage""`
 
 ### app:dumpTree
 
@@ -152,13 +152,13 @@ dump application items tree
 
 Usage:
 
-`driver.execute_command("app:dumpTree")`
+`driver.execute_script("app:dumpTree")`
 
 ### system:shell
 
-executes command with root privileges. use with caution
+executes script with root privileges. use with caution
 
 Usage:
 
-`driver.execute_command("system:shell", "ls", ["-la", "/"])`
+`driver.execute_script("system:shell", "ls", ["-la", "/"])`
 
