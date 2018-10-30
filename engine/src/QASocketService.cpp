@@ -704,13 +704,14 @@ void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket)
+void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket, const QVariant &timeoutArg)
 {
-    m_sailfishTest->waitForPageChange();
+    const int timeout = timeoutArg.toInt();
+    m_sailfishTest->waitForPageChange(timeout);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QVariant &elementArg, const QVariant &propertyArg, const QVariant &valueArg)
+void QASocketService::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QVariant &elementArg, const QVariant &propertyArg, const QVariant &valueArg, const QVariant &timeoutArg)
 {
     const QString elementId = elementArg.toString();
     if (!s_items.contains(elementId)) {
@@ -719,7 +720,8 @@ void QASocketService::executeCommand_app_waitForPropertyChange(QTcpSocket *socke
         return;
     }
     const QString propertyName = propertyArg.toString();
-    m_sailfishTest->waitForPropertyChange(s_items.value(elementId), propertyName, valueArg);
+    const int timeout = timeoutArg.toInt();
+    m_sailfishTest->waitForPropertyChange(s_items.value(elementId), propertyName, valueArg, timeout);
     socketReply(socket, QString());
 }
 

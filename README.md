@@ -46,7 +46,9 @@ synchronously wait for page change
 
 Usage:
 
-`driver.execute_script("app:waitForPageChange")`
+`driver.execute_script("app:waitForPageChange", 1000)`
+
+1000 - is timeout to wait for change or continue anyway
 
 ### app:waitForPropertyChange
 
@@ -54,11 +56,13 @@ synchronously wait for element property value change
 
 Usage:
 
-`driver.execute_script("app:waitForPropertyChange", "ContextMenu_0x12345678", "opened", true)`
+`driver.execute_script("app:waitForPropertyChange", "ContextMenu_0x12345678", "opened", true, 10000)`
 
 `"ContextMenu_0x12345678"` is element.id, you should find element before using this method
 
 You can use None as property value to wait for any property change, or exact value to watch for.
+
+10000 - is timeout to wait for change or continue anyway
 
 ### app:swipe
 

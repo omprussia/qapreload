@@ -81,8 +81,8 @@ public slots:
     void saveScreenshot(const QString &location, bool fillBackground = true);
 
     void sleep(int msecs);
-    void waitForPageChange();
-    void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value);
+    void waitForPageChange(int timeout = 1000);
+    void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
 
     void assert(const QString &text);
     void message(const QString &text);

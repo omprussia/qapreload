@@ -803,26 +803,12 @@ void SailfishTest::sleep(int msecs)
     Use the function to wait until the current page will be changed.
 */
 
-void SailfishTest::waitForPageChange()
+void SailfishTest::waitForPageChange(int timeout)
 {
-    QQuickItem* pageStack = QAEngine::getPageStack();
-    if (!pageStack) {
-        return;
-    }
-
-    if (!pageStack->property("busy").toBool()) {
-        return;
-    }
-
-    QEventLoop loop;
-    QTimer timer;
-    timer.setInterval(800);
-    connect(pageStack, SIGNAL(busyChanged()), &timer, SLOT(start()));
-    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    loop.exec();
+    waitForPropertyChange(QAEngine::getPageStack(), QStringLiteral("busy"), false, timeout);
 }
 
-void SailfishTest::waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value)
+void SailfishTest::waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout)
 {
     if (!item) {
         qWarning() << "item is null" << item;
@@ -834,16 +820,22 @@ void SailfishTest::waitForPropertyChange(QQuickItem *item, const QString &proper
         return;
     }
     const QMetaProperty prop = item->metaObject()->property(propertyIndex);
+    if (prop.read(item) == value) {
+        return;
+    }
     if (!prop.hasNotifySignal()) {
         qWarning() << Q_FUNC_INFO << item << "property" << propertyName << "have on notifySignal!";
         return;
     }
     QEventLoop loop;
+    QTimer timer;
     item->setProperty("SailfishTestEventLoop", QVariant::fromValue(&loop));
     item->setProperty("SailfishTestPropertyName", propertyName);
     item->setProperty("SailfishTestPropertyValue", value);
     const QMetaMethod propertyChanged = metaObject()->method(metaObject()->indexOfSlot("onPropertyChanged()"));
     connect(item, prop.notifySignal(), this, propertyChanged);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start(timeout);
     loop.exec();
     disconnect(item, prop.notifySignal(), this, propertyChanged);
 }
