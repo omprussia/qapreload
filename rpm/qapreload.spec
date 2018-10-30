@@ -69,6 +69,8 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 /bin/systemctl enable qabridge.socket
 /bin/systemctl stop qabridge.service
 /bin/systemctl restart qabridge.socket
+/bin/systemctl-user daemon-reload
+/bin/systemctl-user restart qaservice.service
 
 /bin/systemctl-user restart booster-qt5.service
 /bin/systemctl-user restart booster-silica-qt5.service
@@ -78,6 +80,8 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 /bin/systemctl disable qabridge.socket
 /bin/systemctl stop qabridge.socket
 /bin/systemctl stop qabridge.service
+/bin/systemctl-user daemon-reload
+/bin/systemctl-user stop qaservice.service
 
 /bin/systemctl-user restart booster-qt5.service
 /bin/systemctl-user restart booster-silica-qt5.service
@@ -90,10 +94,13 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 %{_libdir}/qtpreloadplugins/libqaengine.so
 # bridge files
 %{_bindir}/qabridge
+%{_bindir}/qabridge-user
 /lib/systemd/system/qabridge.service
 /lib/systemd/system/qabridge.socket
 %{_datadir}/dbus-1/interfaces/ru.omprussia.qabridge.xml
 %{_sysconfdir}/dbus-1/system.d/ru.omprussia.qabridge.conf
+%{_libdir}/systemd/user/qaservice.service
+%{_datadir}/dbus-1/services/ru.omprussia.qaservice.service
 
 %files devel
 %{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir

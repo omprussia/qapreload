@@ -1,7 +1,8 @@
 TEMPLATE = subdirs
 SUBDIRS = \
     engine \
-    bridge
+    bridge \
+    service
 
 dbusInterface.files = dbus/ru.omprussia.qabridge.xml
 dbusInterface.path = /usr/share/dbus-1/interfaces/

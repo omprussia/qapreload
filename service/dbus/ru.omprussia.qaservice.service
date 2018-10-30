@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=ru.omprussia.qaservice
+Exec=/bin/false
+SystemdService=qaservice.service

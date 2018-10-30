@@ -18,8 +18,6 @@
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusReply>
 
-#include <contentaction5/contentaction.h>
-
 #include <Transaction>
 #include <Daemon>
 
@@ -175,10 +173,14 @@ void QABridge::startActivityBootstrap(QTcpSocket *socket, const QVariant &appIdA
     const QString appName = appIdArg.toString();
     const QStringList arguments = paramsArg.toStringList();
     qDebug() << Q_FUNC_INFO << appName << arguments;
-    ContentAction::Action action = ContentAction::Action::launcherAction(QStringLiteral("%1.desktop").arg(appName), arguments);
-    action.trigger();
 
-    socketReply(socket, QVariant());
+    const bool success = QABridge::launchApp(appName, arguments);
+
+    if (success) {
+        socketReply(socket, QString());
+    } else {
+        socketReply(socket, QString(), 1);
+    }
 }
 
 void QABridge::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
@@ -187,8 +189,7 @@ void QABridge::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg
     qDebug() << Q_FUNC_INFO << appName;
     if (m_appPort.value(appName, 0) == 0) {
         QStringList arguments;
-        ContentAction::Action action = ContentAction::Action::launcherAction(QStringLiteral("%1.desktop").arg(appName), arguments);
-        action.trigger();
+        QABridge::launchApp(appName, arguments);
     } else {
         QJsonObject json;
         json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
@@ -317,8 +318,7 @@ void QABridge::launchAppBootstrap(QTcpSocket *socket)
     m_appPort.insert(appName, 0);
     qDebug() << Q_FUNC_INFO << appName;
     QStringList arguments;
-    ContentAction::Action action = ContentAction::Action::launcherAction(QStringLiteral("%1.desktop").arg(appName), arguments);
-    action.trigger();
+    QABridge::launchApp(appName, arguments);
 
     QTimer maxTimer;
     connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
@@ -805,6 +805,16 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
     socket->write(appReplyData);
     qWarning() << Q_FUNC_INFO << "Writing to appium socket:" <<
                   socket->waitForBytesWritten();
+}
+
+bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
+{
+    QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
+                                                         QStringLiteral("/ru/omprussia/qaservice"),
+                                                         QStringLiteral("ru.omprussia.qaservice"),
+                                                         QStringLiteral("launchApp"));
+    launch.setArguments({ appName, arguments });
+    return QDBusConnection::sessionBus().send(launch);
 }
 
 QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &data)

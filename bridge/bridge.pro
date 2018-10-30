@@ -4,7 +4,6 @@ PKGCONFIG += \
     libsystemd-daemon \
     libshadowutils \
     packagekitqt5 \
-    contentaction5 \
     connman-qt5
 
 TEMPLATE = app
