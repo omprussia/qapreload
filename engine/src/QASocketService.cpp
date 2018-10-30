@@ -289,7 +289,9 @@ void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &s
                               QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
                               Qt::DirectConnection,
                               Q_ARG(QTcpSocket*, socket),
-                              Q_ARG(QString, selector));
+                              Q_ARG(QString, selector),
+                              Q_ARG(bool, false),
+                              Q_ARG(QQuickItem*, nullptr));
 }
 
 void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg)
@@ -304,7 +306,52 @@ void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &
                               Qt::DirectConnection,
                               Q_ARG(QTcpSocket*, socket),
                               Q_ARG(QString, selector),
-                              Q_ARG(bool, true));
+                              Q_ARG(bool, true),
+                              Q_ARG(QQuickItem*, nullptr));
+}
+
+void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg)
+{
+    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
+    const QString selector = selectorArg.toString();
+    const QString elementId = elementIdArg.toString();
+
+    QQuickItem *item = nullptr;
+    if (s_items.contains(elementId)) {
+        item = s_items.value(elementId);
+    }
+
+    qDebug() << Q_FUNC_INFO << socket << strategy << selector;
+
+    QMetaObject::invokeMethod(this,
+                              QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
+                              Qt::DirectConnection,
+                              Q_ARG(QTcpSocket*, socket),
+                              Q_ARG(QString, selector),
+                              Q_ARG(bool, false),
+                              Q_ARG(QQuickItem*, item));
+}
+
+void QASocketService::findElementsFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg)
+{
+    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
+    const QString selector = selectorArg.toString();
+    const QString elementId = elementIdArg.toString();
+
+    QQuickItem *item = nullptr;
+    if (s_items.contains(elementId)) {
+        item = s_items.value(elementId);
+    }
+
+    qDebug() << Q_FUNC_INFO << socket << strategy << selector;
+
+    QMetaObject::invokeMethod(this,
+                              QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
+                              Qt::DirectConnection,
+                              Q_ARG(QTcpSocket*, socket),
+                              Q_ARG(QString, selector),
+                              Q_ARG(bool, true),
+                              Q_ARG(QQuickItem*, item));
 }
 
 void QASocketService::getLocationBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
@@ -942,22 +989,22 @@ void QASocketService::clearBootstrap(QTcpSocket *socket, const QVariant &element
     setAttribute(socket, QStringLiteral("text"), QString(), elementIdArg);
 }
 
-void QASocketService::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple)
+void QASocketService::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
 {
-    QQuickItem *item = QAEngine::findItemByObjectName(selector);
+    QQuickItem *item = QAEngine::findItemByObjectName(selector, parentItem);
     qDebug() << Q_FUNC_INFO << selector << multiple << item;
     elementReply(socket, QVariantList() << QVariant::fromValue(item), multiple);
 }
 
-void QASocketService::findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple)
+void QASocketService::findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
 {
-    QVariantList items = QAEngine::findItemsByClassName(selector);
+    QVariantList items = QAEngine::findItemsByClassName(selector, parentItem);
     qDebug() << Q_FUNC_INFO << selector << multiple << items;
     elementReply(socket, items, multiple);
 }
-void QASocketService::findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple)
+void QASocketService::findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
 {
-    QVariantList items = QAEngine::findItemsByText(selector);
+    QVariantList items = QAEngine::findItemsByText(selector, parentItem);
     qDebug() << Q_FUNC_INFO << selector << multiple << items;
     elementReply(socket, items, multiple);
 }

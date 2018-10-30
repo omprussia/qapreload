@@ -31,6 +31,8 @@ private slots:
     void setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg);
     void findElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg);
     void findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg);
+    void findElementFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg);
+    void findElementsFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg);
     void getLocationBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void getLocationInViewBootstrap(QTcpSocket *socket, const QVariant &elementIdArg);
     void getAttributeBootstrap(QTcpSocket *socket, const QVariant &attributeArg, const QVariant &elementIdArg);
@@ -105,9 +107,9 @@ private slots:
 
     void processTouchActionList(const QVariant &actionListArg);
 
-    void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false);
-    void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false);
-    void findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple = false);
+    void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
 
 private:
     explicit QASocketService(QObject *parent = nullptr);
