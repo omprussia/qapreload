@@ -196,7 +196,7 @@ QVariantList SailfishTest::openContextMenu(QQuickItem *item)
     if (!item) {
         return QVariantList();
     }
-    pressAndHold(item);
+    pressAndHold(item, 1200);
     const QVariantList contextMenus = findItemsByClassName(QStringLiteral("ContextMenu"));
     if (contextMenus.count() < 1) {
         return QVariantList();
