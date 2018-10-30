@@ -953,6 +953,10 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
 
         if (actionName == QStringLiteral("wait")) {
             delay = options.value(QStringLiteral("ms")).toInt();
+        } else if (actionName == QStringLiteral("tap")) {
+            const int tapX = options.value(QStringLiteral("x")).toInt();
+            const int tapY = options.value(QStringLiteral("y")).toInt();
+            m_sailfishTest->clickPoint(tapX, tapY);
         } else if (actionName == QStringLiteral("press")) {
             startX = options.value(QStringLiteral("x")).toInt();
             startY = options.value(QStringLiteral("y")).toInt();
