@@ -56,6 +56,10 @@ void QAEngine::ready()
 
     QADBusService::instance()->initialize();
 
+    if (QFileInfo::exists(QStringLiteral("/etc/qapreload-touch-indicator"))) {
+        setTouchIndicator(true);
+    }
+
     const QStringList args = qApp->arguments();
     const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
     if (testArgIndex < 0) {

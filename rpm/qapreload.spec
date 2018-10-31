@@ -46,6 +46,12 @@ Group:      System/Libraries
 %description doc
 %{summary}.
 
+%package indicator
+Summary:    Touch indicator enabler
+Group:      System/Libraries
+
+%description indicator
+%{summary}.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -63,6 +69,9 @@ ln -s ../../../../../qtpreloadplugins/libqaengine.so %{buildroot}/usr/lib/qt5/qm
 
 /usr/lib/qt5/bin/qmlplugindump -v -noinstantiate -nonrelocatable ru.omprussia.sailfishtest 1.0 %{buildroot}%{_libdir}/qt5/qml > %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes |:
 sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
+
+mkdir -p %{buildroot}%{_sysconfdir}
+touch %{buildroot}%{_sysconfdir}/qapreload-touch-indicator
 
 %post
 /bin/systemctl daemon-reload
@@ -101,3 +110,5 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 %dir %{_datadir}/doc/qapreload
 %{_datadir}/doc/qapreload/qapreload.qch
 
+%files indicator
+%{_sysconfdir}/qapreload-touch-indicator
