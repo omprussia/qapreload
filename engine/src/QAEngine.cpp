@@ -709,6 +709,7 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
 
 void QAEngine::setTouchIndicator(bool enable)
 {
+    qDebug() << Q_FUNC_INFO << enable;
     if (enable) {
         if (m_touchFilter) {
             return;
@@ -789,8 +790,8 @@ TouchFilter::TouchFilter(QObject *parent)
         qWarning() << Q_FUNC_INFO << object << "object is not QQuickitem!";
         return;
     }
-    item->setParent(trueItem);
-    item->setParentItem(trueItem);
+    item->setParent(QAEngine::instance()->rootItem());
+    item->setParentItem(QAEngine::instance()->rootItem());
     m_touchIndicator = item;
     qGuiApp->installEventFilter(this);
 }
