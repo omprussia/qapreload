@@ -32,6 +32,11 @@ target.path = /usr/lib/qtpreloadplugins
 
 INSTALLS = target
 
+qmlfiles.files = \
+    qml/TouchIndicator.qml
+qmlfiles.path = /usr/share/qapreload/qml
+INSTALLS += qmlfiles
+
 qa_dbus_adaptor.files = dbus/ru.omprussia.qaservice.xml
 qa_dbus_adaptor.source_flags = -c QAAdaptor
 qa_dbus_adaptor.header_flags = -c QAAdaptor

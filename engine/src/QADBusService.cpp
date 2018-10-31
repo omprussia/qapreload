@@ -226,6 +226,15 @@ void QADBusService::setEventFilterEnabled(bool enable)
                               Q_ARG(QDBusMessage, message()));
 }
 
+void QADBusService::setTouchIndicatorEnabled(bool enable)
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(bool, enable),
+                              Q_ARG(QDBusMessage, message()));
+}
+
 int QADBusService::startSocket()
 {
     qWarning() << Q_FUNC_INFO;

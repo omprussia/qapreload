@@ -651,12 +651,17 @@ void QAEngine::setEventFilterEnabled(bool enable, const QDBusMessage &message)
     qWarning() << Q_FUNC_INFO << enable;
     if (enable) {
         qGuiApp->installEventFilter(this);
-        m_rootItem->window()->installEventFilter(this);
     } else {
         qGuiApp->removeEventFilter(this);
-        m_rootItem->window()->removeEventFilter(this);
     }
 
+    QADBusService::sendMessageReply(message, QVariantList());
+}
+
+void QAEngine::setTouchIndicatorEnabled(bool enable, const QDBusMessage &message)
+{
+    setTouchIndicator(enable);
+    qWarning() << Q_FUNC_INFO << enable << m_touchFilter;
     QADBusService::sendMessageReply(message, QVariantList());
 }
 
@@ -674,6 +679,9 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
     {
         QTouchEvent *te = static_cast<QTouchEvent*>(event);
         qWarning() << "[TE]" << te->device() << te->window() << te->target();
+        for (const QTouchEvent::TouchPoint &point : te->touchPoints()) {
+            qWarning() << "[TP]" << point.pos() << point.rect() << point.pressure();
+        }
     }
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease:
@@ -693,6 +701,22 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
         break;
     }
     return QObject::eventFilter(watched, event);
+}
+
+void QAEngine::setTouchIndicator(bool enable)
+{
+    if (enable) {
+        if (m_touchFilter) {
+            return;
+        }
+        m_touchFilter = new TouchFilter(this);
+    } else {
+        if (!m_touchFilter) {
+            return;
+        }
+        m_touchFilter->deleteLater();
+        m_touchFilter = nullptr;
+    }
 }
 
 QQmlEngine *QAEngine::getEngine()
@@ -730,4 +754,80 @@ void TestResult::raise()
 {
     QV4::ExecutionEngine* eEngine = QV8Engine::getV4(m_engine);
     eEngine->throwError(message);
+}
+
+TouchFilter::TouchFilter(QObject *parent)
+    : QObject(parent)
+{
+    QQmlEngine *engine = qmlEngine(QAEngine::instance()->rootItem());
+    QQuickItem *trueItem = QAEngine::instance()->rootItem();
+    if (!engine) {
+        trueItem = QAEngine::instance()->rootItem()->childItems().first();
+        engine = qmlEngine(trueItem);
+    }
+    if (!engine) {
+        qWarning() << Q_FUNC_INFO << "Can't determine engine!";
+        return;
+    }
+    engine->clearComponentCache();
+    QQmlComponent component(engine, QUrl::fromLocalFile(QStringLiteral("/usr/share/qapreload/qml/TouchIndicator.qml")));
+    if (!component.isReady()) {
+        qWarning() << Q_FUNC_INFO << component.errorString();
+        return;
+    }
+    QObject *object = component.create(qmlEngine(trueItem)->rootContext());
+    if (!object) {
+        qWarning() << Q_FUNC_INFO << component.errorString();
+        return;
+    }
+    QQuickItem *item = qobject_cast<QQuickItem*>(object);
+    if (!item) {
+        qWarning() << Q_FUNC_INFO << object << "object is not QQuickitem!";
+        return;
+    }
+    item->setParent(trueItem);
+    item->setParentItem(trueItem);
+    m_touchIndicator = item;
+    qGuiApp->installEventFilter(this);
+}
+
+TouchFilter::~TouchFilter()
+{
+    qGuiApp->removeEventFilter(this);
+    delete m_touchIndicator;
+    m_touchIndicator = nullptr;
+}
+
+bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
+{
+    QQuickItem *item = qobject_cast<QQuickItem*>(watched);
+    if (!item) {
+        return QObject::eventFilter(watched, event);
+    }
+    switch (event->type()) {
+    case QEvent::TouchBegin:
+    case QEvent::TouchUpdate:
+    {
+        QTouchEvent *te = static_cast<QTouchEvent*>(event);
+        if (te->touchPoints().isEmpty()) {
+            break;
+        }
+        QMetaObject::invokeMethod(m_touchIndicator,
+                                  "show",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(QVariant, te->touchPoints().first().screenPos().toPoint()),
+                                  Q_ARG(QVariant, te->touchPoints().first().rect().size().toSize()));
+        break;
+    }
+    case QEvent::TouchEnd:
+    case QEvent::TouchCancel:
+    {
+        QMetaObject::invokeMethod(m_touchIndicator,
+                                  "hide",
+                                  Qt::QueuedConnection);
+    }
+    default:
+        break;
+    }
+    return QObject::eventFilter(watched, event);
 }

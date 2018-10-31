@@ -30,6 +30,19 @@ private:
 Q_DECLARE_METATYPE(TestResult)
 
 class QQuickItem;
+class TouchFilter : public QObject
+{
+    Q_OBJECT
+public:
+    explicit TouchFilter(QObject* parent = nullptr);
+    virtual ~TouchFilter();
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
+private:
+    QQuickItem *m_touchIndicator = nullptr;
+
+};
+
 class QDBusMessage;
 class QMouseEvent;
 class QTouchEvent;
@@ -98,6 +111,7 @@ private slots:
     void clearComponentCache();
 
     void setEventFilterEnabled(bool enable, const QDBusMessage &message);
+    void setTouchIndicatorEnabled(bool enable, const QDBusMessage &message);
 
     void onTouchEvent(const QTouchEvent &event);
     void onKeyEvent(QKeyEvent *event);
@@ -111,6 +125,9 @@ private:
     friend class SailfishTest;
     friend class LipstickTestHelper;
     friend class QASocketService;
+    friend class TouchFilter;
+
+    void setTouchIndicator(bool enable);
 
     QQmlEngine* getEngine();
     TestResult* getTestResult(const QString& functionName);
@@ -133,6 +150,7 @@ private:
 
     QHash<QString, TestResult*> m_testResults;
 
+    TouchFilter *m_touchFilter = nullptr;
 };
 
 #endif // QAENGINE_HPP

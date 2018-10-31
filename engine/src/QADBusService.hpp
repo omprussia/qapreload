@@ -45,6 +45,7 @@ private slots:
     void clearComponentCache();
 
     void setEventFilterEnabled(bool enable);
+    void setTouchIndicatorEnabled(bool enable);
 
     int startSocket();
 
