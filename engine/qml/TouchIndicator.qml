@@ -5,10 +5,11 @@ Item {
     id: root
     width: 1
     height: 1
-    visible: false
+    opacity: 0.0
     property int size: Theme.itemSizeSmall
 
     function show(point, psize) {
+        hideAnimation.stop()
         x = point.x
         y = point.y
         if (psize && psize.width > 0) {
@@ -16,11 +17,11 @@ Item {
         } else {
             size = Theme.itemSizeSmall
         }
-        visible = true
+        opacity = 1.0
     }
 
     function hide() {
-        root.visible = false
+        hideAnimation.start()
     }
 
     Rectangle {
@@ -31,5 +32,14 @@ Item {
         border.color: Theme.highlightColor
         border.width: 1
         color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
+    }
+
+    NumberAnimation {
+        id: hideAnimation
+        target: root
+        property: "opacity"
+        to: 0.0
+        duration: 250
+        easing.type: Easing.InQuad
     }
 }
