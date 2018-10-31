@@ -49,6 +49,7 @@ Group:      System/Libraries
 %package indicator
 Summary:    Touch indicator enabler
 Group:      System/Libraries
+Requires:   %{name}
 
 %description indicator
 %{summary}.
