@@ -66,22 +66,11 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 
 %post
 /bin/systemctl daemon-reload
-/bin/systemctl enable qabridge.socket
 /bin/systemctl stop qabridge.service
 /bin/systemctl restart qabridge.socket
+/bin/systemctl enable qabridge.socket
 /bin/systemctl-user daemon-reload
 /bin/systemctl-user restart qaservice.service
-
-/bin/systemctl-user restart booster-qt5.service
-/bin/systemctl-user restart booster-silica-qt5.service
-
-%preun
-/bin/systemctl daemon-reload
-/bin/systemctl disable qabridge.socket
-/bin/systemctl stop qabridge.socket
-/bin/systemctl stop qabridge.service
-/bin/systemctl-user daemon-reload
-/bin/systemctl-user stop qaservice.service
 
 /bin/systemctl-user restart booster-qt5.service
 /bin/systemctl-user restart booster-silica-qt5.service
