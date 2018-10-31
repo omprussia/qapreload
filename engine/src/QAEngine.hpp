@@ -36,6 +36,8 @@ class TouchFilter : public QObject
 public:
     explicit TouchFilter(QObject* parent = nullptr);
     virtual ~TouchFilter();
+public slots:
+    void hideImmediately();
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 private:
@@ -112,6 +114,7 @@ private slots:
 
     void setEventFilterEnabled(bool enable, const QDBusMessage &message);
     void setTouchIndicatorEnabled(bool enable, const QDBusMessage &message);
+    void hideTouchIndicator(const QDBusMessage &message);
 
     void onTouchEvent(const QTouchEvent &event);
     void onKeyEvent(QKeyEvent *event);

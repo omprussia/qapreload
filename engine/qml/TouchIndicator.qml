@@ -24,6 +24,11 @@ Item {
         hideAnimation.start()
     }
 
+    function hideImmediately() {
+        hideAnimation.stop()
+        opacity = 0.0
+    }
+
     Rectangle {
         anchors.centerIn: parent
         width: root.size

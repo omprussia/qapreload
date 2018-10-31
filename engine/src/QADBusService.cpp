@@ -235,6 +235,14 @@ void QADBusService::setTouchIndicatorEnabled(bool enable)
                               Q_ARG(QDBusMessage, message()));
 }
 
+void QADBusService::hideTouchIndicator()
+{
+    QMetaObject::invokeMethod(QAEngine::instance(),
+                              METHOD_NAME_HERE,
+                              Qt::QueuedConnection,
+                              Q_ARG(QDBusMessage, message()));
+}
+
 int QADBusService::startSocket()
 {
     qWarning() << Q_FUNC_INFO;

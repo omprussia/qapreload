@@ -65,6 +65,9 @@
         <method name="setTouchIndicatorEnabled">
             <arg name="enable" type="b" direction="in" />
         </method>
+        <method name="hideTouchIndicator">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+        </method>
         <method name="startSocket">
             <arg name="appPort" type="i" direction="out" />
         </method>

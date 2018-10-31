@@ -669,6 +669,15 @@ void QAEngine::setTouchIndicatorEnabled(bool enable, const QDBusMessage &message
     QADBusService::sendMessageReply(message, QVariantList());
 }
 
+void QAEngine::hideTouchIndicator(const QDBusMessage &message)
+{
+    qDebug() << Q_FUNC_INFO << m_touchFilter;
+    if (m_touchFilter) {
+        m_touchFilter->hideImmediately();
+    }
+    QADBusService::sendMessageReply(message, QVariantList());
+}
+
 bool QAEngine::eventFilter(QObject *watched, QEvent *event)
 {
     QQuickItem *item = qobject_cast<QQuickItem*>(watched);
@@ -696,6 +705,7 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
     {
         QInputEvent *ie = static_cast<QInputEvent*>(event);
         qWarning() << "[IE]" << ie->timestamp();
+        qWarning() << "[EV]" << watched << event;
     }
     case QEvent::FocusIn:
     case QEvent::FocusOut:
@@ -803,6 +813,13 @@ TouchFilter::~TouchFilter()
     m_touchIndicator = nullptr;
 }
 
+void TouchFilter::hideImmediately()
+{
+    QMetaObject::invokeMethod(m_touchIndicator,
+                              "hideImmediately",
+                              Qt::QueuedConnection);
+}
+
 bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
 {
     QQuickItem *item = qobject_cast<QQuickItem*>(watched);
@@ -811,6 +828,19 @@ bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
     }
     switch (event->type()) {
     case QEvent::TouchBegin:
+    {
+        if (QADBusService::processName() != QStringLiteral("lipstick")) {
+            QDBusMessage hideTouchIndicator = QDBusMessage::createMethodCall(
+                        QStringLiteral("ru.omprussia.qaservice.lipstick"),
+                        QStringLiteral("/ru/omprussia/qaservice"),
+                        QStringLiteral("ru.omprussia.qaservice"),
+                        QStringLiteral("hideTouchIndicator"));
+            QDBusReply<void> reply = QDBusConnection::sessionBus().call(hideTouchIndicator, QDBus::NoBlock);
+            if (reply.error().type() != QDBusError::NoError) {
+                qDebug() << Q_FUNC_INFO << reply.error().message();
+            }
+        }
+    }
     case QEvent::TouchUpdate:
     {
         QTouchEvent *te = static_cast<QTouchEvent*>(event);
