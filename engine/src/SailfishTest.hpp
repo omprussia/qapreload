@@ -31,24 +31,24 @@ public:
     QStringList declarativeFunctions() const;
 
 public slots:
-    QQuickItem* findItemByObjectName(const QString &objectName, QQuickItem* parentItem = nullptr);
-    QVariantList findItemsByClassName(const QString &className, QQuickItem* parentItem = nullptr);
-    QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem* parentItem = nullptr);
-    QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem* parentItem = nullptr);
+    QQuickItem *findItemByObjectName(const QString &objectName, QQuickItem *parentItem = nullptr);
+    QVariantList findItemsByClassName(const QString &className, QQuickItem *parentItem = nullptr);
+    QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
+    QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
 
-    QQuickItem* findParentFlickable(QQuickItem* rootItem = nullptr);
-    QVariantList findNestedFlickable(QQuickItem* parentItem = nullptr);
+    QQuickItem *findParentFlickable(QQuickItem *rootItem = nullptr);
+    QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
 
-    QVariantList openContextMenu(QQuickItem* item);
+    QVariantList openContextMenu(QQuickItem *item);
 
-    void clickContextMenuItem(QQuickItem* item, const QString &text, bool partial = true);
-    void clickContextMenuItem(QQuickItem* item, int index);
+    void clickContextMenuItem(QQuickItem *item, const QString &text, bool partial = true);
+    void clickContextMenuItem(QQuickItem *item, int index);
 
-    QPointF getAbsPosition(QQuickItem* item) const;
+    QPointF getAbsPosition(QQuickItem *item) const;
 
     void enterCode(const QString &code);
 
-    QQuickItem* getCurrentPage();
+    QQuickItem *getCurrentPage();
 
     void pullDownTo(const QString &text);
     void pullDownTo(int index);
@@ -56,10 +56,10 @@ public slots:
     void pushUpTo(const QString &text);
     void pushUpTo(int index);
 
-    void scrollToItem(QQuickItem* item);
+    void scrollToItem(QQuickItem *item);
 
     void clickItem(QQuickItem *item);
-    void pressAndHold(QQuickItem* item, int delay = 800);
+    void pressAndHold(QQuickItem *item, int delay = 800);
 
     void clickPoint(int posx, int posy);
     void pressAndHold(int posx, int posy, int delay = 800);

@@ -75,32 +75,32 @@ private slots:
     void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
     void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
 
-    void executeCommand_app_pullDownTo(QTcpSocket* socket, const QVariant &destinationArg);
-    void executeCommand_app_pushUpTo(QTcpSocket* socket, const QVariant &destinationArg);
+    void executeCommand_app_pullDownTo(QTcpSocket *socket, const QVariant &destinationArg);
+    void executeCommand_app_pushUpTo(QTcpSocket *socket, const QVariant &destinationArg);
 
-    void executeCommand_app_clickContextMenuItem(QTcpSocket* socket, const QVariant &elementIdArg, const QVariant &destinationArg);
+    void executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &destinationArg);
 
-    void executeCommand_app_waitForPageChange(QTcpSocket* socket, const QVariant &timeoutArg);
-    void executeCommand_app_waitForPropertyChange(QTcpSocket* socket, const QVariant &elementArg, const QVariant &propertyArg, const QVariant &valueArg, const QVariant &timeoutArg);
+    void executeCommand_app_waitForPageChange(QTcpSocket *socket, const QVariant &timeoutArg);
+    void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QVariant &elementArg, const QVariant &propertyArg, const QVariant &valueArg, const QVariant &timeoutArg);
 
-    void executeCommand_app_swipe(QTcpSocket* socket, const QVariant& directionArg);
-    void executeCommand_app_peek(QTcpSocket* socket, const QVariant& directionArg);
+    void executeCommand_app_swipe(QTcpSocket *socket, const QVariant &directionArg);
+    void executeCommand_app_peek(QTcpSocket *socket, const QVariant &directionArg);
 
-    void executeCommand_app_goBack(QTcpSocket* socket);
-    void executeCommand_app_goForward(QTcpSocket* socket);
+    void executeCommand_app_goBack(QTcpSocket *socket);
+    void executeCommand_app_goForward(QTcpSocket *socket);
 
-    void executeCommand_app_enterCode(QTcpSocket* socket, const QVariant& codeArg);
+    void executeCommand_app_enterCode(QTcpSocket *socket, const QVariant &codeArg);
 
-    void executeCommand_touch_pressAndHold(QTcpSocket* socket, const QVariant& posxArg, const QVariant& posyArg);
-    void executeCommand_touch_mouseSwipe(QTcpSocket* socket, const QVariant& posxArg, const QVariant& posyArg, const QVariant& stopxArg, const QVariant& stopyArg);
+    void executeCommand_touch_pressAndHold(QTcpSocket *socket, const QVariant &posxArg, const QVariant &posyArg);
+    void executeCommand_touch_mouseSwipe(QTcpSocket *socket, const QVariant &posxArg, const QVariant &posyArg, const QVariant &stopxArg, const QVariant &stopyArg);
 
-    void executeCommand_app_scrollToItem(QTcpSocket* socket, const QVariant& elementIdArg);
+    void executeCommand_app_scrollToItem(QTcpSocket *socket, const QVariant &elementIdArg);
 
-    void executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant& paramsArg);
-    void executeCommand_app_js(QTcpSocket* socket, const QVariant& elementIdArg, const QVariant& jsCodeArg);
+    void executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant &paramsArg);
+    void executeCommand_app_js(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &jsCodeArg);
 
-    void executeCommand_app_dumpCurrentPage(QTcpSocket* socket);
-    void executeCommand_app_dumpTree(QTcpSocket* socket);
+    void executeCommand_app_dumpCurrentPage(QTcpSocket *socket);
+    void executeCommand_app_dumpTree(QTcpSocket *socket);
 
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg);

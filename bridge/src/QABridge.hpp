@@ -35,7 +35,7 @@ private slots:
 
     void initializeBootstrap(QTcpSocket *socket, const QVariant &appPackageArg);
     void appConnectBootstrap(QTcpSocket *socket);
-    void appDisconnectBootstrap(QTcpSocket* socket, const QVariant &autoLaunchArg);
+    void appDisconnectBootstrap(QTcpSocket *socket, const QVariant &autoLaunchArg);
 
     void startActivityBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &paramsArg);
 
@@ -81,7 +81,7 @@ private slots:
     void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
     void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
 
-    void executeCommand_shell(QTcpSocket* socket, const QVariant &executableArg, const QVariant &paramsArg);
+    void executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
 
     void ApplicationReady(const QString &appName);
 
@@ -104,7 +104,7 @@ private:
 
     QByteArray m_dataStream;
 
-    QEventLoop* m_connectLoop;
+    QEventLoop *m_connectLoop;
     QString m_connectAppName;
     QABridgeAdaptor *m_adaptor = nullptr;
 };

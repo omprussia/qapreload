@@ -416,7 +416,7 @@ QAEngine::~QAEngine()
 {
 }
 
-QQuickItem* QAEngine::rootItem()
+QQuickItem *QAEngine::rootItem()
 {
     return m_rootItem;
 }
@@ -588,7 +588,7 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
         }
         return;
     }
-    SailfishTest* test = qobject_cast<SailfishTest*>(object);
+    SailfishTest *test = qobject_cast<SailfishTest*>(object);
     if (!test) {
         qWarning() << Q_FUNC_INFO << fileName << "is not SailfishTest instance!";;
         object->deleteLater();
@@ -613,7 +613,7 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
     QAEngine::print(QStringLiteral("### RUNNING TESTS"));
     for (const QString &testFunction : testFunctions) {
         QAEngine::print(QStringLiteral("## RUNNING TEST: %1").arg(testFunction));
-        TestResult* tr = new TestResult(engine);
+        TestResult *tr = new TestResult(engine);
         m_testResults.insert(testFunction, tr);
         QMetaObject::invokeMethod(test,
                                   testFunction.toLatin1().constData(),
@@ -767,7 +767,7 @@ TestResult::TestResult(const TestResult &other)
 
 void TestResult::raise()
 {
-    QV4::ExecutionEngine* eEngine = QV8Engine::getV4(m_engine);
+    QV4::ExecutionEngine *eEngine = QV8Engine::getV4(m_engine);
     eEngine->throwError(message);
 }
 

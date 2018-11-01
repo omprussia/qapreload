@@ -76,14 +76,14 @@ QStringList SailfishTest::declarativeFunctions() const
 }
 
 /*!
-    \qmlmethod QQuickItem SailfishTest::findItemByObjectName(const QString &objectName, QQuickItem* parentItem)
+    \qmlmethod QQuickItem SailfishTest::findItemByObjectName(const QString &objectName, QQuickItem *parentItem)
 
     Search for single item, starting from the \a parentItem. The located items will be returned as pointer to QQuickItem.
     The function return an item whose objectName attribute matches the \a objectName.
 
 */
 
-QQuickItem *SailfishTest::findItemByObjectName(const QString &objectName, QQuickItem* parentItem)
+QQuickItem *SailfishTest::findItemByObjectName(const QString &objectName, QQuickItem *parentItem)
 {
     return QAEngine::findItemByObjectName(objectName, parentItem);
 }
@@ -128,13 +128,13 @@ QVariantList SailfishTest::findItemsByProperty(const QString &propertyName, cons
 }
 
 /*!
-    \qmlmethod QQuickItem* SailfishTest::findParentFlickable(QQuickItem *rootItem)
+    \qmlmethod QQuickItem *SailfishTest::findParentFlickable(QQuickItem *rootItem)
 
     The function searches through parents of \a rootItem, returns Flickable item or null.
 
 */
 
-QQuickItem* SailfishTest::findParentFlickable(QQuickItem *rootItem)
+QQuickItem *SailfishTest::findParentFlickable(QQuickItem *rootItem)
 {
     return QAEngine::findParentFlickable(rootItem);
 }
@@ -161,7 +161,7 @@ void SailfishTest::clickContextMenuItem(QQuickItem *item, const QString &text, b
 {
     const QVariantList contextMenuItems = openContextMenu(item);
     for (const QVariant &cmItem : contextMenuItems) {
-        QQuickItem* item = cmItem.value<QQuickItem*>();
+        QQuickItem *item = cmItem.value<QQuickItem*>();
         if ((partial && QAEngine::getText(item).contains(text)) || (!partial && QAEngine::getText(item) == text)) {
             clickItem(item);
             return;
@@ -228,7 +228,7 @@ QPointF SailfishTest::getAbsPosition(QQuickItem *item) const
 
 void SailfishTest::enterCode(const QString &code)
 {
-    QQuickItem* keypadItem = nullptr;
+    QQuickItem *keypadItem = nullptr;
     QVariantList keypads = findItemsByClassName(QStringLiteral("Keypad"));
     for (const QVariant &keypad : keypads) {
         QQuickItem *possibleKeypadItem = keypad.value<QQuickItem*>();
@@ -273,13 +273,13 @@ QQuickItem *SailfishTest::getCurrentPage()
 
 void SailfishTest::pullDownTo(const QString &text)
 {
-    QQuickItem* page = getCurrentPage();
+    QQuickItem *page = getCurrentPage();
 
     QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem* flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
     bool atYBeginning = flickable->property("atYBeginning").toBool();
     if (!atYBeginning) {
         QMetaObject::invokeMethod(flickable, "scrollToTop", Qt::DirectConnection);
@@ -299,7 +299,7 @@ void SailfishTest::pullDownTo(const QString &text)
     if (pullDownMenus.isEmpty()) {
         return;
     }
-    QQuickItem* pullDownMenu = pullDownMenus.first().value<QQuickItem*>();
+    QQuickItem *pullDownMenu = pullDownMenus.first().value<QQuickItem*>();
     QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pullDownMenu);
     if (columns.isEmpty()) {
         return;
@@ -309,7 +309,7 @@ void SailfishTest::pullDownTo(const QString &text)
     if (items.isEmpty() || items.count() > 1) {
         return;
     }
-    QQuickItem* item = items.first().value<QQuickItem*>();
+    QQuickItem *item = items.first().value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -329,13 +329,13 @@ void SailfishTest::pullDownTo(const QString &text)
 
 void SailfishTest::pullDownTo(int index)
 {
-    QQuickItem* page = getCurrentPage();
+    QQuickItem *page = getCurrentPage();
 
     QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem* flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
     bool atYBeginning = flickable->property("atYBeginning").toBool();
     if (!atYBeginning) {
         QMetaObject::invokeMethod(flickable, "scrollToTop", Qt::DirectConnection);
@@ -355,7 +355,7 @@ void SailfishTest::pullDownTo(int index)
     if (pullDownMenus.isEmpty()) {
         return;
     }
-    QQuickItem* pullDownMenu = pullDownMenus.first().value<QQuickItem*>();
+    QQuickItem *pullDownMenu = pullDownMenus.first().value<QQuickItem*>();
     QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pullDownMenu);
     if (columns.isEmpty()) {
         return;
@@ -365,7 +365,7 @@ void SailfishTest::pullDownTo(int index)
     if (items.isEmpty() || items.count() < (index + 1)) {
         return;
     }
-    QQuickItem* item = items.at(index).value<QQuickItem*>();
+    QQuickItem *item = items.at(index).value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -385,13 +385,13 @@ void SailfishTest::pullDownTo(int index)
 
 void SailfishTest::pushUpTo(const QString &text)
 {
-    QQuickItem* page = getCurrentPage();
+    QQuickItem *page = getCurrentPage();
 
     QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem* flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
     bool atYEnd = flickable->property("atYEnd").toBool();
     if (!atYEnd) {
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
@@ -411,7 +411,7 @@ void SailfishTest::pushUpTo(const QString &text)
     if (pushUpMenus.isEmpty()) {
         return;
     }
-    QQuickItem* pushUpMenu = pushUpMenus.first().value<QQuickItem*>();
+    QQuickItem *pushUpMenu = pushUpMenus.first().value<QQuickItem*>();
     QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pushUpMenu);
     if (columns.isEmpty()) {
         return;
@@ -421,7 +421,7 @@ void SailfishTest::pushUpTo(const QString &text)
     if (items.isEmpty() || items.count() > 1) {
         return;
     }
-    QQuickItem* item = items.first().value<QQuickItem*>();
+    QQuickItem *item = items.first().value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -441,13 +441,13 @@ void SailfishTest::pushUpTo(const QString &text)
 
 void SailfishTest::pushUpTo(int index)
 {
-    QQuickItem* page = getCurrentPage();
+    QQuickItem *page = getCurrentPage();
 
     QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem* flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
     bool atYEnd = flickable->property("atYEnd").toBool();
     if (!atYEnd) {
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
@@ -467,7 +467,7 @@ void SailfishTest::pushUpTo(int index)
     if (pushUpMenus.isEmpty()) {
         return;
     }
-    QQuickItem* pushUpMenu = pushUpMenus.first().value<QQuickItem*>();
+    QQuickItem *pushUpMenu = pushUpMenus.first().value<QQuickItem*>();
     QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pushUpMenu);
     if (columns.isEmpty()) {
         return;
@@ -477,7 +477,7 @@ void SailfishTest::pushUpTo(int index)
     if (items.isEmpty() || items.count() < (index + 1)) {
         return;
     }
-    QQuickItem* item = items.at(index).value<QQuickItem*>();
+    QQuickItem *item = items.at(index).value<QQuickItem*>();
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -498,20 +498,20 @@ void SailfishTest::scrollToItem(QQuickItem *item)
     if (!item) {
         return;
     }
-    QQuickItem* flickable = findParentFlickable(item);
+    QQuickItem *flickable = findParentFlickable(item);
     if (!flickable) {
         return;
     }
-    QQuickItem* rootItem = QAEngine::getApplicationWindow();
+    QQuickItem *rootItem = QAEngine::getApplicationWindow();
     QPointF itemAbs = getAbsPosition(item);
     if (itemAbs.y() < 0) {
         while (itemAbs.y() < 0) {
-            mouseSwipe(rootItem->width() / 2, rootItem->height() * 0.05, rootItem->width() / 2, rootItem->height() * 0.95);
+            mouseSwipe(rootItem->width() / 2, rootItem->height()  *0.05, rootItem->width() / 2, rootItem->height()  *0.95);
             itemAbs = getAbsPosition(item);
         }
     } else if (itemAbs.y() > rootItem->height()) {
         while (itemAbs.y() > rootItem->height()) {
-            mouseSwipe(rootItem->width() / 2, rootItem->height() * 0.95, rootItem->width() / 2, rootItem->height() * 0.05);
+            mouseSwipe(rootItem->width() / 2, rootItem->height()  *0.95, rootItem->width() / 2, rootItem->height()  *0.05);
             itemAbs = getAbsPosition(item);
         }
     }
@@ -646,7 +646,7 @@ void SailfishTest::goBack()
 
 void SailfishTest::goForward()
 {
-    QQuickItem* rootItem = QAEngine::getApplicationWindow();
+    QQuickItem *rootItem = QAEngine::getApplicationWindow();
     clickPoint(rootItem->width() - 10, 10);
 }
 
@@ -659,7 +659,7 @@ void SailfishTest::goForward()
 
 void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
 {
-    QQuickItem* rootItem = QAEngine::instance()->rootItem();
+    QQuickItem *rootItem = QAEngine::instance()->rootItem();
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case SwipeDirectionUp:
@@ -687,7 +687,7 @@ void SailfishTest::swipe(SailfishTest::SwipeDirection direction)
 */
 void SailfishTest::peek(SailfishTest::PeekDirection direction)
 {
-    QQuickItem* rootItem = QAEngine::instance()->rootItem();
+    QQuickItem *rootItem = QAEngine::instance()->rootItem();
     QRectF rootRect(0, 0, rootItem->width(), rootItem->height());
     switch (direction) {
     case PeekDirectionUp:
@@ -763,7 +763,7 @@ void SailfishTest::clearFocus()
 
 void SailfishTest::saveScreenshot(const QString &location, bool fillBackground)
 {
-    QQuickItem* item = QAEngine::instance()->rootItem();
+    QQuickItem *item = QAEngine::instance()->rootItem();
     QSharedPointer<QQuickItemGrabResult> grabber = item->grabToImage();
     QEventLoop loop;
     connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, fillBackground, location, &loop]() {
@@ -860,16 +860,16 @@ void SailfishTest::onPropertyChanged()
 
 void SailfishTest::assert(const QString &text)
 {
-    QQmlEngine* engine = qmlEngine(this);
+    QQmlEngine *engine = qmlEngine(this);
     if (!engine) {
         return;
     }
-    QV4::ExecutionEngine* eEngine = QV8Engine::getV4(engine);
+    QV4::ExecutionEngine *eEngine = QV8Engine::getV4(engine);
     if (!eEngine) {
         return;
     }
     const QString functionName = eEngine->currentStackFrame().function;
-    TestResult* tr = QAEngine::instance()->getTestResult(functionName);
+    TestResult *tr = QAEngine::instance()->getTestResult(functionName);
     if (!tr) {
         return;
     }

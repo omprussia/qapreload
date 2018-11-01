@@ -9,7 +9,7 @@ class TestResult : public QObject
 {
     Q_OBJECT
 public:
-    explicit TestResult(QObject* parent = nullptr);
+    explicit TestResult(QObject *parent = nullptr);
     TestResult(const TestResult &other);
 
     Q_PROPERTY(bool success MEMBER success NOTIFY successChanged)
@@ -25,7 +25,7 @@ signals:
     void messageChanged();
 
 private:
-    QQmlEngine* m_engine;
+    QQmlEngine *m_engine;
 };
 Q_DECLARE_METATYPE(TestResult)
 
@@ -34,7 +34,7 @@ class TouchFilter : public QObject
 {
     Q_OBJECT
 public:
-    explicit TouchFilter(QObject* parent = nullptr);
+    explicit TouchFilter(QObject *parent = nullptr);
     virtual ~TouchFilter();
 public slots:
     void hideImmediately();
@@ -63,27 +63,27 @@ public:
 
     virtual ~QAEngine();
 
-    Q_PROPERTY(QQuickItem* rootItem READ rootItem CONSTANT)
-    QQuickItem* rootItem();
+    Q_PROPERTY(QQuickItem *rootItem READ rootItem CONSTANT)
+    QQuickItem *rootItem();
 
-    Q_PROPERTY(QQuickItem* applicationWindow READ applicationWindow CONSTANT)
-    QQuickItem* applicationWindow();
+    Q_PROPERTY(QQuickItem *applicationWindow READ applicationWindow CONSTANT)
+    QQuickItem *applicationWindow();
 
     static QString getText(QQuickItem *item);
-    static QString className(QQuickItem* item);
-    static QString uniqueId(QQuickItem* item);
-    static QPointF getAbsPosition(QQuickItem* item);
+    static QString className(QQuickItem *item);
+    static QString uniqueId(QQuickItem *item);
+    static QPointF getAbsPosition(QQuickItem *item);
 
-    static QQuickItem* findItemByObjectName(const QString &objectName, QQuickItem* parentItem = nullptr);
-    static QVariantList findItemsByClassName(const QString &className, QQuickItem* parentItem = nullptr);
-    static QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem* parentItem = nullptr);
-    static QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem* parentItem = nullptr);
-    static QQuickItem* findParentFlickable(QQuickItem* rootItem = nullptr);
-    static QVariantList findNestedFlickable(QQuickItem* parentItem = nullptr);
+    static QQuickItem *findItemByObjectName(const QString &objectName, QQuickItem *parentItem = nullptr);
+    static QVariantList findItemsByClassName(const QString &className, QQuickItem *parentItem = nullptr);
+    static QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
+    static QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
+    static QQuickItem *findParentFlickable(QQuickItem *rootItem = nullptr);
+    static QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
 
-    static QQuickItem* getApplicationWindow();
-    static QQuickItem* getCurrentPage();
-    static QQuickItem* getPageStack();
+    static QQuickItem *getApplicationWindow();
+    static QQuickItem *getCurrentPage();
+    static QQuickItem *getPageStack();
 
     static QVariant executeJS(const QString &jsCode, QQuickItem *item);
 
@@ -132,8 +132,8 @@ private:
 
     void setTouchIndicator(bool enable);
 
-    QQmlEngine* getEngine();
-    TestResult* getTestResult(const QString& functionName);
+    QQmlEngine *getEngine();
+    TestResult *getTestResult(const QString &functionName);
 
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
@@ -145,7 +145,7 @@ private:
 
     explicit QAEngine(QObject *parent = nullptr);
 
-    QQuickItem* m_applicationWindow = nullptr;
+    QQuickItem *m_applicationWindow = nullptr;
     QQuickItem *m_rootItem = nullptr;
 
     QAMouseEngine *m_mouseEngine = nullptr;

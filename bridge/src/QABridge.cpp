@@ -358,7 +358,7 @@ void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant 
     const int networkConnectionType = connectionType.toInt();
     qDebug() << Q_FUNC_INFO << networkConnectionType;
 
-    NetworkManager* nm = NetworkManager::instance();
+    NetworkManager *nm = NetworkManager::instance();
     if (nm->getTechnologies().isEmpty()) {
         QEventLoop loop;
         connect(nm, &NetworkManager::technologiesChanged, &loop, &QEventLoop::quit);
@@ -383,7 +383,7 @@ void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant 
         loop.exec();
     }
 
-    NetworkTechnology* wifiTech = nm->getTechnology(QStringLiteral("wifi"));
+    NetworkTechnology *wifiTech = nm->getTechnology(QStringLiteral("wifi"));
     if (wifiTech) {
         qDebug() << "Wifi powered:" << wifiTech->powered();
         wifiTech->setPowered((networkConnectionType & NetworkConnectionWifi) == NetworkConnectionWifi);
@@ -391,7 +391,7 @@ void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant 
         qDebug() << "Wifi not available";
     }
 
-    NetworkTechnology* cellularTech = nm->getTechnology(QStringLiteral("cellular"));
+    NetworkTechnology *cellularTech = nm->getTechnology(QStringLiteral("cellular"));
     if (cellularTech) {
         qDebug() << "Data powered:" << cellularTech->powered();
         cellularTech->setPowered((networkConnectionType & NetworkConnectionData) == NetworkConnectionData);
@@ -857,7 +857,7 @@ void QABridge::connectAppSocket(const QString &appName)
 
 int QABridge::getNetworkConnection() const
 {
-    NetworkManager* nm = NetworkManager::instance();
+    NetworkManager *nm = NetworkManager::instance();
     if (nm->getTechnologies().isEmpty()) {
         QEventLoop loop;
         connect(nm, &NetworkManager::technologiesChanged, &loop, &QEventLoop::quit);
@@ -867,7 +867,7 @@ int QABridge::getNetworkConnection() const
         return NetworkConnectionAirplane;
     }
     int connection = NetworkConnectionNone;
-    for (NetworkTechnology* tech : nm->getTechnologies()) {
+    for (NetworkTechnology *tech : nm->getTechnologies()) {
         if (tech->powered() && tech->type() == QStringLiteral("wifi")) {
             connection |= NetworkConnectionWifi;
         }

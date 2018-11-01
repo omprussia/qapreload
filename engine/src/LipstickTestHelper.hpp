@@ -11,7 +11,7 @@ public:
     explicit LipstickTestHelper(QObject *parent = nullptr);
 
 private:
-    QQuickItem* m_pannable = nullptr;
+    QQuickItem *m_pannable = nullptr;
 
 signals:
 

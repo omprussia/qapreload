@@ -525,7 +525,7 @@ void QASocketService::submitBootstrap(QTcpSocket *socket, const QVariant &elemen
 
 void QASocketService::getCurrentActivityBootstrap(QTcpSocket *socket)
 {
-    QQuickItem* currentPage = QAEngine::instance()->getCurrentPage();
+    QQuickItem *currentPage = QAEngine::instance()->getCurrentPage();
     const QString currentPageName = QStringLiteral("%1_%2")
             .arg(QString::fromLatin1(currentPage->metaObject()->className()).section(QChar('_'), 0, 0))
             .arg(currentPage->property("objectName").toString());
@@ -563,7 +563,7 @@ void QASocketService::getAlertTextBootstrap(QTcpSocket *socket)
 
 void QASocketService::isKeyboardShownBootstrap(QTcpSocket *socket)
 {
-    QInputMethod* ime = qApp->inputMethod();
+    QInputMethod *ime = qApp->inputMethod();
     if (!ime) {
         socketReply(socket, false, 1);
     }
@@ -611,14 +611,14 @@ void QASocketService::isIMEActivatedBootstrap(QTcpSocket *socket)
 
 void QASocketService::getOrientationBootstrap(QTcpSocket *socket)
 {
-    QQuickItem* item = QAEngine::getApplicationWindow();
+    QQuickItem *item = QAEngine::getApplicationWindow();
     const int deviceOrientation = item->property("deviceOrientation").toInt();
     socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QStringLiteral("LANDSCAPE") : QStringLiteral("PORTRAIT"));
 }
 
 void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg)
 {
-    QQuickItem* item = QAEngine::getApplicationWindow();
+    QQuickItem *item = QAEngine::getApplicationWindow();
     const QString orientation = orientationArg.toString();
     item->setProperty("deviceOrientation", orientation == QStringLiteral("LANDSCAPE") ? 2 : 1);
     socketReply(socket, QString());
@@ -735,7 +735,7 @@ void QASocketService::executeCommand_app_pushUpTo(QTcpSocket *socket, const QVar
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QVariant& elementIdArg, const QVariant &destinationArg)
+void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &destinationArg)
 {
     const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId << destinationArg;
@@ -846,10 +846,10 @@ void QASocketService::executeCommand_app_scrollToItem(QTcpSocket *socket, const 
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant& paramsArg)
+void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant &paramsArg)
 {
     const QString elementId = elementIdArg.toString();
-    QObject* object = QAEngine::getApplicationWindow()->window();
+    QObject *object = QAEngine::getApplicationWindow()->window();
     if (s_items.contains(elementId)) {
         object = s_items.value(elementId);
     }
@@ -884,8 +884,8 @@ void QASocketService::executeCommand_app_js(QTcpSocket *socket, const QVariant &
     const QString elementId = elementIdArg.toString();
     const QString jsCode = jsCodeArg.toString();
 
-    QQuickItem* item = QAEngine::getApplicationWindow();
-    QObject* object = item->window();
+    QQuickItem *item = QAEngine::getApplicationWindow();
+    QObject *object = item->window();
     if (s_items.contains(elementId)) {
         item = s_items.value(elementId);
     }
