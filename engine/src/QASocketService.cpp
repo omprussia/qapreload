@@ -1008,7 +1008,7 @@ void QASocketService::findStrategy_classname(QTcpSocket *socket, const QString &
 }
 void QASocketService::findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
 {
-    QVariantList items = QAEngine::findItemsByText(selector, parentItem);
+    QVariantList items = QAEngine::findItemsByText(selector, false, parentItem);
     qDebug() << Q_FUNC_INFO << selector << multiple << items;
     elementReply(socket, items, multiple);
 }
