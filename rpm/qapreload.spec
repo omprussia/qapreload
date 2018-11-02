@@ -74,6 +74,9 @@ sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfisht
 mkdir -p %{buildroot}%{_sysconfdir}
 touch %{buildroot}%{_sysconfdir}/qapreload-touch-indicator
 
+mkdir -p %{buildroot}/%{_docdir}/%{name}
+cp -R engine/html/* %{buildroot}/%{_docdir}/%{name}/
+
 %post
 /bin/systemctl daemon-reload
 /bin/systemctl stop qabridge.service
@@ -109,7 +112,7 @@ touch %{buildroot}%{_sysconfdir}/qapreload-touch-indicator
 %files doc
 %defattr(-,root,root,-)
 %dir %{_datadir}/doc/qapreload
-%{_datadir}/doc/qapreload/qapreload.qch
+%{_docdir}/qapreload/
 
 %files indicator
 %{_sysconfdir}/qapreload-touch-indicator
