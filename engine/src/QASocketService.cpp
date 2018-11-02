@@ -51,6 +51,33 @@ void QASocketService::initialize()
     }
 }
 
+bool QASocketService::invoke(QTcpSocket *socket, const QString &methodName, const QVariantList &parameters)
+{
+    for (int i = metaObject()->methodOffset(); i < metaObject()->methodOffset() + metaObject()->methodCount(); i++) {
+        if (metaObject()->method(i).name() == methodName.toLatin1()) {
+            const QMetaMethod method = metaObject()->method(i);
+            QGenericArgument arguments[9] = { QGenericArgument() };
+            for (int i = 0; i < method.parameterCount() - 1; i++) {
+                arguments[i] = Q_ARG(QVariant, parameters[i]);
+            }
+            return QMetaObject::invokeMethod(this,
+                                             methodName.toLatin1().constData(),
+                                             Qt::DirectConnection,
+                                             Q_ARG(QTcpSocket*, socket),
+                                             arguments[0],
+                                             arguments[1],
+                                             arguments[2],
+                                             arguments[3],
+                                             arguments[4],
+                                             arguments[5],
+                                             arguments[6],
+                                             arguments[7],
+                                             arguments[8]);
+        }
+    }
+    return false;
+}
+
 void QASocketService::elementReply(QTcpSocket *socket, const QVariantList &elements, bool multiple)
 {
     QVariantList value;
@@ -177,28 +204,8 @@ void QASocketService::readSocket()
 
     const QString methodName = QStringLiteral("%1Bootstrap").arg(action);
 
-    for (int i = metaObject()->methodOffset(); i < metaObject()->methodOffset() + metaObject()->methodCount(); i++) {
-        if (metaObject()->method(i).name() == methodName.toLatin1()) {
-            const QMetaMethod method = metaObject()->method(i);
-            QGenericArgument arguments[9] = { QGenericArgument() };
-            for (int i = 0; i < method.parameterCount() - 1; i++) {
-                arguments[i] = Q_ARG(QVariant, params[i]);
-            }
-            QMetaObject::invokeMethod(this,
-                                      methodName.toLatin1().constData(),
-                                      Qt::DirectConnection,
-                                      Q_ARG(QTcpSocket*, socket),
-                                      arguments[0],
-                                      arguments[1],
-                                      arguments[2],
-                                      arguments[3],
-                                      arguments[4],
-                                      arguments[5],
-                                      arguments[6],
-                                      arguments[7],
-                                      arguments[8]);
-            return;
-        }
+    if (invoke(socket, methodName, params)) {
+        return;
     }
 
     socketReply(socket, QStringLiteral("Not implemented"), 9);
@@ -285,13 +292,10 @@ void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &s
 
     qDebug() << Q_FUNC_INFO << socket << strategy << selector;
 
-    QMetaObject::invokeMethod(this,
-                              QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
-                              Qt::DirectConnection,
-                              Q_ARG(QTcpSocket*, socket),
-                              Q_ARG(QString, selector),
-                              Q_ARG(bool, false),
-                              Q_ARG(QQuickItem*, nullptr));
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
+    if (!invoke(socket, methodName, {selectorArg, false, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
+        findByProperty(socket, strategy, selectorArg, false, nullptr);
+    }
 }
 
 void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg)
@@ -301,13 +305,10 @@ void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &
 
     qDebug() << Q_FUNC_INFO << socket << strategy << selector;
 
-    QMetaObject::invokeMethod(this,
-                              QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
-                              Qt::DirectConnection,
-                              Q_ARG(QTcpSocket*, socket),
-                              Q_ARG(QString, selector),
-                              Q_ARG(bool, true),
-                              Q_ARG(QQuickItem*, nullptr));
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
+    if (!invoke(socket, methodName, {selectorArg, false, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
+        findByProperty(socket, strategy, selectorArg, true, nullptr);
+    }
 }
 
 void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg)
@@ -323,13 +324,10 @@ void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const 
 
     qDebug() << Q_FUNC_INFO << socket << strategy << selector;
 
-    QMetaObject::invokeMethod(this,
-                              QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
-                              Qt::DirectConnection,
-                              Q_ARG(QTcpSocket*, socket),
-                              Q_ARG(QString, selector),
-                              Q_ARG(bool, false),
-                              Q_ARG(QQuickItem*, item));
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
+    if (!invoke(socket, methodName, {selectorArg, false, QVariant::fromValue(item)})) {
+        findByProperty(socket, strategy, selectorArg, false, item);
+    }
 }
 
 void QASocketService::findElementsFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg)
@@ -345,13 +343,10 @@ void QASocketService::findElementsFromElementBootstrap(QTcpSocket *socket, const
 
     qDebug() << Q_FUNC_INFO << socket << strategy << selector;
 
-    QMetaObject::invokeMethod(this,
-                              QStringLiteral("findStrategy_%1").arg(strategy).toLatin1().constData(),
-                              Qt::DirectConnection,
-                              Q_ARG(QTcpSocket*, socket),
-                              Q_ARG(QString, selector),
-                              Q_ARG(bool, true),
-                              Q_ARG(QQuickItem*, item));
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
+    if (!invoke(socket, methodName, {selectorArg, true, QVariant::fromValue(item)})) {
+        findByProperty(socket, strategy, selectorArg, true, item);
+    }
 }
 
 void QASocketService::getLocationBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
@@ -652,24 +647,8 @@ void QASocketService::executeBootstrap(QTcpSocket *socket, const QVariant &comma
     qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
 
     const QVariantList params = paramsArg.toList();
-    QGenericArgument arguments[9] = { QGenericArgument() };
-    for (int i = 0; i < params.length(); i++) {
-        arguments[i] = Q_ARG(QVariant, params[i]);
-    }
-
-    bool handled = QMetaObject::invokeMethod(this,
-                              QStringLiteral("executeCommand_%1").arg(command).toLatin1().constData(),
-                              Qt::DirectConnection,
-                              Q_ARG(QTcpSocket*, socket),
-                              arguments[0],
-                              arguments[1],
-                              arguments[2],
-                              arguments[3],
-                              arguments[4],
-                              arguments[5],
-                              arguments[6],
-                              arguments[7],
-                              arguments[8]);
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(command);
+    const bool handled = invoke(socket, methodName, params);
 
     if (!handled) {
         qWarning() << Q_FUNC_INFO << command << "not handled!";
@@ -684,24 +663,8 @@ void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &
     qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
 
     const QVariantList params = paramsArg.toList();
-    QGenericArgument arguments[9] = { QGenericArgument() };
-    for (int i = 0; i < params.length(); i++) {
-        arguments[i] = Q_ARG(QVariant, params[i]);
-    }
-
-    bool handled = QMetaObject::invokeMethod(this,
-                              QStringLiteral("executeCommand_%1").arg(command).toLatin1().constData(),
-                              Qt::QueuedConnection,
-                              Q_ARG(QTcpSocket*, nullptr),
-                              arguments[0],
-                              arguments[1],
-                              arguments[2],
-                              arguments[3],
-                              arguments[4],
-                              arguments[5],
-                              arguments[6],
-                              arguments[7],
-                              arguments[8]);
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(command);
+    const bool handled = invoke(socket, methodName, params);
 
     if (!handled) {
         qWarning() << Q_FUNC_INFO << command << "not handled!";
@@ -975,6 +938,13 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
     }
 }
 
+void QASocketService::findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple, QQuickItem *parentItem)
+{
+    QVariantList items = QAEngine::findItemsByProperty(propertyName, propertyValue, parentItem);
+    qDebug() << Q_FUNC_INFO << propertyName << propertyValue << multiple << parentItem;
+    elementReply(socket, items, multiple);
+}
+
 void QASocketService::clickBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
 {
     const QString elementId = elementIdArg.toString();
@@ -998,6 +968,11 @@ void QASocketService::findStrategy_id(QTcpSocket *socket, const QString &selecto
     QQuickItem *item = QAEngine::findItemByObjectName(selector, parentItem);
     qDebug() << Q_FUNC_INFO << selector << multiple << item;
     elementReply(socket, QVariantList() << QVariant::fromValue(item), multiple);
+}
+
+void QASocketService::findStrategy_objectName(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    findStrategy_id(socket, selector, multiple, parentItem);
 }
 
 void QASocketService::findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)

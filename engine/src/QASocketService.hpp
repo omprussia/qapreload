@@ -107,13 +107,18 @@ private slots:
 
     void processTouchActionList(const QVariant &actionListArg);
 
+    void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QQuickItem *parentItem = nullptr);
+
     void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_objectName(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
     void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
     void findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
 
 private:
     explicit QASocketService(QObject *parent = nullptr);
     void initialize();
+
+    bool invoke(QTcpSocket *socket, const QString &methodName, const QVariantList &parameters);
 
     void elementReply(QTcpSocket *socket, const QVariantList &elements, bool multiple = false);
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0);
