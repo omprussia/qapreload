@@ -25,6 +25,13 @@
 
 #include <systemd/sd-daemon.h>
 
+static inline QGenericArgument qVariantToArgument(const QVariant &variant) {
+    if (variant.isValid() && !variant.isNull()) {
+        return QGenericArgument(variant.typeName(), variant.constData());
+    }
+    return QGenericArgument();
+}
+
 QABridge::QABridge(QObject *parent)
     : QObject(parent)
     , m_server(new QTcpServer(this))
@@ -112,9 +119,8 @@ void QABridge::removeSocket()
     }
 }
 
-void QABridge::initializeBootstrap(QTcpSocket *socket, const QVariant &appPackageArg)
+void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    const QString appName = appPackageArg.toString();
     qDebug() << Q_FUNC_INFO << appName;
 
     if (m_appSocket.contains(socket)) {
@@ -145,7 +151,7 @@ void QABridge::appConnectBootstrap(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void QABridge::appDisconnectBootstrap(QTcpSocket *socket, const QVariant &autoLaunchArg)
+void QABridge::appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch)
 {
     const QString appName = m_appSocket.value(socket);
 
@@ -154,7 +160,7 @@ void QABridge::appDisconnectBootstrap(QTcpSocket *socket, const QVariant &autoLa
         return;
     }
 
-    if (autoLaunchArg.toBool()) {
+    if (autoLaunch) {
         QJsonObject json;
         json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
         json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("closeApp")));
@@ -168,10 +174,8 @@ void QABridge::appDisconnectBootstrap(QTcpSocket *socket, const QVariant &autoLa
     socketReply(socket, QString());
 }
 
-void QABridge::startActivityBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &paramsArg)
+void QABridge::startActivityBootstrap(QTcpSocket *socket, const QString &appName, const QStringList &arguments)
 {
-    const QString appName = appIdArg.toString();
-    const QStringList arguments = paramsArg.toStringList();
     qDebug() << Q_FUNC_INFO << appName << arguments;
 
     const bool success = QABridge::launchApp(appName, arguments);
@@ -183,10 +187,10 @@ void QABridge::startActivityBootstrap(QTcpSocket *socket, const QVariant &appIdA
     }
 }
 
-void QABridge::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
+void QABridge::activateAppBootstrap(QTcpSocket *socket, const QString &appId)
 {
     const QString appName = m_appSocket.value(socket);
-    qDebug() << Q_FUNC_INFO << appName;
+    qDebug() << Q_FUNC_INFO << appName << appId;
     if (m_appPort.value(appName, 0) == 0) {
         QStringList arguments;
         QABridge::launchApp(appName, arguments);
@@ -200,10 +204,10 @@ void QABridge::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg
     socketReply(socket, QString());
 }
 
-void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId)
+void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QString &appId)
 {
     const QString appName = m_appSocket.value(socket);
-    qDebug() << Q_FUNC_INFO << appName;
+    qDebug() << Q_FUNC_INFO << appName << appId;
     if (m_appPort.value(appName) != 0) {
         QJsonObject json;
         json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
@@ -217,9 +221,8 @@ void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId)
     }
 }
 
-void QABridge::installAppBootstrap(QTcpSocket *socket, const QVariant &appPathArg)
+void QABridge::installAppBootstrap(QTcpSocket *socket, const QString &appPath)
 {
-    const QString appPath = appPathArg.toString();
     qDebug() << Q_FUNC_INFO << appPath;
     QEventLoop loop;
     PackageKit::Transaction *tx = PackageKit::Daemon::installFile(appPath, PackageKit::Transaction::TransactionFlagNone);
@@ -232,9 +235,8 @@ void QABridge::installAppBootstrap(QTcpSocket *socket, const QVariant &appPathAr
     loop.exec();
 }
 
-void QABridge::removeAppBootstrap(QTcpSocket *socket, const QVariant &appNameArg)
+void QABridge::removeAppBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    const QString appName = appNameArg.toString();
     qDebug() << Q_FUNC_INFO << appName;
     QEventLoop loop;
     PackageKit::Transaction *r = PackageKit::Daemon::resolve(appName, PackageKit::Transaction::FilterInstalled);
@@ -260,9 +262,8 @@ void QABridge::removeAppBootstrap(QTcpSocket *socket, const QVariant &appNameArg
     loop.exec();
 }
 
-void QABridge::isAppInstalledBootstrap(QTcpSocket *socket, const QVariant &appNameArg)
+void QABridge::isAppInstalledBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    const QString appName = appNameArg.toString();
     qDebug() << Q_FUNC_INFO << appName;
     QEventLoop loop;
     PackageKit::Transaction *tx = PackageKit::Daemon::resolve(appName, PackageKit::Transaction::FilterInstalled);
@@ -281,9 +282,8 @@ void QABridge::isAppInstalledBootstrap(QTcpSocket *socket, const QVariant &appNa
     loop.exec();
 }
 
-void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appId)
+void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    const QString appName = appId.toString();
     qDebug() << Q_FUNC_INFO << appName;
     QEventLoop loop;
     PackageKit::Transaction *tx = PackageKit::Daemon::resolve(appName, PackageKit::Transaction::FilterInstalled);
@@ -353,9 +353,9 @@ void QABridge::resetBootstrap(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant &connectionType)
+void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, double connectionType)
 {
-    const int networkConnectionType = connectionType.toInt();
+    const int networkConnectionType = static_cast<int>(connectionType);
     qDebug() << Q_FUNC_INFO << networkConnectionType;
 
     NetworkManager *nm = NetworkManager::instance();
@@ -407,18 +407,6 @@ void QABridge::getNetworkConnectionBootstrap(QTcpSocket *socket)
     socketReply(socket, getNetworkConnection());
 }
 
-void QABridge::getStringsBootstrap(QTcpSocket *socket, const QVariant &language, const QVariant &stringFile)
-{
-    qDebug() << Q_FUNC_INFO << language << stringFile;
-    socketReply(socket, QString());
-}
-
-void QABridge::endCoverageBootstrap(QTcpSocket *socket, const QVariant &intent, const QVariant &path)
-{
-    qDebug() << Q_FUNC_INFO << intent << path;
-    socketReply(socket, QString());
-}
-
 void QABridge::mobileShakeBootstrap(QTcpSocket *socket)
 {
     socketReply(socket, QString());
@@ -429,9 +417,8 @@ void QABridge::getSettingsBootstrap(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void QABridge::getDeviceTimeBootstrap(QTcpSocket *socket, const QVariant &format)
+void QABridge::getDeviceTimeBootstrap(QTcpSocket *socket, const QString &dateFormat)
 {
-    const QString dateFormat = format.toString();
     const QString time = dateFormat.isEmpty()
             ? QDateTime::currentDateTime().toString(Qt::TextDate)
             : QDateTime::currentDateTime().toString(dateFormat);
@@ -448,9 +435,8 @@ void QABridge::stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &
     socketReply(socket, QString());
 }
 
-void QABridge::executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
+void QABridge::executeBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg)
 {
-    const QString command = commandArg.toString();
     const QStringList commandPair = command.split(QChar(':'));
     if (commandPair.length() != 2) {
         socketReply(socket, QString());
@@ -493,9 +479,8 @@ void QABridge::executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, 
     }
 }
 
-void QABridge::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
+void QABridge::executeAsyncBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg)
 {
-    const QString command = commandArg.toString();
     const QStringList commandPair = command.split(QChar(':'));
     if (commandPair.length() != 2) {
         socketReply(socket, QString());
@@ -568,8 +553,12 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
         if (metaObject()->method(i).name() == methodName.toLatin1()) {
             const QMetaMethod method = metaObject()->method(i);
             QGenericArgument arguments[9] = { QGenericArgument() };
-            for (int i = 0; i < method.parameterCount() - 1; i++) {
-                arguments[i] = Q_ARG(QVariant, params[i]);
+            for (int i = 0; i < (method.parameterCount() - 1) && params.count() > i; i++) {
+                if (method.parameterType(i + 1) == QMetaType::QVariant) {
+                    arguments[i] = Q_ARG(QVariant, params[i]);
+                } else {
+                    arguments[i] = qVariantToArgument(params[i]);
+                }
             }
             QMetaObject::invokeMethod(this,
                                       methodName.toLatin1().constData(),
@@ -632,7 +621,7 @@ void QABridge::getLogTypesBootstrap(QTcpSocket *socket)
     socketReply(socket, QStringList());
 }
 
-void QABridge::getLogBootstrap(QTcpSocket *socket, const QVariant &typeArg)
+void QABridge::getLogBootstrap(QTcpSocket *socket, const QString &type)
 {
     socketReply(socket, QStringList());
 }
@@ -642,7 +631,7 @@ void QABridge::setGeoLocationBootstrap(QTcpSocket *socket, const QVariant &locat
     socketReply(socket, QString());
 }
 
-void QABridge::lockBootstrap(QTcpSocket *socket, const QVariant &secondsArg)
+void QABridge::lockBootstrap(QTcpSocket *socket, double seconds)
 {
     QDBusMessage lock = QDBusMessage::createMethodCall(
                 QStringLiteral("com.nokia.mce"),
@@ -658,16 +647,15 @@ void QABridge::lockBootstrap(QTcpSocket *socket, const QVariant &secondsArg)
     }
 }
 
-void QABridge::pushFileBootstrap(QTcpSocket *socket, const QVariant &pathArg, const QVariant &dataArg)
+void QABridge::pushFileBootstrap(QTcpSocket *socket, const QString &path, const QString &data)
 {
-    qDebug() << Q_FUNC_INFO << pathArg;
-    const QByteArray data = dataArg.toByteArray();
-    QFile file(pathArg.toString());
+    qDebug() << Q_FUNC_INFO << path;
+    QFile file(path);
 
     if (!file.open(QFile::WriteOnly)) {
         socketReply(socket, QString(), 1);
     }
-    bool success = file.write(QByteArray::fromBase64(data));
+    bool success = file.write(QByteArray::fromBase64(data.toLatin1()));
 
     if (!success) {
         qWarning() << Q_FUNC_INFO << "Error saving file!";
@@ -682,61 +670,19 @@ void QABridge::pushFileBootstrap(QTcpSocket *socket, const QVariant &pathArg, co
     socketReply(socket, QString());
 }
 
-void QABridge::pullFileBootstrap(QTcpSocket *socket, const QVariant &pathArg)
+void QABridge::pullFileBootstrap(QTcpSocket *socket, const QString &path)
 {
-    qDebug() << Q_FUNC_INFO << pathArg;
-    QFile file(pathArg.toString());
+    qDebug() << Q_FUNC_INFO << path;
+    QFile file(path);
 
     if (!file.open(QFile::ReadOnly)) {
-        qWarning() << Q_FUNC_INFO << "Can't find file" << pathArg.toString() << file.errorString();
+        qWarning() << Q_FUNC_INFO << "Can't find file" << path << file.errorString();
         socketReply(socket, QString(), 1);
     } else {
         const QByteArray data = file.readAll().toBase64();
         qDebug() << Q_FUNC_INFO << data << "Base64 is" << QByteArray::fromBase64(data);
         socketReply(socket, data);
     }
-}
-
-void QABridge::pullFolderBootstrap(QTcpSocket *socket, const QVariant &pathArg)
-{
-    const QString sourceFolder = pathArg.toString();
-    QByteArray reply;
-
-    QDir src(sourceFolder);
-    if(!src.exists())//folder not found
-    {
-        qWarning() << Q_FUNC_INFO << "Can't finde source path" << sourceFolder;
-        socketReply(socket, QString(), 1);
-        return;
-    }
-
-    bool success = compressFolder(sourceFolder, "");
-    qDebug() << Q_FUNC_INFO << "Wait operation compressFolder";
-
-    if (success) {
-        qDebug() << Q_FUNC_INFO << "compressFolder finished" << success << QByteArray::fromBase64(m_dataStream);
-        socketReply(socket, reply);
-    }
-}
-
-void QABridge::implicitWaitBootstrap(QTcpSocket *socket, const QVariant &msecondArg)
-{
-    socketReply(socket, QString());
-}
-
-void QABridge::asyncScriptTimeoutBootstrap(QTcpSocket *socket, const QVariant &msecondArg)
-{
-    socketReply(socket, QString());
-}
-
-void QABridge::timeoutsBootstrap(QTcpSocket *socket, const QVariant &, const QVariant &, const QVariant &, const QVariant &msecondArg)
-{
-    socketReply(socket, QString());
-}
-
-void QABridge::compareImagesBootstrap(QTcpSocket *socket, const QVariant &matchFeatures, const QVariant &firstImage, const QVariant &secondImage)
-{
-    socketReply(socket, QString());
 }
 
 void QABridge::unlockBootstrap(QTcpSocket *socket)
@@ -888,54 +834,4 @@ void QABridge::socketReply(QTcpSocket *socket, const QVariant &value, int status
     socket->write(QJsonDocument(reply).toJson(QJsonDocument::Compact));
     socket->flush();
 }
-
-bool QABridge::compressFolder(QString sourceFolder, QString prefex)
-{
-    QDir dir(sourceFolder);
-    if(!dir.exists())
-        return false;
-
-    //1 - list all folders inside the current folder
-    dir.setFilter(QDir::NoDotAndDotDot | QDir::Dirs);
-    QFileInfoList foldersList = dir.entryInfoList();
-
-    qDebug() << Q_FUNC_INFO << "Folderlist lenght is:" << foldersList.length();
-
-    //2 - For each folder in list: call the same function with folders' paths
-    for(int i=0; i<foldersList.length(); i++)
-    {
-        QString folderName = foldersList.at(i).fileName();
-        QString folderPath = dir.absolutePath()+"/"+folderName;
-        QString newPrefex = prefex+"/"+folderName;
-
-        qDebug() << Q_FUNC_INFO << folderName << folderPath << newPrefex;
-        compressFolder(folderPath, newPrefex);
-    }
-
-    //3 - List all files inside the current folder
-    dir.setFilter(QDir::NoDotAndDotDot | QDir::Files);
-    QFileInfoList filesList = dir.entryInfoList();
-
-    //4- For each file in list: add file path and compressed binary data
-    for(int i=0; i<filesList.length(); i++)
-    {
-        QString fileName = dir.absolutePath()+"/"+filesList.at(i).fileName();
-        QFile file(dir.absolutePath()+"/"+filesList.at(i).fileName());
-        qDebug() << Q_FUNC_INFO << filesList.length() << fileName;
-        if(!file.open(QIODevice::ReadOnly))//couldn't open file
-        {
-            qDebug() << Q_FUNC_INFO << "Couldn't open file";
-            return false;
-        }
-
-        m_dataStream.append(QString(prefex+"/"+filesList.at(i).fileName()));
-        m_dataStream.append(qCompress(file.readAll()));
-
-        qDebug() << Q_FUNC_INFO << "Compress binary data" << QByteArray::fromBase64(file.readAll());
-
-        file.close();
-    }
-    return true;
-}
-
 

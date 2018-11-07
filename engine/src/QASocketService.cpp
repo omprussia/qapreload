@@ -24,6 +24,13 @@
 static QASocketService *s_instance = nullptr;
 static QHash<QString, QQuickItem*> s_items;
 
+static inline QGenericArgument qVariantToArgument(const QVariant &variant) {
+    if (variant.isValid() && !variant.isNull()) {
+        return QGenericArgument(variant.typeName(), variant.constData());
+    }
+    return QGenericArgument();
+}
+
 QASocketService::QASocketService(QObject *parent)
     : QObject(parent)
 {
@@ -57,8 +64,12 @@ bool QASocketService::invoke(QTcpSocket *socket, const QString &methodName, cons
         if (metaObject()->method(i).name() == methodName.toLatin1()) {
             const QMetaMethod method = metaObject()->method(i);
             QGenericArgument arguments[9] = { QGenericArgument() };
-            for (int i = 0; i < method.parameterCount() - 1; i++) {
-                arguments[i] = Q_ARG(QVariant, parameters[i]);
+            for (int i = 0; i < (method.parameterCount() - 1) && parameters.count() > i; i++) {
+                if (method.parameterType(i + 1) == QMetaType::QVariant) {
+                    arguments[i] = Q_ARG(QVariant, parameters[i]);
+                } else {
+                    arguments[i] = qVariantToArgument(parameters[i]);
+                }
             }
             return QMetaObject::invokeMethod(this,
                                              methodName.toLatin1().constData(),
@@ -211,9 +222,8 @@ void QASocketService::readSocket()
     socketReply(socket, QStringLiteral("Not implemented"), 9);
 }
 
-void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
+void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    const QString appName = appIdArg.toString();
     if (appName != qApp->arguments().first().section(QLatin1Char('/'), -1)) {
         qWarning() << Q_FUNC_INFO << appName << "is not" << qApp->arguments().first().section(QLatin1Char('/'), -1);
         socketReply(socket, QString(), 1);
@@ -223,9 +233,8 @@ void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QVariant &a
     socketReply(socket, QString());
 }
 
-void QASocketService::closeAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
+void QASocketService::closeAppBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    const QString appName = appIdArg.toString();
     qDebug() << Q_FUNC_INFO << appName;
     if (appName != qApp->arguments().first().section(QLatin1Char('/'), -1)) {
         qWarning() << Q_FUNC_INFO << appName << "is not" << qApp->arguments().first().section(QLatin1Char('/'), -1);
@@ -237,9 +246,8 @@ void QASocketService::closeAppBootstrap(QTcpSocket *socket, const QVariant &appI
     qApp->quit();
 }
 
-void QASocketService::queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appIdArg)
+void QASocketService::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    const QString appName = appIdArg.toString();
     qDebug() << Q_FUNC_INFO << appName;
     if (appName != qApp->arguments().first().section(QLatin1Char('/'), -1)) {
         qWarning() << Q_FUNC_INFO << appName << "is not" << qApp->arguments().first().section(QLatin1Char('/'), -1);
@@ -255,22 +263,22 @@ void QASocketService::getClipboardBootstrap(QTcpSocket *socket)
     socketReply(socket, QString::fromUtf8(qGuiApp->clipboard()->text().toUtf8().toBase64()));
 }
 
-void QASocketService::setClipboardBootstrap(QTcpSocket *socket, const QVariant &contentArg)
+void QASocketService::setClipboardBootstrap(QTcpSocket *socket, const QString &content)
 {
-    qGuiApp->clipboard()->setText(contentArg.toString());
+    qGuiApp->clipboard()->setText(content);
     socketReply(socket, QString());
 }
 
-void QASocketService::implicitWaitBootstrap(QTcpSocket *socket, const QVariant &msecondArg)
+void QASocketService::implicitWaitBootstrap(QTcpSocket *socket, int msecs)
 {
-    int msecs = msecondArg.toInt();
+    qDebug() << Q_FUNC_INFO << msecs;
 
     socketReply(socket, QString());
 }
 
-void QASocketService::backgroundBootstrap(QTcpSocket *socket, const QVariant &secondsArg)
+void QASocketService::backgroundBootstrap(QTcpSocket *socket, int seconds)
 {
-    int msecs = secondsArg.toInt() * 1000;
+    const int msecs = seconds * 1000;
     qDebug() << Q_FUNC_INFO << msecs;
     QAEngine::instance()->rootItem()->window()->lower();
     if (msecs > 0) {
@@ -285,37 +293,36 @@ void QASocketService::backgroundBootstrap(QTcpSocket *socket, const QVariant &se
     socketReply(socket, QString());
 }
 
-void QASocketService::findElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg)
+void QASocketService::findElementBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector)
 {
-    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
-    const QString selector = selectorArg.toString();
+    QString fixStrategy = strategy;
+    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
 
-    qDebug() << Q_FUNC_INFO << socket << strategy << selector;
+    qDebug() << Q_FUNC_INFO << socket << fixStrategy << selector;
 
-    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
-    if (!invoke(socket, methodName, {selectorArg, false, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
-        findByProperty(socket, strategy, selectorArg, false, nullptr);
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(fixStrategy);
+    if (!invoke(socket, methodName, {selector, false, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
+        findByProperty(socket, fixStrategy, selector, false, nullptr);
     }
 }
 
-void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg)
+void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector)
 {
-    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
-    const QString selector = selectorArg.toString();
+    QString fixStrategy = strategy;
+    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
 
-    qDebug() << Q_FUNC_INFO << socket << strategy << selector;
+    qDebug() << Q_FUNC_INFO << socket << fixStrategy << selector;
 
-    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
-    if (!invoke(socket, methodName, {selectorArg, false, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
-        findByProperty(socket, strategy, selectorArg, true, nullptr);
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(fixStrategy);
+    if (!invoke(socket, methodName, {selector, false, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
+        findByProperty(socket, fixStrategy, selector, true, nullptr);
     }
 }
 
-void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg)
+void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId)
 {
-    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
-    const QString selector = selectorArg.toString();
-    const QString elementId = elementIdArg.toString();
+    QString fixStrategy = strategy;
+    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
 
     QQuickItem *item = nullptr;
     if (s_items.contains(elementId)) {
@@ -325,34 +332,32 @@ void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const 
     qDebug() << Q_FUNC_INFO << socket << strategy << selector;
 
     const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
-    if (!invoke(socket, methodName, {selectorArg, false, QVariant::fromValue(item)})) {
-        findByProperty(socket, strategy, selectorArg, false, item);
+    if (!invoke(socket, methodName, {selector, false, QVariant::fromValue(item)})) {
+        findByProperty(socket, strategy, selector, false, item);
     }
 }
 
-void QASocketService::findElementsFromElementBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &selectorArg, const QVariant &elementIdArg)
+void QASocketService::findElementsFromElementBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId)
 {
-    const QString strategy = strategyArg.toString().replace(QChar(' '), QString());
-    const QString selector = selectorArg.toString();
-    const QString elementId = elementIdArg.toString();
+    QString fixStrategy = strategy;
+    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
 
     QQuickItem *item = nullptr;
     if (s_items.contains(elementId)) {
         item = s_items.value(elementId);
     }
 
-    qDebug() << Q_FUNC_INFO << socket << strategy << selector;
+    qDebug() << Q_FUNC_INFO << socket << fixStrategy << selector;
 
-    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
-    if (!invoke(socket, methodName, {selectorArg, true, QVariant::fromValue(item)})) {
-        findByProperty(socket, strategy, selectorArg, true, item);
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(fixStrategy);
+    if (!invoke(socket, methodName, {selector, true, QVariant::fromValue(item)})) {
+        findByProperty(socket, fixStrategy, selector, true, item);
     }
 }
 
-void QASocketService::getLocationBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::getLocationBootstrap(QTcpSocket *socket, const QString &elementId)
 {
     QJsonObject reply;
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << s_items.value(elementId);
     if (s_items.contains(elementId)) {
         QQuickItem *item = s_items.value(elementId);
@@ -369,10 +374,9 @@ void QASocketService::getLocationBootstrap(QTcpSocket *socket, const QVariant &e
     }
 }
 
-void QASocketService::getLocationInViewBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::getLocationInViewBootstrap(QTcpSocket *socket, const QString &elementId)
 {
     QJsonObject reply;
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << s_items.value(elementId);
     if (s_items.contains(elementId)) {
         QQuickItem *item = s_items.value(elementId);
@@ -388,10 +392,8 @@ void QASocketService::getLocationInViewBootstrap(QTcpSocket *socket, const QVari
     }
 }
 
-void QASocketService::getAttributeBootstrap(QTcpSocket *socket, const QVariant &attributeArg, const QVariant &elementIdArg)
+void QASocketService::getAttributeBootstrap(QTcpSocket *socket, const QString &attribute, const QString &elementId)
 {
-    const QString elementId = elementIdArg.toString();
-    const QString attribute = attributeArg.toString();
     qDebug() << Q_FUNC_INFO << elementId << attribute;
     if (s_items.contains(elementId)) {
         const QVariant reply = s_items.value(elementId)->property(attribute.toLatin1().constData());
@@ -401,10 +403,8 @@ void QASocketService::getAttributeBootstrap(QTcpSocket *socket, const QVariant &
     }
 }
 
-void QASocketService::getPropertyBootstrap(QTcpSocket *socket, const QVariant &attributeArg, const QVariant &elementIdArg)
+void QASocketService::getPropertyBootstrap(QTcpSocket *socket, const QString &attribute, const QString &elementId)
 {
-    const QString elementId = elementIdArg.toString();
-    const QString attribute = attributeArg.toString();
     qDebug() << Q_FUNC_INFO << elementId << attribute;
     if (s_items.contains(elementId)) {
         const QVariant reply = s_items.value(elementId)->property(attribute.toLatin1().constData());
@@ -414,9 +414,8 @@ void QASocketService::getPropertyBootstrap(QTcpSocket *socket, const QVariant &a
     }
 }
 
-void QASocketService::getTextBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::getTextBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId;
     if (s_items.contains(elementId)) {
         socketReply(socket, QAEngine::getText(s_items.value(elementId)));
@@ -425,9 +424,8 @@ void QASocketService::getTextBootstrap(QTcpSocket *socket, const QVariant &eleme
     }
 }
 
-void QASocketService::getElementScreenshotBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::getElementScreenshotBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId;
     if (s_items.contains(elementId)) {
         QQuickItem *item = s_items.value(elementId);
@@ -442,24 +440,23 @@ void QASocketService::getScreenshotBootstrap(QTcpSocket *socket)
     grabScreenshot(socket, QAEngine::instance()->rootItem(), true);
 }
 
-void QASocketService::elementEnabledBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::elementEnabledBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    getAttributeBootstrap(socket, QStringLiteral("enabled"), elementIdArg);
+    getAttributeBootstrap(socket, QStringLiteral("enabled"), elementId);
 }
 
-void QASocketService::elementDisplayedBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::elementDisplayedBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    getAttributeBootstrap(socket, QStringLiteral("visible"), elementIdArg);
+    getAttributeBootstrap(socket, QStringLiteral("visible"), elementId);
 }
 
-void QASocketService::elementSelectedBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::elementSelectedBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    getAttributeBootstrap(socket, QStringLiteral("checked"), elementIdArg);
+    getAttributeBootstrap(socket, QStringLiteral("checked"), elementId);
 }
 
-void QASocketService::getSizeBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::getSizeBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << s_items.value(elementId);
     if (s_items.contains(elementId)) {
         QQuickItem *item = s_items.value(elementId);
@@ -472,17 +469,18 @@ void QASocketService::getSizeBootstrap(QTcpSocket *socket, const QVariant &eleme
     }
 }
 
-void QASocketService::setValueImmediateBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
+void QASocketService::setValueImmediateBootstrap(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qDebug() << Q_FUNC_INFO << valueArg << elementIdArg;
-    setAttribute(socket, QStringLiteral("text"), valueArg.toList().first(), elementIdArg);
+    qDebug() << Q_FUNC_INFO << value << elementId;
+    QStringList text;
+    for (const QVariant &val : value) {
+        text.append(val.toString());
+    }
+    setAttribute(socket, QStringLiteral("text"), text.join(QString()), elementId);
 }
 
-void QASocketService::setAttribute(QTcpSocket *socket, const QVariant &attributeArg, const QVariant &valueArg, const QVariant &elementIdArg)
+void QASocketService::setAttribute(QTcpSocket *socket, const QString &attribute, const QString &value, const QString &elementId)
 {
-    const QString attribute = attributeArg.toString();
-    const QString value = valueArg.toString();
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << attribute << value << elementId;
     if (s_items.contains(elementId)) {
         s_items.value(elementId)->setProperty(attribute.toLatin1().constData(), value);
@@ -492,28 +490,21 @@ void QASocketService::setAttribute(QTcpSocket *socket, const QVariant &attribute
     }
 }
 
-void QASocketService::replaceValueBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
+void QASocketService::replaceValueBootstrap(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qDebug() << Q_FUNC_INFO << valueArg << elementIdArg;
-    setAttribute(socket, QStringLiteral("text"), valueArg.toList().first(), elementIdArg);
+    qDebug() << Q_FUNC_INFO << value << elementId;
+    setValueImmediateBootstrap(socket, value, elementId);
 }
 
-void QASocketService::setValueBootstrap(QTcpSocket *socket, const QVariant &valueArg, const QVariant &elementIdArg)
+void QASocketService::setValueBootstrap(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qDebug() << Q_FUNC_INFO << valueArg << elementIdArg;
-    QQuickItem *item = s_items.value(elementIdArg.toString());
-    if (!item) {
-        socketReply(socket, QString(), 1);
-        return;
-    }
-    m_sailfishTest->clickItem(item);
-    m_sailfishTest->pressKeys(valueArg.toStringList().join(""));
-    socketReply(socket, QString());
+    qDebug() << Q_FUNC_INFO << value << elementId;
+    setValueImmediateBootstrap(socket, value, elementId);
 }
 
-void QASocketService::submitBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::submitBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug() << Q_FUNC_INFO << elementIdArg;
+    qDebug() << Q_FUNC_INFO << elementId;
     QAEngine::instance()->m_keyEngine->pressEnter(1);
     socketReply(socket, QString());
 }
@@ -611,10 +602,9 @@ void QASocketService::getOrientationBootstrap(QTcpSocket *socket)
     socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QStringLiteral("LANDSCAPE") : QStringLiteral("PORTRAIT"));
 }
 
-void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QVariant &orientationArg)
+void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QString &orientation)
 {
     QQuickItem *item = QAEngine::getApplicationWindow();
-    const QString orientation = orientationArg.toString();
     item->setProperty("deviceOrientation", orientation == QStringLiteral("LANDSCAPE") ? 2 : 1);
     socketReply(socket, QString());
 }
@@ -634,110 +624,110 @@ void QASocketService::pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &
     socketReply(socket, QString());
 }
 
-void QASocketService::hideKeyboardBootstrap(QTcpSocket *socket, const QVariant &strategyArg, const QVariant &keyArg, const QVariant &keyCodeArg, const QVariant &keyNameArg)
+void QASocketService::hideKeyboardBootstrap(QTcpSocket *socket, const QString &strategy, const QString &key, int keyCode, const QString &keyName)
 {
     m_sailfishTest->clearFocus();
     socketReply(socket, QString());
 }
 
-void QASocketService::executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
+void QASocketService::executeBootstrap(QTcpSocket *socket, const QString &command, const QVariantList &params)
 {
-    const QString command = commandArg.toString().replace(QChar(':'), QChar('_'));
+    const QString fixCommand = QString(command).replace(QChar(':'), QChar('_'));
 
-    qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
+    qDebug() << Q_FUNC_INFO << socket << fixCommand << params;
 
-    const QVariantList params = paramsArg.toList();
-    const QString methodName = QStringLiteral("executeCommand_%1").arg(command);
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(fixCommand);
     const bool handled = invoke(socket, methodName, params);
 
     if (!handled) {
-        qWarning() << Q_FUNC_INFO << command << "not handled!";
+        qWarning() << Q_FUNC_INFO << fixCommand << "not handled!";
         socketReply(socket, QString());
     }
 }
 
-void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg)
+void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QString &command, const QVariantList &params)
 {
-    const QString command = commandArg.toString().replace(QChar(':'), QChar('_'));
+    const QString fixCommand = QString(command).replace(QChar(':'), QChar('_'));
 
-    qDebug() << Q_FUNC_INFO << socket << command << paramsArg;
+    qDebug() << Q_FUNC_INFO << socket << fixCommand << params;
 
-    const QVariantList params = paramsArg.toList();
-    const QString methodName = QStringLiteral("executeCommand_%1").arg(command);
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(fixCommand);
     const bool handled = invoke(socket, methodName, params);
 
     if (!handled) {
-        qWarning() << Q_FUNC_INFO << command << "not handled!";
+        qWarning() << Q_FUNC_INFO << fixCommand << "not handled!";
     }
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_pullDownTo(QTcpSocket *socket, const QVariant &destinationArg)
+void QASocketService::executeCommand_app_pullDownTo(QTcpSocket *socket, const QString &destination)
 {
-    qDebug() << Q_FUNC_INFO << destinationArg;
-    if (destinationArg.type() == QMetaType::QString) {
-        const QString name = destinationArg.toString();
-        m_sailfishTest->pullDownTo(name);
-    } else {
-        const int index = destinationArg.toInt();
-        m_sailfishTest->pullDownTo(index);
-    }
+    qDebug() << Q_FUNC_INFO << destination;
+
+    m_sailfishTest->pullDownTo(destination);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_pushUpTo(QTcpSocket *socket, const QVariant &destinationArg)
+void QASocketService::executeCommand_app_pullDownTo(QTcpSocket *socket, double destination)
 {
-    qDebug() << Q_FUNC_INFO << destinationArg;
-    if (destinationArg.type() == QMetaType::QString) {
-        const QString name = destinationArg.toString();
-        m_sailfishTest->pushUpTo(name);
-    } else {
-        const int index = destinationArg.toInt();
-        m_sailfishTest->pushUpTo(index);
-    }
+    qDebug() << Q_FUNC_INFO << destination;
+    m_sailfishTest->pullDownTo(destination);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &destinationArg)
+void QASocketService::executeCommand_app_pushUpTo(QTcpSocket *socket, const QString &destination)
 {
-    const QString elementId = elementIdArg.toString();
-    qDebug() << Q_FUNC_INFO << elementId << destinationArg;
+    qDebug() << Q_FUNC_INFO << destination;
+
+    m_sailfishTest->pushUpTo(destination);
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_pushUpTo(QTcpSocket *socket, double destination)
+{
+    qDebug() << Q_FUNC_INFO << destination;
+
+    m_sailfishTest->pushUpTo(destination);
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, const QString &destination)
+{
+    qDebug() << Q_FUNC_INFO << elementId << destination;
     if (s_items.contains(elementId)) {
-        if (destinationArg.type() == QMetaType::QString) {
-            const QString name = destinationArg.toString();
-            m_sailfishTest->clickContextMenuItem(s_items.value(elementId), name);
-        } else {
-            const int index = destinationArg.toInt();
-            m_sailfishTest->clickContextMenuItem(s_items.value(elementId), index);
-        }
+        m_sailfishTest->clickContextMenuItem(s_items.value(elementId), destination);
     }
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket, const QVariant &timeoutArg)
+void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, double destination)
 {
-    const int timeout = timeoutArg.toInt();
+    qDebug() << Q_FUNC_INFO << elementId << destination;
+    if (s_items.contains(elementId)) {
+        m_sailfishTest->clickContextMenuItem(s_items.value(elementId), destination);
+    }
+    socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket, int timeout)
+{
     m_sailfishTest->waitForPageChange(timeout);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QVariant &elementArg, const QVariant &propertyArg, const QVariant &valueArg, const QVariant &timeoutArg)
+void QASocketService::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout)
 {
-    const QString elementId = elementArg.toString();
     if (!s_items.contains(elementId)) {
         qWarning() << Q_FUNC_INFO << "Element" << elementId << "is unknown!";
         socketReply(socket, QString());
         return;
     }
-    const QString propertyName = propertyArg.toString();
-    const int timeout = timeoutArg.toInt();
-    m_sailfishTest->waitForPropertyChange(s_items.value(elementId), propertyName, valueArg, timeout);
+    m_sailfishTest->waitForPropertyChange(s_items.value(elementId), propertyName, value, timeout);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_swipe(QTcpSocket *socket, const QVariant &directionArg)
+void QASocketService::executeCommand_app_swipe(QTcpSocket *socket, const QString &directionString)
 {
-    const QString directionString = directionArg.toString();
     SailfishTest::SwipeDirection direction = SailfishTest::SwipeDirectionDown;
     if (directionString == QStringLiteral("down")) {
         direction = SailfishTest::SwipeDirectionDown;
@@ -752,9 +742,8 @@ void QASocketService::executeCommand_app_swipe(QTcpSocket *socket, const QVarian
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_peek(QTcpSocket *socket, const QVariant &directionArg)
+void QASocketService::executeCommand_app_peek(QTcpSocket *socket, const QString &directionString)
 {
-    const QString directionString = directionArg.toString();
     SailfishTest::PeekDirection direction = SailfishTest::PeekDirectionDown;
     if (directionString == QStringLiteral("down")) {
         direction = SailfishTest::PeekDirectionDown;
@@ -781,27 +770,26 @@ void QASocketService::executeCommand_app_goForward(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_enterCode(QTcpSocket *socket, const QVariant &codeArg)
+void QASocketService::executeCommand_app_enterCode(QTcpSocket *socket, const QString &code)
 {
-    m_sailfishTest->enterCode(codeArg.toString());
+    m_sailfishTest->enterCode(code);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_touch_pressAndHold(QTcpSocket *socket, const QVariant &posxArg, const QVariant &posyArg)
+void QASocketService::executeCommand_touch_pressAndHold(QTcpSocket *socket, int posx, int posy)
 {
-    m_sailfishTest->pressAndHold(posxArg.toInt(), posyArg.toInt());
+    m_sailfishTest->pressAndHold(posx, posy);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_touch_mouseSwipe(QTcpSocket *socket, const QVariant &posxArg, const QVariant &posyArg, const QVariant &stopxArg, const QVariant &stopyArg)
+void QASocketService::executeCommand_touch_mouseSwipe(QTcpSocket *socket, int posx, int posy, int stopx, int stopy)
 {
-    m_sailfishTest->mouseSwipe(posxArg.toInt(), posyArg.toInt(), stopxArg.toInt(), stopyArg.toInt());
+    m_sailfishTest->mouseSwipe(posx, posy, stopx, stopy);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_scrollToItem(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::executeCommand_app_scrollToItem(QTcpSocket *socket, const QString &elementId)
 {
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId;
     if (s_items.contains(elementId)) {
         m_sailfishTest->scrollToItem(s_items.value(elementId));
@@ -809,15 +797,13 @@ void QASocketService::executeCommand_app_scrollToItem(QTcpSocket *socket, const 
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &methodArg, const QVariant &paramsArg)
+void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params)
 {
-    const QString elementId = elementIdArg.toString();
     QObject *object = QAEngine::getApplicationWindow()->window();
     if (s_items.contains(elementId)) {
         object = s_items.value(elementId);
     }
 
-    const QVariantList params = paramsArg.toList();
     QGenericArgument arguments[10] = { QGenericArgument() };
     for (int i = 0; i < params.length(); i++) {
         arguments[i] = Q_ARG(QVariant, params[i]);
@@ -826,7 +812,7 @@ void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QVaria
     QVariant reply;
 
     QMetaObject::invokeMethod(object,
-                              methodArg.toString().toLatin1().constData(),
+                              method.toLatin1().constData(),
                               Qt::DirectConnection,
                               Q_RETURN_ARG(QVariant, reply),
                               arguments[0],
@@ -842,11 +828,8 @@ void QASocketService::executeCommand_app_method(QTcpSocket *socket, const QVaria
     socketReply(socket, reply);
 }
 
-void QASocketService::executeCommand_app_js(QTcpSocket *socket, const QVariant &elementIdArg, const QVariant &jsCodeArg)
+void QASocketService::executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode)
 {
-    const QString elementId = elementIdArg.toString();
-    const QString jsCode = jsCodeArg.toString();
-
     QQuickItem *item = QAEngine::getApplicationWindow();
     QObject *object = item->window();
     if (s_items.contains(elementId)) {
@@ -900,6 +883,15 @@ void QASocketService::performMultiActionBootstrap(QTcpSocket *socket, const QVar
     socketReply(socket, QString());
 }
 
+void QASocketService::performMultiActionBootstrap(QTcpSocket *socket, const QVariantList &actions)
+{
+    for (const QVariant &action : actions) {
+        processTouchActionList(action);
+    }
+
+    socketReply(socket, QString());
+}
+
 void QASocketService::processTouchActionList(const QVariant &actionListArg)
 {
     int startX = 0;
@@ -945,9 +937,8 @@ void QASocketService::findByProperty(QTcpSocket *socket, const QString &property
     elementReply(socket, items, multiple);
 }
 
-void QASocketService::clickBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::clickBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    const QString elementId = elementIdArg.toString();
     qDebug() << Q_FUNC_INFO << elementId;
     if (s_items.contains(elementId)) {
         QQuickItem *item = s_items.value(elementId);
@@ -958,9 +949,9 @@ void QASocketService::clickBootstrap(QTcpSocket *socket, const QVariant &element
     }
 }
 
-void QASocketService::clearBootstrap(QTcpSocket *socket, const QVariant &elementIdArg)
+void QASocketService::clearBootstrap(QTcpSocket *socket, const QString &elementId)
 {
-    setAttribute(socket, QStringLiteral("text"), QString(), elementIdArg);
+    setAttribute(socket, QStringLiteral("text"), QString(), elementId);
 }
 
 void QASocketService::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)

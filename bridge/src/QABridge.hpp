@@ -33,37 +33,29 @@ private slots:
     void readSocket();
     void removeSocket();
 
-    void initializeBootstrap(QTcpSocket *socket, const QVariant &appPackageArg);
+    void initializeBootstrap(QTcpSocket *socket, const QString &appName);
     void appConnectBootstrap(QTcpSocket *socket);
-    void appDisconnectBootstrap(QTcpSocket *socket, const QVariant &autoLaunchArg);
+    void appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch);
 
-    void startActivityBootstrap(QTcpSocket *socket, const QVariant &appIdArg, const QVariant &paramsArg);
+    void startActivityBootstrap(QTcpSocket *socket, const QString &appName, const QStringList &params);
 
-    void installAppBootstrap(QTcpSocket *socket, const QVariant &appPathArg);
-    void activateAppBootstrap(QTcpSocket *socket, const QVariant &appIdArg);
-    void terminateAppBootstrap(QTcpSocket *socket, const QVariant &appId);
-    void removeAppBootstrap(QTcpSocket *socket, const QVariant &appNameArg);
-    void isAppInstalledBootstrap(QTcpSocket *socket, const QVariant &appNameArg);
-    void queryAppStateBootstrap(QTcpSocket *socket, const QVariant &appId);
-    void pushFileBootstrap(QTcpSocket *socket, const QVariant &pathArg, const QVariant &dataArg);
-    void pullFileBootstrap(QTcpSocket *socket, const QVariant &pathArg);
-    void lockBootstrap(QTcpSocket *socket, const QVariant &secondsArg);
+    void installAppBootstrap(QTcpSocket *socket, const QString &appPath);
+    void activateAppBootstrap(QTcpSocket *socket, const QString &appId);
+    void terminateAppBootstrap(QTcpSocket *socket, const QString &appId);
+    void removeAppBootstrap(QTcpSocket *socket, const QString &appName);
+    void isAppInstalledBootstrap(QTcpSocket *socket, const QString &appName);
+    void queryAppStateBootstrap(QTcpSocket *socket, const QString &appName);
+    void pushFileBootstrap(QTcpSocket *socket, const QString &path, const QString &data);
+    void pullFileBootstrap(QTcpSocket *socket, const QString &path);
+    void lockBootstrap(QTcpSocket *socket, double seconds);
     void unlockBootstrap(QTcpSocket *socket);
     void isLockedBootstrap(QTcpSocket *socket);
     void launchAppBootstrap(QTcpSocket *socket);
     void closeAppBootstrap(QTcpSocket *socket);
     void getCurrentContextBootstrap(QTcpSocket *socket);
-    void getDeviceTimeBootstrap(QTcpSocket *socket, const QVariant &format = QVariant());
-
-    void pullFolderBootstrap(QTcpSocket *socket, const QVariant &pathArg);
-    void implicitWaitBootstrap(QTcpSocket *socket, const QVariant &msecondArg);
-    void asyncScriptTimeoutBootstrap(QTcpSocket *socket, const QVariant &msecondArg);
-    void timeoutsBootstrap(QTcpSocket *socket, const QVariant &, const QVariant &, const QVariant &, const QVariant &msecondArg);
-    void compareImagesBootstrap(QTcpSocket *socket, const QVariant &matchFeatures, const QVariant &firstImage, const QVariant &secondImage);
-    void setNetworkConnectionBootstrap(QTcpSocket *socket, const QVariant &connectionType);
+    void getDeviceTimeBootstrap(QTcpSocket *socket, const QString &dateFormat = QString());
+    void setNetworkConnectionBootstrap(QTcpSocket *socket, double connectionType);
     void getNetworkConnectionBootstrap(QTcpSocket *socket);
-    void getStringsBootstrap(QTcpSocket *socket, const QVariant &language, const QVariant &stringFile);
-    void endCoverageBootstrap(QTcpSocket *socket, const QVariant &intent, const QVariant &path);
     void resetBootstrap(QTcpSocket *socket);
     void mobileShakeBootstrap(QTcpSocket *socket);
     void getSettingsBootstrap(QTcpSocket *socket);
@@ -73,13 +65,13 @@ private slots:
     void openNotificationsBootstrap(QTcpSocket *socket);
     void getGeoLocationBootstrap(QTcpSocket *socket);
     void getLogTypesBootstrap(QTcpSocket *socket);
-    void getLogBootstrap(QTcpSocket *socket, const QVariant &typeArg);
+    void getLogBootstrap(QTcpSocket *socket, const QString &type);
     void setGeoLocationBootstrap(QTcpSocket *socket, const QVariant &location);
     void startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments);
     void stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments);
 
-    void executeBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
-    void executeAsyncBootstrap(QTcpSocket *socket, const QVariant &commandArg, const QVariant &paramsArg);
+    void executeBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg);
+    void executeAsyncBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg);
 
     void executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
 
@@ -96,7 +88,6 @@ private:
     int getNetworkConnection() const;
 
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0);
-    bool compressFolder(QString sourceFolder, QString prefex);
 
     QTcpServer *m_server = nullptr;
     QHash<QTcpSocket*, QString> m_appSocket;
