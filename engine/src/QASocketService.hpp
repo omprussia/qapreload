@@ -26,7 +26,7 @@ private slots:
     void activateAppBootstrap(QTcpSocket *socket, const QString &appName);
     void closeAppBootstrap(QTcpSocket *socket, const QString &appName);
     void queryAppStateBootstrap(QTcpSocket *socket, const QString &appName);
-    void backgroundBootstrap(QTcpSocket *socket, int seconds);
+    void backgroundBootstrap(QTcpSocket *socket, double seconds);
     void getClipboardBootstrap(QTcpSocket *socket);
     void setClipboardBootstrap(QTcpSocket *socket, const QString &content);
     void findElementBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector);
@@ -56,10 +56,10 @@ private slots:
     void forwardBootstrap(QTcpSocket *socket);
     void getOrientationBootstrap(QTcpSocket *socket);
     void setOrientationBootstrap(QTcpSocket *socket, const QString &orientation);
-    void hideKeyboardBootstrap(QTcpSocket *socket, const QString &strategy, const QString &key = QString(), int keyCode = 0, const QString &keyName = QString());
+    void hideKeyboardBootstrap(QTcpSocket *socket, const QString &strategy, const QString &key = QString(), double keyCode = 0, const QString &keyName = QString());
 
     void getCurrentActivityBootstrap(QTcpSocket *socket);
-    void implicitWaitBootstrap(QTcpSocket *socket, int msecs); // ?
+    void implicitWaitBootstrap(QTcpSocket *socket, double msecs); // ?
     void activeBootstrap(QTcpSocket *socket); //for functions switch_to.active_element
     void getAlertTextBootstrap(QTcpSocket *socket); //for functions switch_to.alert
     void isKeyboardShownBootstrap(QTcpSocket *socket);
@@ -83,7 +83,7 @@ private slots:
     void executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, const QString &destination);
     void executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, double destination);
 
-    void executeCommand_app_waitForPageChange(QTcpSocket *socket, int timeout = 3000);
+    void executeCommand_app_waitForPageChange(QTcpSocket *socket, double timeout = 3000);
     void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
 
     void executeCommand_app_swipe(QTcpSocket *socket, const QString &directionString);
@@ -94,8 +94,8 @@ private slots:
 
     void executeCommand_app_enterCode(QTcpSocket *socket, const QString &code);
 
-    void executeCommand_touch_pressAndHold(QTcpSocket *socket, int posx, int posy);
-    void executeCommand_touch_mouseSwipe(QTcpSocket *socket, int posx, int posy, int stopx, int stopy);
+    void executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy);
+    void executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
 
     void executeCommand_app_scrollToItem(QTcpSocket *socket, const QString &elementId);
 
