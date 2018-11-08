@@ -35,7 +35,6 @@ class TouchFilter : public QObject
     Q_OBJECT
 public:
     explicit TouchFilter(QObject *parent = nullptr);
-    virtual ~TouchFilter();
 public slots:
     void hideImmediately();
 protected:

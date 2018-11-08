@@ -806,13 +806,6 @@ TouchFilter::TouchFilter(QObject *parent)
     qGuiApp->installEventFilter(this);
 }
 
-TouchFilter::~TouchFilter()
-{
-    qGuiApp->removeEventFilter(this);
-    delete m_touchIndicator;
-    m_touchIndicator = nullptr;
-}
-
 void TouchFilter::hideImmediately()
 {
     QMetaObject::invokeMethod(m_touchIndicator,
