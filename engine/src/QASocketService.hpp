@@ -56,7 +56,7 @@ private slots:
     void forwardBootstrap(QTcpSocket *socket);
     void getOrientationBootstrap(QTcpSocket *socket);
     void setOrientationBootstrap(QTcpSocket *socket, const QString &orientation);
-    void hideKeyboardBootstrap(QTcpSocket *socket, const QString &strategy, const QString &key, int keyCode, const QString &keyName);
+    void hideKeyboardBootstrap(QTcpSocket *socket, const QString &strategy, const QString &key = QString(), int keyCode = 0, const QString &keyName = QString());
 
     void getCurrentActivityBootstrap(QTcpSocket *socket);
     void implicitWaitBootstrap(QTcpSocket *socket, int msecs); // ?
