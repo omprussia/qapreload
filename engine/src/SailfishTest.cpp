@@ -805,6 +805,7 @@ void SailfishTest::sleep(int msecs)
 
 void SailfishTest::waitForPageChange(int timeout)
 {
+    waitForPropertyChange(QAEngine::getPageStack(), QStringLiteral("currentPage"), QVariant(), timeout);
     waitForPropertyChange(QAEngine::getPageStack(), QStringLiteral("busy"), false, timeout);
 }
 
