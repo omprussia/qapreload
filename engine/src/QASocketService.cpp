@@ -269,14 +269,14 @@ void QASocketService::setClipboardBootstrap(QTcpSocket *socket, const QString &c
     socketReply(socket, QString());
 }
 
-void QASocketService::implicitWaitBootstrap(QTcpSocket *socket, int msecs)
+void QASocketService::implicitWaitBootstrap(QTcpSocket *socket, double msecs)
 {
     qDebug() << Q_FUNC_INFO << msecs;
 
     socketReply(socket, QString());
 }
 
-void QASocketService::backgroundBootstrap(QTcpSocket *socket, int seconds)
+void QASocketService::backgroundBootstrap(QTcpSocket *socket, double seconds)
 {
     const int msecs = seconds * 1000;
     qDebug() << Q_FUNC_INFO << msecs;
@@ -624,7 +624,7 @@ void QASocketService::pressKeyCodeBootstrap(QTcpSocket *socket, const QVariant &
     socketReply(socket, QString());
 }
 
-void QASocketService::hideKeyboardBootstrap(QTcpSocket *socket, const QString &strategy, const QString &key, int keyCode, const QString &keyName)
+void QASocketService::hideKeyboardBootstrap(QTcpSocket *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName)
 {
     m_sailfishTest->clearFocus();
     socketReply(socket, QString());
@@ -709,7 +709,7 @@ void QASocketService::executeCommand_app_clickContextMenuItem(QTcpSocket *socket
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket, int timeout)
+void QASocketService::executeCommand_app_waitForPageChange(QTcpSocket *socket, double timeout)
 {
     m_sailfishTest->waitForPageChange(timeout);
     socketReply(socket, QString());
@@ -776,13 +776,13 @@ void QASocketService::executeCommand_app_enterCode(QTcpSocket *socket, const QSt
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_touch_pressAndHold(QTcpSocket *socket, int posx, int posy)
+void QASocketService::executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy)
 {
     m_sailfishTest->pressAndHold(posx, posy);
     socketReply(socket, QString());
 }
 
-void QASocketService::executeCommand_touch_mouseSwipe(QTcpSocket *socket, int posx, int posy, int stopx, int stopy)
+void QASocketService::executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
 {
     m_sailfishTest->mouseSwipe(posx, posy, stopx, stopy);
     socketReply(socket, QString());
