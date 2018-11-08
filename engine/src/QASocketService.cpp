@@ -925,7 +925,7 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
             if (!s_items.contains(elementId)) {
                 continue;
             }
-            m_sailfishTest->pressAndHold(s_items.value(elementId), delay);
+            m_sailfishTest->pressAndHoldItem(s_items.value(elementId), delay);
         }
     }
 }

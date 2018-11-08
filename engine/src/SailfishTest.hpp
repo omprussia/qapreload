@@ -59,7 +59,7 @@ public slots:
     void scrollToItem(QQuickItem *item);
 
     void clickItem(QQuickItem *item);
-    void pressAndHold(QQuickItem *item, int delay = 800);
+    void pressAndHoldItem(QQuickItem *item, int delay = 800);
 
     void clickPoint(int posx, int posy);
     void pressAndHold(int posx, int posy, int delay = 800);

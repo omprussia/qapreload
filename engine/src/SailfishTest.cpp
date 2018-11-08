@@ -196,8 +196,8 @@ QVariantList SailfishTest::openContextMenu(QQuickItem *item)
     if (!item) {
         return QVariantList();
     }
-    pressAndHold(item, 1200);
-    const QVariantList contextMenus = findItemsByClassName(QStringLiteral("ContextMenu"));
+    pressAndHoldItem(item, 1200);
+    const QVariantList contextMenus = findItemsByClassName(QStringLiteral("ContextMenu"), item);
     if (contextMenus.count() < 1) {
         return QVariantList();
     }
@@ -534,12 +534,12 @@ void SailfishTest::clickItem(QQuickItem *item)
 }
 
 /*!
-    \qmlmethod void SailfishTest::pressAndHold(QQuickItem *item)
+    \qmlmethod void SailfishTest::pressAndHoldItem(QQuickItem *item)
 
     The function simulates clicking and holding a mouse button on an \a item.
 */
 
-void SailfishTest::pressAndHold(QQuickItem *item, int delay)
+void SailfishTest::pressAndHoldItem(QQuickItem *item, int delay)
 {
     if (!item) {
         return;
