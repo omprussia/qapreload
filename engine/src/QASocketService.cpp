@@ -296,7 +296,7 @@ void QASocketService::backgroundBootstrap(QTcpSocket *socket, double seconds)
 void QASocketService::findElementBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector)
 {
     QString fixStrategy = strategy;
-    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
+    fixStrategy = fixStrategy.replace(QChar(' '), QString());
 
     qDebug() << Q_FUNC_INFO << socket << fixStrategy << selector;
 
@@ -309,7 +309,7 @@ void QASocketService::findElementBootstrap(QTcpSocket *socket, const QString &st
 void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector)
 {
     QString fixStrategy = strategy;
-    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
+    fixStrategy = fixStrategy.replace(QChar(' '), QString());
 
     qDebug() << Q_FUNC_INFO << socket << fixStrategy << selector;
 
@@ -322,7 +322,7 @@ void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QString &s
 void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId)
 {
     QString fixStrategy = strategy;
-    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
+    fixStrategy = fixStrategy.replace(QChar(' '), QString());
 
     QQuickItem *item = nullptr;
     if (s_items.contains(elementId)) {
@@ -340,7 +340,7 @@ void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const 
 void QASocketService::findElementsFromElementBootstrap(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId)
 {
     QString fixStrategy = strategy;
-    fixStrategy = fixStrategy.replace(QChar(' '), QChar());
+    fixStrategy = fixStrategy.replace(QChar(' '), QString());
 
     QQuickItem *item = nullptr;
     if (s_items.contains(elementId)) {
