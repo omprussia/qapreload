@@ -767,6 +767,8 @@ QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &d
 {
     QTcpSocket appSocket;
     appSocket.connectToHost(QHostAddress(QHostAddress::LocalHost), m_appPort.value(appName));
+    qWarning() << Q_FUNC_INFO << "Connecting to app socket:" << m_appPort.value(appName) <<
+    appSocket.waitForConnected();
     if (!appSocket.isOpen()) {
         qWarning() << Q_FUNC_INFO << "Can't connect to app socket:" << m_appPort.value(appName);
         return QByteArray();
