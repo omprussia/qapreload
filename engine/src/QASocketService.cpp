@@ -52,7 +52,7 @@ void QASocketService::initialize()
     } else {
         m_server = new QTcpServer(this);
         connect(m_server, &QTcpServer::newConnection, this, &QASocketService::newConnection);
-        qWarning() << Q_FUNC_INFO << m_server->listen(QHostAddress::AnyIPv4);
+        qWarning() << Q_FUNC_INFO << m_server->listen(QHostAddress(QHostAddress::LocalHost));
 
         m_sailfishTest = new SailfishTest(m_server);
     }
