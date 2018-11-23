@@ -102,6 +102,8 @@ private slots:
     void executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params);
     void executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode);
 
+    void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value);
+
     void executeCommand_app_dumpCurrentPage(QTcpSocket *socket);
     void executeCommand_app_dumpTree(QTcpSocket *socket);
 
