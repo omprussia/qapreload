@@ -833,10 +833,10 @@ void QASocketService::executeCommand_app_js(QTcpSocket *socket, const QString &e
     QQuickItem *item = QAEngine::getApplicationWindow();
     QObject *object = item->window();
     if (s_items.contains(elementId)) {
-        item = s_items.value(elementId);
+        object = s_items.value(elementId);
     }
 
-    if (!qmlEngine(item)) {
+    if (!qmlEngine(object)) {
         qWarning() << Q_FUNC_INFO << "No Engine for" << item;
         socketReply(socket, QString());
         return;
@@ -851,6 +851,11 @@ void QASocketService::executeCommand_app_js(QTcpSocket *socket, const QString &e
 
     qDebug() << Q_FUNC_INFO << reply;
     socketReply(socket, QString());
+}
+
+void QASocketService::executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value)
+{
+    setAttribute(socket, attribute, value, elementId);
 }
 
 void QASocketService::executeCommand_app_dumpCurrentPage(QTcpSocket *socket)

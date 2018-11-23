@@ -154,6 +154,16 @@ Usage:
 
 `"MyItem_0x12345678"` is element.id, you should find element before using this method
 
+### app:setAttribute
+
+set attribute value in element
+
+Usage:
+
+`driver.execute_script("app:setAttribute", "MyItem_0x12345678", "attribute_name", "value")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
 ### app:dumpCurrentPage
 
 dump current page items tree
