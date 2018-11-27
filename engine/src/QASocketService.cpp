@@ -314,7 +314,7 @@ void QASocketService::findElementsBootstrap(QTcpSocket *socket, const QString &s
     qDebug() << Q_FUNC_INFO << socket << fixStrategy << selector;
 
     const QString methodName = QStringLiteral("findStrategy_%1").arg(fixStrategy);
-    if (!invoke(socket, methodName, {selector, false, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
+    if (!invoke(socket, methodName, {selector, true, QVariant::fromValue(reinterpret_cast<QQuickItem*>(0))})) {
         findByProperty(socket, fixStrategy, selector, true, nullptr);
     }
 }
