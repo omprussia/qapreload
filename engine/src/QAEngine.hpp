@@ -151,6 +151,8 @@ private:
     QHash<QString, TestResult*> m_testResults;
 
     TouchFilter *m_touchFilter = nullptr;
+
+    QHash<QString, QStringList> m_blacklistedProperties;
 };
 
 #endif // QAENGINE_HPP
