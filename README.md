@@ -72,7 +72,7 @@ Usage:
 
 `driver.execute_script("app:swipe", "left")`
 
-Allowed directions are: left, right, top, bottom
+Allowed directions are: left, right, up, down
 
 ### app:peek
 
@@ -82,7 +82,7 @@ Usage:
 
 `driver.execute_script("app:peek", "left")`
 
-Allowed directions are: left, right, top, bottom
+Allowed directions are: left, right, up, down
 
 ### app:goBack
 
