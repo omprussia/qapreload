@@ -229,6 +229,7 @@ void QASocketService::activateAppBootstrap(QTcpSocket *socket, const QString &ap
         socketReply(socket, QString(), 1);
         return;
     }
+    QAEngine::instance()->rootItem()->window()->showFullScreen();
     QAEngine::instance()->rootItem()->window()->raise();
     socketReply(socket, QString());
 }
