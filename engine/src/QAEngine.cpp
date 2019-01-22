@@ -784,7 +784,6 @@ TouchFilter::TouchFilter(QObject *parent)
         qWarning() << Q_FUNC_INFO << "Can't determine engine!";
         return;
     }
-    engine->clearComponentCache();
     QQmlComponent component(engine, QUrl::fromLocalFile(QStringLiteral("/usr/share/qapreload/qml/TouchIndicator.qml")));
     if (!component.isReady()) {
         qWarning() << Q_FUNC_INFO << component.errorString();
