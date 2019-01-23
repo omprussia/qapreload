@@ -76,6 +76,7 @@ private slots:
     void executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
 
     void ApplicationReady(const QString &appName);
+    void ApplicationClose(const QString &appName);
 
 private slots:
     void processCommand(QTcpSocket *socket, const QByteArray &cmd);

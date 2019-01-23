@@ -56,6 +56,8 @@ void QAEngine::ready()
 
     QADBusService::instance()->initialize();
 
+    connect(qGuiApp, &QGuiApplication::aboutToQuit, QADBusService::instance(), &QADBusService::deinitialize);
+
     if (QFileInfo::exists(QStringLiteral("/etc/qapreload-touch-indicator"))) {
         setTouchIndicator(true);
     }

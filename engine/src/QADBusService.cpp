@@ -65,6 +65,11 @@ void QADBusService::initialize()
     qDebug() << Q_FUNC_INFO << s_processName << m_bridgeIface->lastError().message();
 }
 
+void QADBusService::deinitialize()
+{
+    m_bridgeIface->ApplicationClose(s_processName);
+}
+
 QADBusService *QADBusService::instance()
 {
     if (!s_instance) {

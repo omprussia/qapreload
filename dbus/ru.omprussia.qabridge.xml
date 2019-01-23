@@ -5,5 +5,9 @@
             <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
             <arg name="appName" type="s" direction="in" />
         </method>
+        <method name="ApplicationClose">
+            <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
+            <arg name="appName" type="s" direction="in" />
+        </method>
     </interface>
 </node>

@@ -295,11 +295,12 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName
         }
     });
     connect(tx, &PackageKit::Transaction::package, [&loop, appName, socket, this](PackageKit::Transaction::Info, const QString &packageID, const QString &) {
-        qDebug() << Q_FUNC_INFO << packageID;
+        qDebug() << Q_FUNC_INFO << packageID << m_appPort.value(appName, 0);
         if (m_appPort.value(appName, 0) == 0) {
             qDebug() << Q_FUNC_INFO << m_appPort.value(appName) << "AppState is: NOT_RUNNING";
             socketReply(socket, QStringLiteral("NOT_RUNNING"));
             loop.quit();
+            return;
         }
 
         QJsonObject json;
@@ -315,18 +316,27 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName
 void QABridge::launchAppBootstrap(QTcpSocket *socket)
 {
     const QString appName = m_appSocket.value(socket);
-    m_appPort.insert(appName, 0);
-    qDebug() << Q_FUNC_INFO << appName;
-    QStringList arguments;
-    QABridge::launchApp(appName, arguments);
+    qDebug() << Q_FUNC_INFO << appName << m_appPort.value(appName, -1);
+    if (m_appPort.value(appName, 0) != 0) {
+        QJsonObject json;
+        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
+        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("activateApp")));
+        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
+        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+    } else {
+        m_appPort.insert(appName, 0);
+        qDebug() << Q_FUNC_INFO << appName;
+        QStringList arguments;
+        QABridge::launchApp(appName, arguments);
 
-    QTimer maxTimer;
-    connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
-    maxTimer.start(30000);
-    qDebug() << Q_FUNC_INFO << "Starting eventloop connect";
-    m_connectLoop->exec();
-    qDebug() << Q_FUNC_INFO << "Exiting eventloop connect";
-    maxTimer.stop();
+        QTimer maxTimer;
+        connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
+        maxTimer.start(30000);
+        qDebug() << Q_FUNC_INFO << "Starting eventloop connect";
+        m_connectLoop->exec();
+        qDebug() << Q_FUNC_INFO << "Exiting eventloop connect";
+        maxTimer.stop();
+    }
 
     socketReply(socket, QString());
 }
@@ -520,6 +530,12 @@ void QABridge::ApplicationReady(const QString &appName)
     }
 
     connectAppSocket(appName);
+}
+
+void QABridge::ApplicationClose(const QString &appName)
+{
+    qDebug() << Q_FUNC_INFO << appName;
+    m_appPort.remove(appName);
 }
 
 void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)

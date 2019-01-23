@@ -23,6 +23,7 @@ public:
 
 public slots:
     void initialize();
+    void deinitialize();
 
 private slots:
     QString dumpTree();
