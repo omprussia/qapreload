@@ -62,6 +62,18 @@ void QAEngine::ready()
         setTouchIndicator(true);
     }
 
+    QFile blacklist(QStringLiteral("/etc/qapreload-blacklist"));
+    if (blacklist.exists() && blacklist.open(QFile::ReadOnly)) {
+        const QStringList list = QString::fromLatin1(blacklist.readAll().trimmed()).split(QChar(u'\n'));
+        for (const QString &item : list) {
+            const QStringList parts = item.split(QStringLiteral("::"));
+            QStringList blacklisted = m_blacklistedProperties.value(parts.first());
+            blacklisted.append(parts.last());
+            m_blacklistedProperties.insert(parts.first(), blacklisted);
+        }
+        qDebug() << "Blacklist:" << m_blacklistedProperties;
+    }
+
     const QStringList args = qApp->arguments();
     const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
     if (testArgIndex < 0) {
@@ -106,11 +118,19 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
 
     auto mo = item->metaObject();
     do {
+      const QString moClassName = QString::fromLatin1(mo->className());
       std::vector<std::pair<QString, QVariant> > v;
       v.reserve(mo->propertyCount() - mo->propertyOffset());
-      for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i)
-          v.emplace_back(mo->property(i).name(),
+      for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+          const QString propertyName = QString::fromLatin1(mo->property(i).name());
+          if (m_blacklistedProperties.contains(moClassName) &&
+                  m_blacklistedProperties.value(moClassName).contains(propertyName)) {
+              qDebug() << "Found blacklisted:" << moClassName << propertyName;
+              continue;
+          }
+          v.emplace_back(propertyName,
                          mo->property(i).read(item));
+      }
       std::sort(v.begin(), v.end());
       for (auto &i : v) {
           if (!object.contains(i.first)
