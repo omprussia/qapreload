@@ -131,7 +131,7 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     QPointF position(item->x(), item->y());
     QPoint abs;
     if (item->parentItem()) {
-        abs = m_rootItem->mapFromItem(item->parentItem(), position).toPoint();
+        abs = rootItem()->mapFromItem(item->parentItem(), position).toPoint();
     } else {
         abs = position.toPoint();
     }
@@ -218,13 +218,13 @@ void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
 
 void QAEngine::onTouchEvent(const QTouchEvent &event)
 {
-    QWindowSystemInterface::handleTouchEvent(m_rootItem->window(), event.timestamp(), event.device(),
-        QWindowSystemInterfacePrivate::toNativeTouchPoints(event.touchPoints(), m_rootItem->window()));
+    QWindowSystemInterface::handleTouchEvent(rootItem()->window(), event.timestamp(), event.device(),
+        QWindowSystemInterfacePrivate::toNativeTouchPoints(event.touchPoints(), rootItem()->window()));
 }
 
 void QAEngine::onKeyEvent(QKeyEvent *event)
 {
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(rootItem()->window());
     wp->deliverKeyEvent(event);
 }
 
@@ -420,7 +420,12 @@ QAEngine::~QAEngine()
 
 QQuickItem *QAEngine::rootItem()
 {
-    return m_rootItem;
+    QQuickWindow *qw = qobject_cast<QQuickWindow*>(qGuiApp->topLevelAt(QPoint(1, 1)));
+    if (!qw) {
+        return m_rootItem;
+    } else {
+        return qw->contentItem();
+    }
 }
 
 QQuickItem *QAEngine::applicationWindow()
@@ -445,7 +450,7 @@ void QAEngine::dumpTree(const QDBusMessage &message)
 
 void QAEngine::dumpCurrentPage(const QDBusMessage &message)
 {
-    if (m_rootItem->childItems().isEmpty()) {
+    if (rootItem()->childItems().isEmpty()) {
         return;
     }
 
@@ -528,11 +533,11 @@ void QAEngine::pressKeys(const QString &keys, const QDBusMessage &message)
 
 void QAEngine::clearFocus()
 {
-    if (!m_rootItem) {
+    if (!rootItem()) {
         return;
     }
 
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootItem->window());
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(rootItem()->window());
     wp->clearFocusObject();
 }
 
@@ -549,10 +554,10 @@ void QAEngine::executeInPage(const QString &jsCode, const QDBusMessage &message)
 
 void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &message)
 {
-    QQmlEngine *engine = qmlEngine(m_rootItem);
-    QQuickItem *trueItem = m_rootItem;
+    QQmlEngine *engine = qmlEngine(rootItem());
+    QQuickItem *trueItem = rootItem();
     if (!engine) {
-        trueItem = m_rootItem->childItems().first();
+        trueItem = rootItem()->childItems().first();
         engine = qmlEngine(trueItem);
         if (!engine) {
             QADBusService::sendMessageError(message, QStringLiteral("window engine not found"));
@@ -564,10 +569,10 @@ void QAEngine::executeInWindow(const QString &jsCode, const QDBusMessage &messag
 
 void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &message)
 {
-    QQmlEngine *engine = qmlEngine(m_rootItem);
-    QQuickItem *trueItem = m_rootItem;
+    QQmlEngine *engine = qmlEngine(rootItem());
+    QQuickItem *trueItem = rootItem();
     if (!engine) {
-        trueItem = m_rootItem->childItems().first();
+        trueItem = rootItem()->childItems().first();
         engine = qmlEngine(trueItem);
     }
     if (!engine) {
@@ -738,9 +743,9 @@ void QAEngine::setTouchIndicator(bool enable)
 
 QQmlEngine *QAEngine::getEngine()
 {
-    QQmlEngine *engine = qmlEngine(m_rootItem);
+    QQmlEngine *engine = qmlEngine(rootItem());
     if (!engine) {
-        engine = qmlEngine(m_rootItem->childItems().first());
+        engine = qmlEngine(rootItem()->childItems().first());
     }
     return engine;
 }
