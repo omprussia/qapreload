@@ -118,8 +118,6 @@ private slots:
     void onTouchEvent(const QTouchEvent &event);
     void onKeyEvent(QKeyEvent *event);
 
-    void onChildrenChanged();
-
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 

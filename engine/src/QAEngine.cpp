@@ -228,17 +228,6 @@ void QAEngine::onKeyEvent(QKeyEvent *event)
     wp->deliverKeyEvent(event);
 }
 
-void QAEngine::onChildrenChanged()
-{
-    if (m_rootItem->childItems().isEmpty()) {
-        return;
-    }
-
-    disconnect(m_rootItem, &QQuickItem::childrenChanged, this, &QAEngine::onChildrenChanged);
-
-    QADBusService::instance()->initialize();
-}
-
 QString QAEngine::getText(QQuickItem *item)
 {
     static const char *textProperties[] = {
