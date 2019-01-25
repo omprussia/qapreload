@@ -137,6 +137,11 @@ void QASocketService::socketReply(QTcpSocket *socket, const QVariant &value, int
 
 void QASocketService::grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground)
 {
+    if (!item->window()->isVisible()) {
+        socketReply(socket, QString());
+        return;
+    }
+
     QSharedPointer<QQuickItemGrabResult> grabber = item->grabToImage();
 
     connect(grabber.data(), &QQuickItemGrabResult::ready, [this, grabber, socket, fillBackground]() {
