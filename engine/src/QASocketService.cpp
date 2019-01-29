@@ -867,6 +867,10 @@ void QASocketService::executeCommand_app_setAttribute(QTcpSocket *socket, const 
 void QASocketService::executeCommand_app_dumpCurrentPage(QTcpSocket *socket)
 {
     QQuickItem *currentPage = QAEngine::instance()->getCurrentPage();
+    if (!currentPage) {
+        socketReply(socket, QString());
+        return;
+    }
     QJsonObject reply = QAEngine::instance()->recursiveDumpTree(currentPage);
     socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
 }
