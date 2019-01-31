@@ -121,13 +121,12 @@ void QABridge::removeSocket()
 
 void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    qDebug() << Q_FUNC_INFO << appName;
+    qDebug() << Q_FUNC_INFO << appName << socket;
 
     if (m_appSocket.contains(socket)) {
         qWarning() << Q_FUNC_INFO << "Socket already known:" << m_appSocket.value(socket);
     }
     m_appSocket.insert(socket, appName);
-    m_appPort.insert(appName, 0);
 }
 
 void QABridge::appConnectBootstrap(QTcpSocket *socket)
@@ -525,10 +524,6 @@ void QABridge::ApplicationReady(const QString &appName)
 {
     qDebug() << Q_FUNC_INFO << appName;
 
-    if (!m_appPort.contains(appName)) {
-        return;
-    }
-
     connectAppSocket(appName);
 }
 
@@ -757,7 +752,7 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
     const QString appName = m_appSocket.value(socket);
 
     if (!m_appPort.contains(appName)) {
-        qWarning() << Q_FUNC_INFO << "Unknown app:" << socket;
+        qWarning() << Q_FUNC_INFO << "Unknown app:" << appName << socket;
         return;
     }
 
