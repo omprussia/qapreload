@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=ru.omprussia.qabridge
+Exec=/bin/false
+SystemdService=qabridge.service

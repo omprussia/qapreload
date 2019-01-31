@@ -103,6 +103,7 @@ cp -R engine/html/* %{buildroot}/%{_docdir}/%{name}/
 %{_sysconfdir}/dbus-1/system.d/ru.omprussia.qabridge.conf
 %{_libdir}/systemd/user/qaservice.service
 %{_datadir}/dbus-1/services/ru.omprussia.qaservice.service
+%{_datadir}/dbus-1/system-services/ru.omprussia.qabridge.service
 %{_datadir}/qapreload/qml/TouchIndicator.qml
 
 %files devel
