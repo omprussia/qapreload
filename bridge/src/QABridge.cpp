@@ -127,6 +127,9 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
         qWarning() << Q_FUNC_INFO << "Socket already known:" << m_appSocket.value(socket);
     }
     m_appSocket.insert(socket, appName);
+    if (!m_appPort.contains(appName)) {
+        connectAppSocket(appName);
+    }
 }
 
 void QABridge::appConnectBootstrap(QTcpSocket *socket)
