@@ -275,7 +275,7 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName
         socketReply(socket, QStringLiteral("NOT_RUNNING"));
         return;
     } else {
-        orwardToApp(socket, QStringLiteral("queryAppState"), QStringList({appName}));
+        forwardToApp(socket, QStringLiteral("queryAppState"), QStringList({appName}));
     }
 }
 
