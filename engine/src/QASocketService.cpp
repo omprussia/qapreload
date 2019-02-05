@@ -335,11 +335,11 @@ void QASocketService::findElementFromElementBootstrap(QTcpSocket *socket, const 
         item = s_items.value(elementId);
     }
 
-    qDebug() << Q_FUNC_INFO << socket << strategy << selector;
+    qDebug() << Q_FUNC_INFO << socket << fixStrategy << selector;
 
-    const QString methodName = QStringLiteral("findStrategy_%1").arg(strategy);
+    const QString methodName = QStringLiteral("findStrategy_%1").arg(fixStrategy);
     if (!invoke(socket, methodName, {selector, false, QVariant::fromValue(item)})) {
-        findByProperty(socket, strategy, selector, false, item);
+        findByProperty(socket, fixStrategy, selector, false, item);
     }
 }
 
