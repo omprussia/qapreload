@@ -799,17 +799,15 @@ int QABridge::getNetworkConnection() const
 
 bool QABridge::isAppInstalled(const QString &rpmName)
 {
-    bool isInstalled = false;
     qDebug() << Q_FUNC_INFO << rpmName;
 
     rpmReadConfigFiles(NULL, NULL);
     rpmts transactionSet = rpmtsCreate();
-    rpmdbMatchIterator it = rpmtsInitIterator(transactionSet, RPMTAG_NAME, rpmName.toLatin1().data(), 0);
+    rpmdbMatchIterator it = rpmtsInitIterator(transactionSet, RPMTAG_NAME, rpmName.toLatin1().constData(), 0);
 
-    if (Header header = rpmdbNextIterator(it)) {
+    bool isInstalled = false;
+    if (rpmdbNextIterator(it)) {
         isInstalled = true;
-    } else {
-        isInstalled = false;
     }
     rpmdbFreeIterator(it);
     rpmtsFree(transactionSet);
