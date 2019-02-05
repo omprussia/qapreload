@@ -43,7 +43,7 @@ private slots:
     void activateAppBootstrap(QTcpSocket *socket, const QString &appId);
     void terminateAppBootstrap(QTcpSocket *socket, const QString &appId);
     void removeAppBootstrap(QTcpSocket *socket, const QString &appName);
-    void isAppInstalledBootstrap(QTcpSocket *socket, const QString &appName);
+    void isAppInstalledBootstrap(QTcpSocket *socket, const QString &rpmName);
     void queryAppStateBootstrap(QTcpSocket *socket, const QString &appName);
     void pushFileBootstrap(QTcpSocket *socket, const QString &path, const QString &data);
     void pullFileBootstrap(QTcpSocket *socket, const QString &path);
@@ -87,6 +87,7 @@ private:
     QByteArray sendToAppSocket(const QString &appName, const QByteArray &data);
     void connectAppSocket(const QString &appName);
     int getNetworkConnection() const;
+    bool isAppInstalled(const QString &rpmName);
 
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0);
 
