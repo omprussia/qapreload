@@ -429,12 +429,12 @@ QAEngine::~QAEngine()
 
 QQuickItem *QAEngine::rootItem()
 {
-    QQuickWindow *qw = qobject_cast<QQuickWindow*>(qGuiApp->topLevelAt(QPoint(1, 1)));
-    if (!qw) {
-        return m_rootItem;
-    } else {
+    QWindow* window = qGuiApp->focusWindow();
+    QQuickWindow *qw = qobject_cast<QQuickWindow*>(window);
+    if (qw) {
         return qw->contentItem();
     }
+    return m_rootItem;
 }
 
 QQuickItem *QAEngine::applicationWindow()

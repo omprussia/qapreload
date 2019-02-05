@@ -4,7 +4,8 @@ PKGCONFIG += \
     libsystemd-daemon \
     libshadowutils \
     packagekitqt5 \
-    connman-qt5
+    connman-qt5 \
+    rpm
 
 TEMPLATE = app
 TARGET = qabridge

@@ -18,6 +18,11 @@
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusReply>
 
+#include <rpm/rpmlib.h>
+#include <rpm/header.h>
+#include <rpm/rpmdb.h>
+#include <rpm/rpmts.h>
+
 #include <Transaction>
 #include <Daemon>
 
@@ -264,55 +269,26 @@ void QABridge::removeAppBootstrap(QTcpSocket *socket, const QString &appName)
     loop.exec();
 }
 
-void QABridge::isAppInstalledBootstrap(QTcpSocket *socket, const QString &appName)
+void QABridge::isAppInstalledBootstrap(QTcpSocket *socket, const QString &rpmName)
 {
-    qDebug() << Q_FUNC_INFO << appName;
-    QEventLoop loop;
-    PackageKit::Transaction *tx = PackageKit::Daemon::resolve(appName, PackageKit::Transaction::FilterInstalled);
-    connect(tx, &PackageKit::Transaction::finished, [&loop, socket, this](PackageKit::Transaction::Exit status, uint) {
-        qDebug() << Q_FUNC_INFO << "Status is:" << status;
-        if (loop.isRunning()) {
-            socketReply(socket, false);
-            loop.quit();
-        }
-    });
-    connect(tx, &PackageKit::Transaction::package, [&loop, socket, this](PackageKit::Transaction::Info, const QString &packageID, const QString &) {
-        qDebug() << Q_FUNC_INFO << packageID;
-        socketReply(socket, true);
-        loop.quit();
-    });
-    loop.exec();
+    qDebug() << Q_FUNC_INFO << rpmName;
+    const bool isInstalled = isAppInstalled(rpmName);
+    socketReply(socket, isInstalled);
 }
 
 void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    qDebug() << Q_FUNC_INFO << appName;
-    QEventLoop loop;
-    PackageKit::Transaction *tx = PackageKit::Daemon::resolve(appName, PackageKit::Transaction::FilterInstalled);
-    connect(tx, &PackageKit::Transaction::finished, [&loop, socket, this](PackageKit::Transaction::Exit status, uint) {
-        qDebug() << Q_FUNC_INFO << "Status is:" << status;
-        if (loop.isRunning()) {
-            socketReply(socket, QStringLiteral("NOT_INSTALLED"));
-            loop.quit();
-        }
-    });
-    connect(tx, &PackageKit::Transaction::package, [&loop, appName, socket, this](PackageKit::Transaction::Info, const QString &packageID, const QString &) {
-        qDebug() << Q_FUNC_INFO << packageID << m_appPort.value(appName, 0);
-        if (m_appPort.value(appName, 0) == 0) {
-            qDebug() << Q_FUNC_INFO << m_appPort.value(appName) << "AppState is: NOT_RUNNING";
-            socketReply(socket, QStringLiteral("NOT_RUNNING"));
-            loop.quit();
-            return;
-        }
-
+    if (m_appPort.value(appName, 0) == 0) {
+        qDebug() << Q_FUNC_INFO << m_appPort.value(appName) << "AppState is: NOT_RUNNING";
+        socketReply(socket, QStringLiteral("NOT_RUNNING"));
+        return;
+    } else {
         QJsonObject json;
         json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
         json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("queryAppState")));
         json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
         forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
-        loop.quit();
-    });
-    loop.exec();
+    }
 }
 
 void QABridge::launchAppBootstrap(QTcpSocket *socket)
@@ -838,6 +814,26 @@ int QABridge::getNetworkConnection() const
         }
     }
     return connection;
+}
+
+bool QABridge::isAppInstalled(const QString &rpmName)
+{
+    bool isInstalled = false;
+    qDebug() << Q_FUNC_INFO << rpmName;
+
+    rpmReadConfigFiles(NULL, NULL);
+    rpmts transactionSet = rpmtsCreate();
+    rpmdbMatchIterator it = rpmtsInitIterator(transactionSet, RPMTAG_NAME, rpmName.toLatin1().data(), 0);
+
+    if (Header header = rpmdbNextIterator(it)) {
+        isInstalled = true;
+    } else {
+        isInstalled = false;
+    }
+    rpmdbFreeIterator(it);
+    rpmtsFree(transactionSet);
+
+    return isInstalled;
 }
 
 void QABridge::socketReply(QTcpSocket *socket, const QVariant &value, int status)
