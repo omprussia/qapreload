@@ -202,11 +202,7 @@ void QABridge::activateAppBootstrap(QTcpSocket *socket, const QString &appId)
         QStringList arguments;
         QABridge::launchApp(appName, arguments);
     } else {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("activateApp")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
-        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        forwardToApp(socket, QStringLiteral("activateApp"), QStringList({appName}));
     }
     socketReply(socket, QString());
 }
@@ -216,11 +212,7 @@ void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QString &appId)
     const QString appName = m_appSocket.value(socket);
     qDebug() << Q_FUNC_INFO << appName << appId;
     if (m_appPort.value(appName) != 0) {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("closeApp")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
-        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        forwardToApp(socket, QStringLiteral("closeApp"), QStringList({appName}));
         m_appPort.insert(appName, 0);
     } else {
         qWarning() << Q_FUNC_INFO << "App" << appName << "is not active";
@@ -283,11 +275,7 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName
         socketReply(socket, QStringLiteral("NOT_RUNNING"));
         return;
     } else {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("queryAppState")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
-        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        orwardToApp(socket, QStringLiteral("queryAppState"), QStringList({appName}));
     }
 }
 
@@ -296,11 +284,7 @@ void QABridge::launchAppBootstrap(QTcpSocket *socket)
     const QString appName = m_appSocket.value(socket);
     qDebug() << Q_FUNC_INFO << appName << m_appPort.value(appName, -1);
     if (m_appPort.value(appName, 0) != 0) {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("activateApp")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
-        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        forwardToApp(socket, QStringLiteral("activateApp"), QStringList({appName}));
     } else {
         m_appPort.insert(appName, 0);
         qDebug() << Q_FUNC_INFO << appName;
@@ -324,11 +308,7 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
     qDebug() << Q_FUNC_INFO;
     const QString appName = m_appSocket.value(socket);
     if (m_appPort.value(appName) != 0) {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("closeApp")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
-        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        forwardToApp(socket, QStringLiteral("closeApp"), QStringList({appName}));
         m_appPort.insert(appName, 0);
     } else {
         qWarning() << Q_FUNC_INFO << "App" << appName << "is not active";
@@ -431,11 +411,7 @@ void QABridge::executeBootstrap(QTcpSocket *socket, const QString &command, cons
         return;
     }
     if (commandPair.first() != QStringLiteral("system")) {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("execute")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QVariantList({command, paramsArg})));
-        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        forwardToApp(socket, QStringLiteral("execute"), QVariantList({command, paramsArg}));
         return;
     }
 
@@ -475,11 +451,7 @@ void QABridge::executeAsyncBootstrap(QTcpSocket *socket, const QString &command,
         return;
     }
     if (commandPair.first() != QStringLiteral("system")) {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("executeAsync")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QVariantList({command, paramsArg})));
-        forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        forwardToApp(socket, QStringLiteral("executeAsync"), QVariantList({command, paramsArg}));
     }
 }
 
@@ -741,6 +713,15 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
     socket->write(appReplyData);
     qWarning() << Q_FUNC_INFO << "Writing to appium socket:" <<
                   socket->waitForBytesWritten();
+}
+
+void QABridge::forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params)
+{
+    QJsonObject json;
+    json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
+    json.insert(QStringLiteral("action"), QJsonValue(action));
+    json.insert(QStringLiteral("params"), QJsonValue::fromVariant(params));
+    forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
 }
 
 bool QABridge::launchApp(const QString &appName, const QStringList &arguments)

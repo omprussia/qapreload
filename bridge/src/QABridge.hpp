@@ -81,6 +81,7 @@ private slots:
 private slots:
     void processCommand(QTcpSocket *socket, const QByteArray &cmd);
     void forwardToApp(QTcpSocket *socket, const QByteArray &data);
+    void forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params);
 
 private:
     static bool launchApp(const QString &appName, const QStringList &arguments);
