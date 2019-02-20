@@ -208,6 +208,19 @@ QVariantList SailfishTest::openContextMenu(QQuickItem *item)
     return findItemsByClassName(QStringLiteral("MenuItem"), columns.first().value<QQuickItem*>());
 }
 
+QVariantList SailfishTest::filterVisibleItems(const QVariantList &items)
+{
+    QVariantList result;
+    for (const QVariant &itemVariant : items) {
+        QQuickItem *item = itemVariant.value<QQuickItem*>();
+        if (item && !item->isVisible()) {
+            continue;
+        }
+        result.append(itemVariant);
+    }
+    return result;
+}
+
 /*!
     \qmlmethod QPointF SailfishTest::getAbsPosition(QQuickItem *item)
 
@@ -296,6 +309,7 @@ void SailfishTest::pullDownTo(const QString &text)
     }
 
     QVariantList pullDownMenus = findItemsByClassName(QStringLiteral("PullDownMenu"), page);
+    pullDownMenus = filterVisibleItems(pullDownMenus);
     if (pullDownMenus.isEmpty()) {
         return;
     }
@@ -352,6 +366,7 @@ void SailfishTest::pullDownTo(int index)
     }
 
     QVariantList pullDownMenus = findItemsByClassName(QStringLiteral("PullDownMenu"), page);
+    pullDownMenus = filterVisibleItems(pullDownMenus);
     if (pullDownMenus.isEmpty()) {
         return;
     }
@@ -408,6 +423,7 @@ void SailfishTest::pushUpTo(const QString &text)
     }
 
     QVariantList pushUpMenus = findItemsByClassName(QStringLiteral("PushUpMenu"), page);
+    pushUpMenus = filterVisibleItems(pushUpMenus);
     if (pushUpMenus.isEmpty()) {
         return;
     }
@@ -464,6 +480,7 @@ void SailfishTest::pushUpTo(int index)
     }
 
     QVariantList pushUpMenus = findItemsByClassName(QStringLiteral("PushUpMenu"), page);
+    pushUpMenus = filterVisibleItems(pushUpMenus);
     if (pushUpMenus.isEmpty()) {
         return;
     }

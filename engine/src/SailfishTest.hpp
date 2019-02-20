@@ -40,6 +40,7 @@ public slots:
     QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
 
     QVariantList openContextMenu(QQuickItem *item);
+    QVariantList filterVisibleItems(const QVariantList &items);
 
     void clickContextMenuItem(QQuickItem *item, const QString &text, bool partial = true);
     void clickContextMenuItem(QQuickItem *item, int index);
