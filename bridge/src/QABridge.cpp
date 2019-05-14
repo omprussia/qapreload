@@ -30,6 +30,27 @@
 
 #include <systemd/sd-daemon.h>
 
+static QDBusConnection getSessionBus()
+{
+    static const QString s_sessionBusConnection = QStringLiteral("qabridge-connection");
+    static QDBusConnection s_bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, s_sessionBusConnection);
+    if (!s_bus.isConnected()) {
+        QEventLoop loop;
+        QTimer timer;
+        QObject::connect(&timer, &QTimer::timeout, [&loop, &timer](){
+            QDBusConnection::disconnectFromBus(s_sessionBusConnection);
+            s_bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, s_sessionBusConnection);
+            if (s_bus.isConnected()) {
+                timer.stop();
+                loop.quit();
+            }
+        });
+        timer.start(1000);
+        loop.exec();
+    }
+    return s_bus;
+}
+
 static inline QGenericArgument qVariantToArgument(const QVariant &variant) {
     if (variant.isValid() && !variant.isNull()) {
         return QGenericArgument(variant.typeName(), variant.constData());
@@ -42,6 +63,8 @@ QABridge::QABridge(QObject *parent)
     , m_server(new QTcpServer(this))
     , m_connectLoop(new QEventLoop(this))
 {
+    qputenv("DBUS_SESSION_BUS_ADDRESS", QByteArrayLiteral("unix:path=/run/user/100000/dbus/user_bus_socket"));
+
     connect(m_server, &QTcpServer::newConnection, this, &QABridge::newConnection);
 
     qRegisterMetaType<QTcpSocket*>();
@@ -731,7 +754,7 @@ bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
                                                          QStringLiteral("ru.omprussia.qaservice"),
                                                          QStringLiteral("launchApp"));
     launch.setArguments({ appName, arguments });
-    return QDBusConnection::sessionBus().send(launch);
+    return getSessionBus().send(launch);
 }
 
 QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &data)
@@ -765,7 +788,7 @@ void QABridge::connectAppSocket(const QString &appName)
                 QStringLiteral("/ru/omprussia/qaservice"),
                 QStringLiteral("ru.omprussia.qaservice"),
                 QStringLiteral("startSocket"));
-    QDBusReply<int> reply = QDBusConnection::sessionBus().call(startAppSocket);
+    QDBusReply<int> reply = getSessionBus().call(startAppSocket);
     m_appPort.insert(appName, reply.value());
     qDebug() << Q_FUNC_INFO << appName << reply.value();
 
