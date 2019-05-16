@@ -882,6 +882,26 @@ void QASocketService::executeCommand_app_dumpTree(QTcpSocket *socket)
     socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
 }
 
+void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName)
+{
+    const QString initialPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    const QString screenShotPath = QStringLiteral("%1/Screenshots/%2").arg(initialPath, fileName);
+
+    QDBusMessage screenShot = QDBusMessage::createMethodCall(
+                QStringLiteral("org.nemomobile.lipstick"),
+                QStringLiteral("/org/nemomobile/lipstick/screenshot"),
+                QStringLiteral("org.nemomobile.lipstick"),
+                QStringLiteral("saveScreenshot"));
+    screenShot.setArguments({ screenShotPath });
+    QDBusReply<void> reply = QDBusConnection::sessionBus().call(screenShot);
+
+    if (reply.error().type() == QDBusError::NoError) {
+        socketReply(socket, QString());
+    } else {
+        socketReply(socket, QString(), 1);
+    }
+}
+
 void QASocketService::performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg)
 {    
     processTouchActionList(paramsArg);

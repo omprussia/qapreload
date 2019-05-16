@@ -107,6 +107,8 @@ private slots:
     void executeCommand_app_dumpCurrentPage(QTcpSocket *socket);
     void executeCommand_app_dumpTree(QTcpSocket *socket);
 
+    void executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName);
+
     void performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariant &paramsArg, const QVariant &elementIdArg);
     void performMultiActionBootstrap(QTcpSocket *socket, const QVariantList &actions);
