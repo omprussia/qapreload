@@ -164,6 +164,14 @@ Usage:
 
 `"MyItem_0x12345678"` is element.id, you should find element before using this method
 
+### app:saveScreenshot
+
+Save a screenshot with the specified file name
+
+Usage:
+
+`driver.execute_script("app:saveScreenshot", "test.png")`
+
 ### app:dumpCurrentPage
 
 dump current page items tree
