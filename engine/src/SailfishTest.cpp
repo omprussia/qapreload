@@ -521,16 +521,14 @@ void SailfishTest::scrollToItem(QQuickItem *item)
     }
     QQuickItem *rootItem = QAEngine::getApplicationWindow();
     QPointF itemAbs = getAbsPosition(item);
-    if (itemAbs.y() - item->height() < 0) {
-        while (itemAbs.y() - item->height() < 0) {
-            mouseSwipe(rootItem->width() / 2, rootItem->height()  *0.05, rootItem->width() / 2, rootItem->height()  *0.95);
-            itemAbs = getAbsPosition(item);
-        }
-    } else if (itemAbs.y() + item->height() > rootItem->height()) {
-        while (itemAbs.y() + item->height() > rootItem->height()) {
-            mouseSwipe(rootItem->width() / 2, rootItem->height()  *0.95, rootItem->width() / 2, rootItem->height()  *0.05);
-            itemAbs = getAbsPosition(item);
-        }
+
+    while (itemAbs.y() < 0) {
+        mouseSwipe(rootItem->width() / 2, rootItem->height() * 0.05, rootItem->width() / 2, rootItem->height() * 0.95);
+        itemAbs = getAbsPosition(item);
+    }
+    while (itemAbs.y() + item->height() > rootItem->height()) {
+        mouseSwipe(rootItem->width() / 2, rootItem->height() * 0.95, rootItem->width() / 2, rootItem->height() * 0.05);
+        itemAbs = getAbsPosition(item);
     }
 }
 
