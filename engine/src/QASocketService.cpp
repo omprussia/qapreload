@@ -886,6 +886,11 @@ void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, cons
 {
     const QString initialPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
     const QString screenShotPath = QStringLiteral("%1/Screenshots/%2").arg(initialPath, fileName);
+    QFileInfo screenshot(screenShotPath);
+    QDir screnshotDir = screenshot.dir();
+    if (!screnshotDir.exists()) {
+        screnshotDir.mkpath(QStringLiteral("."));
+    }
 
     QDBusMessage screenShot = QDBusMessage::createMethodCall(
                 QStringLiteral("org.nemomobile.lipstick"),
