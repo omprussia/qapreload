@@ -123,6 +123,7 @@ private slots:
     void findStrategy_objectName(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
     void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
     void findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_parent(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
 
 private:
     explicit QASocketService(QObject *parent = nullptr);

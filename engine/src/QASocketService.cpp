@@ -1034,3 +1034,18 @@ void QASocketService::findStrategy_name(QTcpSocket *socket, const QString &selec
     qDebug() << Q_FUNC_INFO << selector << multiple << items;
     elementReply(socket, items, multiple);
 }
+
+void QASocketService::findStrategy_parent(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    const int depth = selector.toInt();
+    QQuickItem *pItem = parentItem->parentItem();
+    for (int i = 0; i < depth; i++) {
+        if (!pItem) {
+            break;
+        }
+        pItem = pItem->parentItem();
+    }
+    const QVariantList items = {QVariant::fromValue(pItem)};
+    qDebug() << Q_FUNC_INFO << selector << multiple << items;
+    elementReply(socket, items, multiple);
+}
