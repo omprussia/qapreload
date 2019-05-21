@@ -66,6 +66,8 @@ public:
     QQuickItem *rootItem();
     QQuickItem *coverItem();
 
+    static QVariantList rootItems();
+
     Q_PROPERTY(QQuickItem *applicationWindow READ applicationWindow CONSTANT)
     QQuickItem *applicationWindow();
 

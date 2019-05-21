@@ -320,6 +320,10 @@ QVariantList QAEngine::findItemsByClassName(const QString &className, QQuickItem
         return {QVariant::fromValue(QAEngine::instance()->coverItem())};
     }
 
+    if (className == QLatin1String("QQuickRootItem")) {
+        return QAEngine::rootItems();
+    }
+
     if (!parentItem) {
         parentItem = QAEngine::instance()->rootItem();
     }
@@ -454,6 +458,19 @@ QQuickItem *QAEngine::coverItem()
     }
     QQuickWindow *qw = qobject_cast<QQuickWindow*>(window);
     return qw->contentItem();
+}
+
+QVariantList QAEngine::rootItems()
+{
+    QVariantList items;
+    for (QWindow *window : qGuiApp->allWindows()) {
+        QQuickWindow *qw = qobject_cast<QQuickWindow*>(window);
+        if (!qw) {
+            continue;
+        }
+        items.append(QVariant::fromValue(qw->contentItem()));
+    }
+    return items;
 }
 
 QQuickItem *QAEngine::applicationWindow()
