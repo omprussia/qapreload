@@ -40,6 +40,7 @@ private slots:
     void getTextBootstrap(QTcpSocket *socket, const QString &elementId);
     void getElementScreenshotBootstrap(QTcpSocket *socket, const QString &elementId);
     void getScreenshotBootstrap(QTcpSocket *socket);
+    void getScreenshotCoverBootstrap(QTcpSocket *socket);
     void elementEnabledBootstrap(QTcpSocket *socket, const QString &elementId);
     void elementDisplayedBootstrap(QTcpSocket *socket, const QString &elementId);
     void elementSelectedBootstrap(QTcpSocket *socket, const QString &elementId);
@@ -106,6 +107,7 @@ private slots:
 
     void executeCommand_app_dumpCurrentPage(QTcpSocket *socket);
     void executeCommand_app_dumpTree(QTcpSocket *socket);
+    void executeCommand_app_dumpCover(QTcpSocket *socket);
 
     void executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName);
 

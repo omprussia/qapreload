@@ -64,12 +64,13 @@ public:
 
     Q_PROPERTY(QQuickItem *rootItem READ rootItem CONSTANT)
     QQuickItem *rootItem();
+    QQuickItem *coverItem();
 
     Q_PROPERTY(QQuickItem *applicationWindow READ applicationWindow CONSTANT)
     QQuickItem *applicationWindow();
 
     static QString getText(QQuickItem *item);
-    static QString className(QQuickItem *item);
+    static QString className(QObject *item);
     static QString uniqueId(QQuickItem *item);
     static QPointF getAbsPosition(QQuickItem *item);
 

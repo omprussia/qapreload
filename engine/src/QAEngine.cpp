@@ -269,7 +269,7 @@ QString QAEngine::getText(QQuickItem *item)
     return QString();
 }
 
-QString QAEngine::className(QQuickItem *item)
+QString QAEngine::className(QObject *item)
 {
     return QString::fromLatin1(item->metaObject()->className()).section(QChar('_'), 0, 0);
 }
@@ -315,6 +315,10 @@ QQuickItem *QAEngine::findItemByObjectName(const QString &objectName, QQuickItem
 QVariantList QAEngine::findItemsByClassName(const QString &className, QQuickItem *parentItem)
 {
     QVariantList items;
+
+    if (className == QLatin1String("DeclarativeCover")) {
+        return {QVariant::fromValue(QAEngine::instance()->coverItem())};
+    }
 
     if (!parentItem) {
         parentItem = QAEngine::instance()->rootItem();
@@ -435,6 +439,21 @@ QQuickItem *QAEngine::rootItem()
         return qw->contentItem();
     }
     return m_rootItem;
+}
+
+QQuickItem *QAEngine::coverItem()
+{
+    QWindow *window = nullptr;
+    for (QWindow *w : qGuiApp->allWindows()) {
+        if (QAEngine::className(w) == QLatin1String("DeclarativeCoverWindow")) {
+            window = w;
+        }
+    }
+    if (!window) {
+        return nullptr;
+    }
+    QQuickWindow *qw = qobject_cast<QQuickWindow*>(window);
+    return qw->contentItem();
 }
 
 QQuickItem *QAEngine::applicationWindow()
