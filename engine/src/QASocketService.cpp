@@ -446,6 +446,11 @@ void QASocketService::getScreenshotBootstrap(QTcpSocket *socket)
     grabScreenshot(socket, QAEngine::instance()->rootItem(), true);
 }
 
+void QASocketService::getScreenshotCoverBootstrap(QTcpSocket *socket)
+{
+    grabScreenshot(socket, QAEngine::instance()->coverItem(), true);
+}
+
 void QASocketService::elementEnabledBootstrap(QTcpSocket *socket, const QString &elementId)
 {
     getAttributeBootstrap(socket, QStringLiteral("enabled"), elementId);
@@ -880,6 +885,17 @@ void QASocketService::executeCommand_app_dumpTree(QTcpSocket *socket)
     QQuickItem *rootItem = QAEngine::instance()->rootItem();
     QJsonObject reply = QAEngine::instance()->recursiveDumpTree(rootItem);
     socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
+}
+
+void QASocketService::executeCommand_app_dumpCover(QTcpSocket *socket)
+{
+    QQuickItem *coverItem = QAEngine::instance()->coverItem();
+    if (!coverItem) {
+        socketReply(socket, QString());
+    } else {
+        QJsonObject reply = QAEngine::instance()->recursiveDumpTree(coverItem);
+        socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
+    }
 }
 
 void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName)
