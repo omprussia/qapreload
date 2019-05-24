@@ -616,7 +616,7 @@ void QASocketService::getOrientationBootstrap(QTcpSocket *socket)
 void QASocketService::setOrientationBootstrap(QTcpSocket *socket, const QString &orientation)
 {
     QQuickItem *item = QAEngine::getApplicationWindow();
-    item->setProperty("deviceOrientation", orientation == QStringLiteral("LANDSCAPE") ? 2 : 1);
+    item->setProperty("deviceOrientation", orientation == QLatin1String("LANDSCAPE") ? 2 : 1);
     socketReply(socket, QString());
 }
 
@@ -740,13 +740,13 @@ void QASocketService::executeCommand_app_waitForPropertyChange(QTcpSocket *socke
 void QASocketService::executeCommand_app_swipe(QTcpSocket *socket, const QString &directionString)
 {
     SailfishTest::SwipeDirection direction = SailfishTest::SwipeDirectionDown;
-    if (directionString == QStringLiteral("down")) {
+    if (directionString == QLatin1String("down")) {
         direction = SailfishTest::SwipeDirectionDown;
-    } else if (directionString == QStringLiteral("up")) {
+    } else if (directionString == QLatin1String("up")) {
         direction = SailfishTest::SwipeDirectionUp;
-    } else if (directionString == QStringLiteral("left")) {
+    } else if (directionString == QLatin1String("left")) {
         direction = SailfishTest::SwipeDirectionLeft;
-    } else if (directionString == QStringLiteral("right")) {
+    } else if (directionString == QLatin1String("right")) {
         direction = SailfishTest::SwipeDirectionRight;
     }
     m_sailfishTest->swipe(direction);
@@ -756,13 +756,13 @@ void QASocketService::executeCommand_app_swipe(QTcpSocket *socket, const QString
 void QASocketService::executeCommand_app_peek(QTcpSocket *socket, const QString &directionString)
 {
     SailfishTest::PeekDirection direction = SailfishTest::PeekDirectionDown;
-    if (directionString == QStringLiteral("down")) {
+    if (directionString == QLatin1String("down")) {
         direction = SailfishTest::PeekDirectionDown;
-    } else if (directionString == QStringLiteral("up")) {
+    } else if (directionString == QLatin1String("up")) {
         direction = SailfishTest::PeekDirectionUp;
-    } else if (directionString == QStringLiteral("left")) {
+    } else if (directionString == QLatin1String("left")) {
         direction = SailfishTest::PeekDirectionLeft;
-    } else if (directionString == QStringLiteral("right")) {
+    } else if (directionString == QLatin1String("right")) {
         direction = SailfishTest::PeekDirectionRight;
     }
     m_sailfishTest->peek(direction);
@@ -962,21 +962,21 @@ void QASocketService::processTouchActionList(const QVariant &actionListArg)
         const QString actionName = action.value(QStringLiteral("action")).toString();
         const QVariantMap options = action.value(QStringLiteral("options")).toMap();
 
-        if (actionName == QStringLiteral("wait")) {
+        if (actionName == QLatin1String("wait")) {
             delay = options.value(QStringLiteral("ms")).toInt();
-        } else if (actionName == QStringLiteral("tap")) {
+        } else if (actionName == QLatin1String("tap")) {
             const int tapX = options.value(QStringLiteral("x")).toInt();
             const int tapY = options.value(QStringLiteral("y")).toInt();
             m_sailfishTest->clickPoint(tapX, tapY);
-        } else if (actionName == QStringLiteral("press")) {
+        } else if (actionName == QLatin1String("press")) {
             startX = options.value(QStringLiteral("x")).toInt();
             startY = options.value(QStringLiteral("y")).toInt();
-        } else if (actionName == QStringLiteral("moveTo")) {
+        } else if (actionName == QLatin1String("moveTo")) {
             endX = options.value(QStringLiteral("x")).toInt();
             endY = options.value(QStringLiteral("y")).toInt();
-        } else if (actionName == QStringLiteral("release")) {
+        } else if (actionName == QLatin1String("release")) {
             m_sailfishTest->mouseDrag(startX, startY, endX, endY, delay);
-        } else if (actionName == QStringLiteral("longPress")) {
+        } else if (actionName == QLatin1String("longPress")) {
             const QString elementId = options.value(QStringLiteral("element")).toString();
             if (!s_items.contains(elementId)) {
                 continue;

@@ -711,7 +711,7 @@ void QABridge::isLockedBootstrap(QTcpSocket *socket)
 
     qDebug() << Q_FUNC_INFO << reply.value() << reply;
     if (reply.error().type() == QDBusError::NoError) {
-        socketReply(socket, reply.value() == QStringLiteral("locked"));
+        socketReply(socket, reply.value() == QLatin1String("locked"));
     } else {
         socketReply(socket, QString(), 1);
     }
@@ -810,10 +810,10 @@ int QABridge::getNetworkConnection() const
     }
     int connection = NetworkConnectionNone;
     for (NetworkTechnology *tech : nm->getTechnologies()) {
-        if (tech->powered() && tech->type() == QStringLiteral("wifi")) {
+        if (tech->powered() && tech->type() == QLatin1String("wifi")) {
             connection |= NetworkConnectionWifi;
         }
-        if (tech->powered() && tech->type() == QStringLiteral("cellular")) {
+        if (tech->powered() && tech->type() == QLatin1String("cellular")) {
             connection |= NetworkConnectionData;
         }
     }

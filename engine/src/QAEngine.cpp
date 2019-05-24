@@ -146,7 +146,7 @@ QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
     object.insert(QStringLiteral("height"), QJsonValue(rect.height()));
     object.insert(QStringLiteral("x"), QJsonValue(rect.x()));
     object.insert(QStringLiteral("y"), QJsonValue(rect.y()));
-    object.insert(QStringLiteral("z"), QJsonValue(depth));
+    object.insert(QStringLiteral("depth"), QJsonValue(depth));
 
     QPointF position(item->x(), item->y());
     QPoint abs;
