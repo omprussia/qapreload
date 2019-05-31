@@ -35,7 +35,6 @@ Library for performing automatic testing QML applications.
 Summary:    Preload library for QA. plugin.qmltypes
 Group:      Qt/Qt
 BuildArch:  noarch
-Requires:   %{name}
 
 %description devel
 %{summary}.
