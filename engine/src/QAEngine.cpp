@@ -54,10 +54,6 @@ void QAEngine::ready()
     m_keyEngine = new QAKeyEngine(this);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
-    QADBusService::instance()->initialize();
-
-    connect(qGuiApp, &QGuiApplication::aboutToQuit, QADBusService::instance(), &QADBusService::deinitialize);
-
     if (QFileInfo::exists(QStringLiteral("/etc/qapreload-touch-indicator"))) {
         setTouchIndicator(true);
     }
@@ -76,15 +72,15 @@ void QAEngine::ready()
 
     const QStringList args = qApp->arguments();
     const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
+
     if (testArgIndex < 0) {
-        return;
+        QADBusService::instance()->initialize();
+        connect(qGuiApp, &QGuiApplication::aboutToQuit, QADBusService::instance(), &QADBusService::deinitialize);
+    } else if (testArgIndex > 0 && testArgIndex == args.length() - 2) {
+        const QString testName = args.at(testArgIndex + 1);
+        loadSailfishTest(testName, QDBusMessage());
+        qApp->quit();
     }
-    if (testArgIndex == args.length() - 1) {
-        return;
-    }
-    const QString testName = args.at(testArgIndex + 1);
-    loadSailfishTest(testName, QDBusMessage());
-    qApp->quit();
 }
 
 QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
