@@ -97,6 +97,7 @@ private slots:
 
     void executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy);
     void executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
+    void executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
 
     void executeCommand_app_scrollToItem(QTcpSocket *socket, const QString &elementId);
 

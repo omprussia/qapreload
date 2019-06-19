@@ -124,6 +124,14 @@ Usage:
 
 `driver.execute_script("touch:mouseSwipe", 20, 40, 60, 80)`
 
+### touch:mouseDrag
+
+perform mouse drag touch action from one point to another
+
+Usage:
+
+`driver.execute_script("touch:mouseDrag", 20, 40, 60, 80)`
+
 ### app:scrollToItem
 
 perform scroll on view to some item

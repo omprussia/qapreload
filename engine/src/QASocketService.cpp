@@ -799,6 +799,12 @@ void QASocketService::executeCommand_touch_mouseSwipe(QTcpSocket *socket, double
     socketReply(socket, QString());
 }
 
+void QASocketService::executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
+{
+    m_sailfishTest->mouseDrag(posx, posy, stopx, stopy);
+    socketReply(socket, QString());
+}
+
 void QASocketService::executeCommand_app_scrollToItem(QTcpSocket *socket, const QString &elementId)
 {
     qDebug() << Q_FUNC_INFO << elementId;
