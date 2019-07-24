@@ -68,8 +68,8 @@ rm -rf %{buildroot}
 %qmake5_install
 ln -s ../../../../../qtpreloadplugins/libqaengine.so %{buildroot}/usr/lib/qt5/qml/ru/omprussia/sailfishtest/libqaengine.so
 
-/usr/lib/qt5/bin/qmlplugindump -v -noinstantiate -nonrelocatable ru.omprussia.sailfishtest 1.0 %{buildroot}%{_libdir}/qt5/qml > %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes |:
-sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
+/usr/lib/qt5/bin/qmlplugindump -v -noinstantiate -nonrelocatable ru.omprussia.sailfishtest 1.0 %{buildroot}%{_libdir}/qt5/qml > %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugins.qmltypes |:
+sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugins.qmltypes |:
 
 mkdir -p %{buildroot}%{_sysconfdir}
 touch %{buildroot}%{_sysconfdir}/qapreload-touch-indicator
@@ -108,7 +108,7 @@ cp -R engine/html/* %{buildroot}/%{_docdir}/%{name}/
 
 %files devel
 %{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir
-%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugin.qmltypes
+%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugins.qmltypes
 
 %files doc
 %defattr(-,root,root,-)
