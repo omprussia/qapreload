@@ -102,7 +102,7 @@ QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
     return object;
 }
 
-QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
+QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth) const
 {
     QJsonObject object;
 
@@ -431,7 +431,7 @@ QAEngine::~QAEngine()
 {
 }
 
-QQuickItem *QAEngine::rootItem()
+QQuickItem *QAEngine::rootItem() const
 {
     QWindow* window = qGuiApp->focusWindow();
     QQuickWindow *qw = qobject_cast<QQuickWindow*>(window);
@@ -441,7 +441,7 @@ QQuickItem *QAEngine::rootItem()
     return m_rootItem;
 }
 
-QQuickItem *QAEngine::coverItem()
+QQuickItem *QAEngine::coverItem() const
 {
     QWindow *window = nullptr;
     for (QWindow *w : qGuiApp->allWindows()) {
@@ -469,15 +469,13 @@ QVariantList QAEngine::rootItems()
     return items;
 }
 
-QQuickItem *QAEngine::applicationWindow()
+QQuickItem *QAEngine::applicationWindow() const
 {
-    if (!m_applicationWindow) {
-        m_applicationWindow = QAEngine::instance()->rootItem();
-        if (!qmlEngine(m_applicationWindow)) {
-            m_applicationWindow = m_applicationWindow->childItems().first();
-        }
+    QQuickItem *applicationWindow = QAEngine::instance()->rootItem();
+    if (!qmlEngine(applicationWindow)) {
+        applicationWindow = applicationWindow->childItems().first();
     }
-    return m_applicationWindow;
+    return applicationWindow;
 }
 
 void QAEngine::dumpTree(const QDBusMessage &message)

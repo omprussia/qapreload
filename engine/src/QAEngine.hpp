@@ -63,13 +63,13 @@ public:
     virtual ~QAEngine();
 
     Q_PROPERTY(QQuickItem *rootItem READ rootItem CONSTANT)
-    QQuickItem *rootItem();
-    QQuickItem *coverItem();
+    QQuickItem *rootItem() const;
+    QQuickItem *coverItem() const;
 
     static QVariantList rootItems();
 
     Q_PROPERTY(QQuickItem *applicationWindow READ applicationWindow CONSTANT)
-    QQuickItem *applicationWindow();
+    QQuickItem *applicationWindow() const;
 
     static QString getText(QQuickItem *item);
     static QString className(QObject *item);
@@ -135,8 +135,9 @@ private:
     QQmlEngine *getEngine();
     TestResult *getTestResult(const QString &functionName);
 
-    QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
-    QJsonObject dumpObject(QQuickItem *item, int depth = 0);
+    void recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth = 0);
+    QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0) const;
+    QJsonObject dumpObject(QQuickItem *item, int depth = 0) const;
 
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
