@@ -50,6 +50,7 @@ class QTouchEvent;
 class QKeyEvent;
 class QAKeyEngine;
 class QAMouseEngine;
+class QXmlStreamWriter;
 class QAEngine : public QObject
 {
     Q_OBJECT
@@ -80,6 +81,7 @@ public:
     static QVariantList findItemsByClassName(const QString &className, QQuickItem *parentItem = nullptr);
     static QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
     static QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
+    static QVariantList findItemsByXpath(const QString &xpath, QQuickItem *parentItem = nullptr);
     static QQuickItem *findParentFlickable(QQuickItem *rootItem = nullptr);
     static QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
 

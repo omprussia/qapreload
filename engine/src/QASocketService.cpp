@@ -1055,3 +1055,10 @@ void QASocketService::findStrategy_parent(QTcpSocket *socket, const QString &sel
     qDebug() << Q_FUNC_INFO << selector << multiple << items;
     elementReply(socket, items, multiple);
 }
+
+void QASocketService::findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    QVariantList items = QAEngine::findItemsByXpath(selector, parentItem);
+    qDebug() << Q_FUNC_INFO << selector << multiple << items;
+    elementReply(socket, items, multiple);
+}
