@@ -293,7 +293,7 @@ QString QAEngine::getText(QQuickItem *item)
 
 QString QAEngine::className(QObject *item)
 {
-    return QString::fromLatin1(item->metaObject()->className()).section(QChar('_'), 0, 0);
+    return QString::fromLatin1(item->metaObject()->className()).section(QChar(u'_'), 0, 0).section(QChar(u':'), -1);
 }
 
 QString QAEngine::uniqueId(QQuickItem *item)
