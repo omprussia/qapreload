@@ -1,5 +1,5 @@
 TEMPLATE = lib
-QT = core dbus quick quick-private core-private
+QT = core dbus quick quick-private core-private xmlpatterns
 CONFIG += plugin
 CONFIG += c++11
 CONFIG += link_pkgconfig

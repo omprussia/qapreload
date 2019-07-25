@@ -50,6 +50,7 @@ class QTouchEvent;
 class QKeyEvent;
 class QAKeyEngine;
 class QAMouseEngine;
+class QXmlStreamWriter;
 class QAEngine : public QObject
 {
     Q_OBJECT
@@ -63,13 +64,13 @@ public:
     virtual ~QAEngine();
 
     Q_PROPERTY(QQuickItem *rootItem READ rootItem CONSTANT)
-    QQuickItem *rootItem();
-    QQuickItem *coverItem();
+    QQuickItem *rootItem() const;
+    QQuickItem *coverItem() const;
 
     static QVariantList rootItems();
 
     Q_PROPERTY(QQuickItem *applicationWindow READ applicationWindow CONSTANT)
-    QQuickItem *applicationWindow();
+    QQuickItem *applicationWindow() const;
 
     static QString getText(QQuickItem *item);
     static QString className(QObject *item);
@@ -80,6 +81,7 @@ public:
     static QVariantList findItemsByClassName(const QString &className, QQuickItem *parentItem = nullptr);
     static QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
     static QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
+    static QVariantList findItemsByXpath(const QString &xpath, QQuickItem *parentItem = nullptr);
     static QQuickItem *findParentFlickable(QQuickItem *rootItem = nullptr);
     static QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
 
@@ -135,8 +137,9 @@ private:
     QQmlEngine *getEngine();
     TestResult *getTestResult(const QString &functionName);
 
-    QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
-    QJsonObject dumpObject(QQuickItem *item, int depth = 0);
+    void recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth = 0);
+    QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0) const;
+    QJsonObject dumpObject(QQuickItem *item, int depth = 0) const;
 
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
     QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);

@@ -20,6 +20,8 @@
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
 #include <QQuickView>
+#include <QXmlQuery>
+#include <QXmlResultItems>
 
 #include <QDBusMessage>
 
@@ -83,7 +85,31 @@ void QAEngine::ready()
     }
 }
 
-QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
+void QAEngine::recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth)
+{
+    const QJsonObject object = dumpObject(rootItem, depth);
+    writer->writeStartElement(object.value(QStringLiteral("classname")).toString());
+    for (auto i = object.constBegin(), objEnd = object.constEnd(); i != objEnd; ++i) {
+        const QJsonValue& val = *i;
+        const QString &name = i.key();
+
+        writer->writeAttribute(name, val.toVariant().toString());
+    }
+    if (object.contains(QStringLiteral("mainTextProperty"))) {
+        writer->writeCharacters(object.value(QStringLiteral("mainTextProperty")).toString());
+    }
+
+    QQuickItemPrivate *itemPrivate = QQuickItemPrivate::get(rootItem);
+
+    int z = 0;
+    for (QQuickItem *child : itemPrivate->paintOrderChildItems()) {
+        recursiveDumpXml(writer, child, ++z);
+    }
+
+    writer->writeEndElement();
+}
+
+QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth) const
 {
     QJsonObject object = dumpObject(rootItem, depth);
 
@@ -102,7 +128,7 @@ QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth)
     return object;
 }
 
-QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth)
+QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth) const
 {
     QJsonObject object;
 
@@ -374,6 +400,54 @@ QVariantList QAEngine::findItemsByProperty(const QString &propertyName, const QV
     return items;
 }
 
+QVariantList QAEngine::findItemsByXpath(const QString &xpath, QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = QAEngine::instance()->rootItem();
+    }
+
+    QString out;
+    QXmlStreamWriter writer(&out);
+    writer.setAutoFormatting(true);
+    writer.writeStartDocument();
+    QAEngine::instance()->recursiveDumpXml(&writer, parentItem, 0);
+    writer.writeEndDocument();
+
+    qDebug().noquote() << out;
+
+    QXmlQuery query;
+    query.setFocus(out);
+    query.setQuery(xpath);
+
+    if (!query.isValid()) {
+        return items;
+    }
+    QString tempString;
+    query.evaluateTo(&tempString);
+
+    if (tempString.trimmed().isEmpty()) {
+        return items;
+    }
+
+    const QString resultData = QLatin1String("<results>") + tempString + QLatin1String("</results>");
+    QXmlStreamReader reader(resultData);
+    reader.readNextStartElement();
+    while (!reader.atEnd()) {
+        reader.readNext();
+        if (reader.isStartElement()) {
+            const QString elementId = reader.attributes().value(QStringLiteral("id")).toString();
+            const QString address = elementId.section(QChar(u'x'), -1);
+            const uint integer = address.toUInt(NULL, 16);
+            QQuickItem *item = reinterpret_cast<QQuickItem*>(integer);
+            items.append(QVariant::fromValue(item));
+        }
+    }
+
+    return items;
+}
+
 QQuickItem *QAEngine::findParentFlickable(QQuickItem *rootItem)
 {
     if (!rootItem) {
@@ -431,7 +505,7 @@ QAEngine::~QAEngine()
 {
 }
 
-QQuickItem *QAEngine::rootItem()
+QQuickItem *QAEngine::rootItem() const
 {
     QWindow* window = qGuiApp->focusWindow();
     QQuickWindow *qw = qobject_cast<QQuickWindow*>(window);
@@ -441,7 +515,7 @@ QQuickItem *QAEngine::rootItem()
     return m_rootItem;
 }
 
-QQuickItem *QAEngine::coverItem()
+QQuickItem *QAEngine::coverItem() const
 {
     QWindow *window = nullptr;
     for (QWindow *w : qGuiApp->allWindows()) {
@@ -469,15 +543,13 @@ QVariantList QAEngine::rootItems()
     return items;
 }
 
-QQuickItem *QAEngine::applicationWindow()
+QQuickItem *QAEngine::applicationWindow() const
 {
-    if (!m_applicationWindow) {
-        m_applicationWindow = QAEngine::instance()->rootItem();
-        if (!qmlEngine(m_applicationWindow)) {
-            m_applicationWindow = m_applicationWindow->childItems().first();
-        }
+    QQuickItem *applicationWindow = QAEngine::instance()->rootItem();
+    if (!qmlEngine(applicationWindow)) {
+        applicationWindow = applicationWindow->childItems().first();
     }
-    return m_applicationWindow;
+    return applicationWindow;
 }
 
 void QAEngine::dumpTree(const QDBusMessage &message)
