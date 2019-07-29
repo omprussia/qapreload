@@ -30,6 +30,10 @@
 
 #include <systemd/sd-daemon.h>
 
+static const QString s_screenRecorderService = QStringLiteral("org.coderus.screenrecorder");
+static const QString s_screenRecorderObject = QStringLiteral("/org/coderus/screenrecorder");
+static const QString s_screenRecorderInterface = QStringLiteral("org.coderus.screenrecorder");
+
 static QDBusConnection getSessionBus()
 {
     static const QString s_sessionBusConnection = QStringLiteral("qabridge-connection");
@@ -56,6 +60,129 @@ static inline QGenericArgument qVariantToArgument(const QVariant &variant) {
         return QGenericArgument(variant.typeName(), variant.constData());
     }
     return QGenericArgument();
+}
+
+QAScreenRecorder::QAScreenRecorder(QObject *parent)
+    : QObject(parent)
+{
+    QDBusConnection systemBus = QDBusConnection::systemBus();
+
+    systemBus.connect(QString(),
+        s_screenRecorderObject,
+        s_screenRecorderInterface,
+        QStringLiteral("RecordingFinished"),
+        this, SLOT(onRecordingFinished(QString)));
+
+    systemBus.connect(QString(),
+        s_screenRecorderObject,
+        s_screenRecorderInterface,
+        QStringLiteral("StateChanged"),
+        this, SLOT(onStateChanged(int)));
+
+    QDBusMessage stateMessage = QDBusMessage::createMethodCall(
+        s_screenRecorderService,
+        s_screenRecorderObject,
+        s_screenRecorderInterface,
+        QStringLiteral("GetState"));
+    QDBusReply<int> stateReply = systemBus.call(stateMessage);
+    if (!stateReply.isValid()) {
+        qWarning() << Q_FUNC_INFO << systemBus.lastError().message();
+        return;
+    }
+    onStateChanged(stateReply.value());
+}
+
+QString QAScreenRecorder::lastFilename() const
+{
+    return m_lastFilename;
+}
+
+bool QAScreenRecorder::setScale(double scale)
+{
+    QDBusConnection systemBus = QDBusConnection::systemBus();
+
+    QDBusMessage scaleMessage = QDBusMessage::createMethodCall(
+        s_screenRecorderService,
+        s_screenRecorderObject,
+        s_screenRecorderInterface,
+        QStringLiteral("SetScale"));
+    scaleMessage.setArguments({scale});
+    QDBusReply<void> scaleReply = systemBus.call(scaleMessage);
+    if (!scaleReply.isValid()) {
+        qWarning() << Q_FUNC_INFO << systemBus.lastError().message();
+        return false;
+    }
+
+    return true;
+}
+
+bool QAScreenRecorder::start()
+{
+    QDBusConnection systemBus = QDBusConnection::systemBus();
+
+    if (m_state != 1) {
+        qWarning() << Q_FUNC_INFO << "Recorder is busy:" << m_state;
+        return false;
+    }
+
+    QDBusMessage startMessage = QDBusMessage::createMethodCall(
+        s_screenRecorderService,
+        s_screenRecorderObject,
+        s_screenRecorderInterface,
+        QStringLiteral("Start"));
+    QDBusReply<void> startReply = systemBus.call(startMessage);
+    if (!startReply.isValid()) {
+        qWarning() << Q_FUNC_INFO << systemBus.lastError().message();
+        return false;
+    }
+
+    return true;
+}
+
+bool QAScreenRecorder::stop()
+{
+    QDBusConnection systemBus = QDBusConnection::systemBus();
+
+    if (m_state != 2) {
+        qWarning() << Q_FUNC_INFO << "Wrong state:" << m_state;
+        return false;
+    }
+
+    QEventLoop loop;
+    connect(this, &QAScreenRecorder::stateChanged, [&loop](int state) {
+        if (state == 1) {
+            loop.quit();
+        }
+    });
+
+    QDBusMessage stopMessage = QDBusMessage::createMethodCall(
+        s_screenRecorderService,
+        s_screenRecorderObject,
+        s_screenRecorderInterface,
+        QStringLiteral("Stop"));
+    QDBusReply<void> stopReply = systemBus.call(stopMessage);
+    if (!stopReply.isValid()) {
+        qWarning() << Q_FUNC_INFO << systemBus.lastError().message();
+        return false;
+    }
+
+    loop.exec();
+
+    return true;
+}
+
+void QAScreenRecorder::onStateChanged(int state)
+{
+    qDebug() << Q_FUNC_INFO << state;
+    m_state = state;
+    emit stateChanged(state);
+}
+
+void QAScreenRecorder::onRecordingFinished(const QString &filename)
+{
+    qDebug() << Q_FUNC_INFO << filename;
+    m_lastFilename = filename;
+    emit recordingFinished(filename);
 }
 
 QABridge::QABridge(QObject *parent)
@@ -418,12 +545,31 @@ void QABridge::getDeviceTimeBootstrap(QTcpSocket *socket, const QString &dateFor
 
 void QABridge::startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments)
 {
-    socketReply(socket, QString());
+    if (!m_screenrecorder) {
+        m_screenrecorder = new QAScreenRecorder(this);
+    }
+
+    if (!m_screenrecorder->start()) {
+        socketReply(socket, QStringLiteral("error"), 1);
+        return;
+    }
+
+    socketReply(socket, QStringLiteral("started"));
 }
 
 void QABridge::stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments)
 {
-    socketReply(socket, QString());
+    if (!m_screenrecorder) {
+        m_screenrecorder = new QAScreenRecorder(this);
+    }
+
+    m_screenrecorder->setScale(0.8);
+    if (!m_screenrecorder->stop()) {
+        socketReply(socket, QStringLiteral("error"), 1);
+        return;
+    }
+
+    socketReply(socket, m_screenrecorder->lastFilename());
 }
 
 void QABridge::executeBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg)
@@ -848,4 +994,3 @@ void QABridge::socketReply(QTcpSocket *socket, const QVariant &value, int status
     socket->write(QJsonDocument(reply).toJson(QJsonDocument::Compact));
     socket->flush();
 }
-
