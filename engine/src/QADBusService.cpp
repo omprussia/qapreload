@@ -58,7 +58,7 @@ void QADBusService::initialize()
     }
 
     m_adaptor = new QAAdaptor(this);
-    emit m_adaptor->engineLoaded(QAEngine::isLoaded());
+    emit engineLoaded(QAEngine::isLoaded());
 
     m_bridgeIface = new QABridgeInterface(DBUS_SERVICE_NAME, DBUS_PATH_NAME, QDBusConnection::systemBus(), this);
     m_bridgeIface->ApplicationReady(s_processName);

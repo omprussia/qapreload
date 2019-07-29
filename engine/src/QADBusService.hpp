@@ -53,6 +53,9 @@ private slots:
 
     void quit();
 
+signals:
+    void engineLoaded(bool loaded);
+
 private:
     explicit QADBusService(QObject *parent = nullptr);
     QAAdaptor *m_adaptor = nullptr;
