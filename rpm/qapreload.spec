@@ -29,6 +29,9 @@ BuildRequires:  qt5-qtdeclarative-devel-tools
 BuildRequires:  qt5-plugin-platform-minimal
 BuildRequires:  mer-qdoc-template
 Requires:   qtpreloadengine
+Supplements: qtpreloadengine-ld
+Supplements: qapreload-indicator
+Supplements: screenrecorder
 
 %description
 Library for performing automatic testing QML applications.
