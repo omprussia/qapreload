@@ -30,6 +30,9 @@
 
 #include <systemd/sd-daemon.h>
 
+#include <sys/socket.h>
+#include <sys/un.h>
+
 static const QString s_screenRecorderService = QStringLiteral("org.coderus.screenrecorder");
 static const QString s_screenRecorderObject = QStringLiteral("/org/coderus/screenrecorder");
 static const QString s_screenRecorderInterface = QStringLiteral("org.coderus.screenrecorder");
@@ -282,6 +285,9 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
         qWarning() << Q_FUNC_INFO << "Socket already known:" << m_appSocket.value(socket);
     }
     m_appSocket.insert(socket, appName);
+    if (appName == QLatin1String("headless")) {
+        return;
+    }
     if (!m_appPort.contains(appName)) {
         connectAppSocket(appName);
     }
@@ -290,6 +296,10 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
 void QABridge::appConnectBootstrap(QTcpSocket *socket)
 {
     const QString appName = m_appSocket.value(socket);
+    if (appName == QLatin1String("headless")) {
+        socketReply(socket, QString());
+        return;
+    }
 
     connectAppSocket(appName);
     qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
@@ -638,6 +648,77 @@ void QABridge::executeCommand_shell(QTcpSocket *socket, const QVariant &executab
     qDebug() << Q_FUNC_INFO << "stdout:" << stdout;
     qDebug() << Q_FUNC_INFO << "stderr:" << stderr;
     socketReply(socket, stdout);
+}
+
+void QABridge::executeCommand_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
+{
+    qDebug() << executableArg << paramsArg;
+    QVariantList params = paramsArg.toList();
+    QString socketPath;
+    if (params.isEmpty()) {
+        QDir askDir(QStringLiteral("/run/systemd/ask-password/"));
+        if (!askDir.exists()) {
+            qWarning() << Q_FUNC_INFO << askDir.absolutePath() << "not exists!";
+            socketReply(socket, QStringLiteral("no dir"), 1);
+            return;
+        }
+        QStringList sockets = askDir.entryList({QStringLiteral("sck.*")}, QDir::System);
+        qDebug() << Q_FUNC_INFO << sockets;
+        if (sockets.isEmpty()) {
+            qWarning() << Q_FUNC_INFO << "No sockets!";
+            socketReply(socket, QStringLiteral("no sockets"), 1);
+            return;
+        }
+
+        socketPath = askDir.absolutePath() + QDir::separator() + sockets.first();
+    } else {
+        socketPath = params.first().toString();
+    }
+
+    const QString password = executableArg.toString();
+
+    char buf[20];
+    int sd, len;
+    struct sockaddr_un name;
+
+    if (password.length() > 0) {
+        buf[0] = '+';
+        strncpy(buf + 1, password.toLatin1().constData(), sizeof(buf) - 1);
+        buf[sizeof(buf) - 1] = '\0';
+        len = strlen(buf);
+    } else {  // Assume cancelled
+        buf[0] = '-';
+        len = 1;
+    }
+
+    if ((sd = ::socket(AF_UNIX, SOCK_DGRAM, 0)) < 0) {
+        qWarning() << Q_FUNC_INFO << "socket open failed";
+        socketReply(socket, QStringLiteral("socket open failed"), 1);
+        return;
+    }
+
+    name.sun_family = AF_UNIX;
+    strncpy(name.sun_path, socketPath.toLatin1().constData(), sizeof(name.sun_path));
+    name.sun_path[sizeof(name.sun_path) - 1] = '\0';
+
+    if (::connect(sd, (struct sockaddr *)&name, SUN_LEN(&name)) != 0) {
+        qWarning() << Q_FUNC_INFO << "socket connect failed";
+        close(sd);
+        socketReply(socket, QStringLiteral("socket connect failed"), 1);
+        return;
+    }
+
+    if (send(sd, buf, len, 0) < len) {
+        qWarning() << Q_FUNC_INFO << "socket send failed";
+        close(sd);
+        socketReply(socket, QStringLiteral("socket send failed"), 1);
+        return;
+    }
+
+    close(sd);
+
+    socketReply(socket, QString());
+
 }
 
 void QABridge::ApplicationReady(const QString &appName)
