@@ -327,7 +327,7 @@ void SailfishTest::pullDownTo(const QString &text)
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
-    const int dragY = 100;
+    const int dragY = page->height() / 2;
     const int dragYEnd = dragY - itemAbs.y() + item->height();
 
     mouseSwipe(dragX, dragY, dragX, dragYEnd);
@@ -384,7 +384,7 @@ void SailfishTest::pullDownTo(int index)
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
-    const int dragY = 100;
+    const int dragY = page->height() / 2;
     const int dragYEnd = dragY - itemAbs.y() + item->height();
 
     mouseSwipe(dragX, dragY, dragX, dragYEnd);
@@ -441,7 +441,7 @@ void SailfishTest::pushUpTo(const QString &text)
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
-    const int dragY = page->height() - 100;
+    const int dragY = page->height() / 2;
     const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
 
     mouseSwipe(dragX, dragY, dragX, dragYEnd);
@@ -498,7 +498,7 @@ void SailfishTest::pushUpTo(int index)
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
-    const int dragY = page->height() - 100;
+    const int dragY = page->height() / 2;
     const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
 
     mouseSwipe(dragX, dragY, dragX, dragYEnd);
