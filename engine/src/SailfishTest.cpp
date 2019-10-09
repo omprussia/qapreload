@@ -442,7 +442,7 @@ void SailfishTest::pushUpTo(const QString &text)
 
     const int dragX = page->width() / 2;
     const int dragY = page->height() / 2;
-    const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
+    const int dragYEnd = dragY - (itemAbs.y() - page->height() + item->height() + 100);
 
     mouseSwipe(dragX, dragY, dragX, dragYEnd);
 }
@@ -499,7 +499,7 @@ void SailfishTest::pushUpTo(int index)
 
     const int dragX = page->width() / 2;
     const int dragY = page->height() / 2;
-    const int dragYEnd = dragY - (itemAbs.y() - dragY + item->height());
+    const int dragYEnd = dragY - (itemAbs.y() - page->height() + item->height() + 100);
 
     mouseSwipe(dragX, dragY, dragX, dragYEnd);
 }
