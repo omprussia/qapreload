@@ -415,8 +415,6 @@ QVariantList QAEngine::findItemsByXpath(const QString &xpath, QQuickItem *parent
     QAEngine::instance()->recursiveDumpXml(&writer, parentItem, 0);
     writer.writeEndDocument();
 
-    qDebug().noquote() << out;
-
     QXmlQuery query;
     query.setFocus(out);
     query.setQuery(xpath);
