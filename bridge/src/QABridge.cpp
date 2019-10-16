@@ -426,10 +426,10 @@ void QABridge::isAppInstalledBootstrap(QTcpSocket *socket, const QString &rpmNam
 
 void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName)
 {
-    if (m_appPort.value(appName, 0) == 0) {
-        qDebug() << Q_FUNC_INFO << m_appPort.value(appName) << "AppState is: NOT_RUNNING";
+    if (!isServiceRegistered(appName)) {
         socketReply(socket, QStringLiteral("NOT_RUNNING"));
-        return;
+    } else if (m_appPort.value(appName, 0) == 0) {
+        socketReply(socket, QStringLiteral("CLOSING"));
     } else {
         forwardToApp(socket, QStringLiteral("queryAppState"), QStringList({appName}));
     }
@@ -464,8 +464,26 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
     qDebug() << Q_FUNC_INFO;
     const QString appName = m_appSocket.value(socket);
     if (m_appPort.value(appName) != 0) {
-        forwardToApp(socket, QStringLiteral("closeApp"), QStringList({appName}));
-        m_appPort.insert(appName, 0);
+        QByteArray appReplyData = sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
+        qDebug() << Q_FUNC_INFO << appReplyData;
+
+        QEventLoop loop;
+        QTimer timer;
+        QDBusConnection sessionBus = getSessionBus();
+        int counter = 0;
+        connect(&timer, &QTimer::timeout, [&loop, &counter, sessionBus, appName]() {
+            if (!isServiceRegistered(appName)) {
+                loop.quit();
+            } else {
+                counter++;
+                if (counter > 10) {
+                    loop.quit();
+                }
+            }
+        });
+        timer.start(500);
+        loop.exec();
+        socketReply(socket, QString());
     } else {
         qWarning() << Q_FUNC_INFO << "App" << appName << "is not active";
         socketReply(socket, QString(), 1);
@@ -973,6 +991,11 @@ QByteArray QABridge::actionData(const QString &action, const QVariant &params)
     json.insert(QStringLiteral("action"), QJsonValue(action));
     json.insert(QStringLiteral("params"), QJsonValue::fromVariant(params));
     return QJsonDocument(json).toJson(QJsonDocument::Compact);
+}
+
+bool QABridge::isServiceRegistered(const QString &appName)
+{
+    return getSessionBus().interface()->isServiceRegistered(QStringLiteral("ru.omprussia.qaservice.%1").arg(appName));
 }
 
 bool QABridge::launchApp(const QString &appName, const QStringList &arguments)

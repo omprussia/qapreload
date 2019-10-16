@@ -110,6 +110,7 @@ private slots:
 
 private:
     QByteArray actionData(const QString &action, const QVariant &params);
+    bool isServiceRegistered(const QString &appName);
 
     static bool launchApp(const QString &appName, const QStringList &arguments);
     QByteArray sendToAppSocket(const QString &appName, const QByteArray &data);
