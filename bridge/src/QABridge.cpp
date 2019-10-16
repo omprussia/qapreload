@@ -328,11 +328,7 @@ void QABridge::appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch)
     }
 
     if (autoLaunch) {
-        QJsonObject json;
-        json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
-        json.insert(QStringLiteral("action"), QJsonValue(QStringLiteral("closeApp")));
-        json.insert(QStringLiteral("params"), QJsonValue::fromVariant(QStringList({appName})));
-        sendToAppSocket(appName, QJsonDocument(json).toJson(QJsonDocument::Compact));
+        sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
     }
 
     m_appPort.remove(appName);
@@ -967,11 +963,16 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
 
 void QABridge::forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params)
 {
+    forwardToApp(socket, actionData(action, params));
+}
+
+QByteArray QABridge::actionData(const QString &action, const QVariant &params)
+{
     QJsonObject json;
     json.insert(QStringLiteral("cmd"), QJsonValue(QStringLiteral("action")));
     json.insert(QStringLiteral("action"), QJsonValue(action));
     json.insert(QStringLiteral("params"), QJsonValue::fromVariant(params));
-    forwardToApp(socket, QJsonDocument(json).toJson(QJsonDocument::Compact));
+    return QJsonDocument(json).toJson(QJsonDocument::Compact);
 }
 
 bool QABridge::launchApp(const QString &appName, const QStringList &arguments)

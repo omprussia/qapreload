@@ -109,6 +109,8 @@ private slots:
     void forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params);
 
 private:
+    QByteArray actionData(const QString &action, const QVariant &params);
+
     static bool launchApp(const QString &appName, const QStringList &arguments);
     QByteArray sendToAppSocket(const QString &appName, const QByteArray &data);
     void connectAppSocket(const QString &appName);
