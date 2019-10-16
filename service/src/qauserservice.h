@@ -10,8 +10,6 @@ class QAUserService : public QObject
 public:
     explicit QAUserService(QObject *parent = nullptr);
 
-signals:
-
 public slots:
     void start();
 
