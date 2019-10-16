@@ -226,13 +226,13 @@ void QABridge::start()
     bool success = false;
     success = QDBusConnection::systemBus().registerObject(DBUS_PATH_NAME, this);
     if (!success) {
-        qWarning () << Q_FUNC_INFO << "Failed to register object!";
+        qWarning() << Q_FUNC_INFO << "Failed to register object!";
         return;
     }
 
     success = QDBusConnection::systemBus().registerService(DBUS_SERVICE_NAME);
     if (!success) {
-        qWarning () << Q_FUNC_INFO << "Failed to register service!" << QDBusConnection::systemBus().lastError().message();
+        qWarning() << Q_FUNC_INFO << "Failed to register service!" << QDBusConnection::systemBus().lastError().message();
         return;
     }
 
