@@ -16,22 +16,23 @@ QAUserService::QAUserService(QObject *parent) : QObject(parent)
 void QAUserService::start()
 {
     const QString serviceName = QStringLiteral("ru.omprussia.qaservice");
+    QDBusConnection sessionBus = QDBusConnection::sessionBus();
 
-    if (QDBusConnection::sessionBus().interface()->isServiceRegistered(serviceName)) {
+    if (sessionBus.interface()->isServiceRegistered(serviceName)) {
         qWarning() << Q_FUNC_INFO << "Service already registered!";
         qApp->quit();
         return;
     }
 
     bool success = false;
-    success = QDBusConnection::sessionBus().registerObject(QStringLiteral("/ru/omprussia/qaservice"), this, QDBusConnection::ExportScriptableSlots);
+    success = sessionBus.registerObject(QStringLiteral("/ru/omprussia/qaservice"), this, QDBusConnection::ExportScriptableSlots);
     if (!success) {
         qWarning () << Q_FUNC_INFO << "Failed to register object!";
         qApp->quit();
         return;
     }
 
-    success = QDBusConnection::sessionBus().registerService(serviceName);
+    success = sessionBus.registerService(serviceName);
     if (!success) {
         qWarning () << Q_FUNC_INFO << "Failed to register service!";
         qApp->quit();
