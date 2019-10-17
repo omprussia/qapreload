@@ -471,7 +471,7 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
         QTimer timer;
         QDBusConnection sessionBus = getSessionBus();
         int counter = 0;
-        connect(&timer, &QTimer::timeout, [&loop, &counter, sessionBus, appName]() {
+        connect(&timer, &QTimer::timeout, [this, &loop, &counter, sessionBus, appName]() {
             if (!isServiceRegistered(appName)) {
                 loop.quit();
             } else {
