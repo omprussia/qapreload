@@ -1010,23 +1010,46 @@ bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
 
 QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &data)
 {
+    QJsonObject reply = {
+        {QStringLiteral("status"), 1},
+        {QStringLiteral("value"), QString()}
+    };
+    QByteArray appReplyData = QJsonDocument(reply).toJson(QJsonDocument::Compact);
+    bool haveData = false;
+
     QTcpSocket appSocket;
+    QTimer timer;
+    timer.setSingleShot(true);
+    timer.setInterval(30000);
+    connect(&appSocket, &QAbstractSocket::readyRead, [&appReplyData, &appSocket, &timer, &haveData]() {
+        if (!haveData) {
+            haveData = true;
+            appReplyData.clear();
+        }
+        qDebug() << Q_FUNC_INFO << "Received bytes from app:" << appSocket.bytesAvailable();
+        appReplyData.append(appSocket.readAll());
+        timer.start();
+    });
+
     appSocket.connectToHost(QHostAddress(QHostAddress::LocalHost), m_appPort.value(appName));
     qWarning() << Q_FUNC_INFO << "Connecting to app socket:" << m_appPort.value(appName) <<
     appSocket.waitForConnected();
     if (!appSocket.isOpen()) {
         qWarning() << Q_FUNC_INFO << "Can't connect to app socket:" << m_appPort.value(appName);
-        return QByteArray();
+        return appReplyData;
     }
     qWarning() << Q_FUNC_INFO << "Writing to app socket:" <<
     appSocket.write(data) <<
     appSocket.waitForBytesWritten();
 
-    qDebug() << Q_FUNC_INFO << "Reading from app socket";
-    QByteArray appReplyData;
-    while (appSocket.state() == QTcpSocket::ConnectedState) {
-        appSocket.waitForReadyRead(3000);
-        appReplyData.append(appSocket.readAll());
+    if (appSocket.state() == QAbstractSocket::ConnectedState) {
+        qDebug() << Q_FUNC_INFO << "Reading from app socket";
+        QEventLoop loop;
+        connect(&appSocket, &QAbstractSocket::stateChanged, &timer, &QTimer::stop);
+        connect(&appSocket, &QAbstractSocket::stateChanged, &loop, &QEventLoop::quit);
+        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        timer.start();
+        loop.exec();
     }
 
     return appReplyData;
