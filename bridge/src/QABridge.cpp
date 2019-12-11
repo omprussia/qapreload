@@ -335,6 +335,10 @@ void QABridge::appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch)
     m_appSocket.remove(socket);
     qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
     socketReply(socket, QString());
+
+    if (socket->isOpen()) {
+        socket->close();
+    }
 }
 
 void QABridge::startActivityBootstrap(QTcpSocket *socket, const QString &appName, const QStringList &arguments)
