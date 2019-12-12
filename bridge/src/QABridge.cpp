@@ -322,18 +322,16 @@ void QABridge::appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch)
 {
     const QString appName = m_appSocket.value(socket);
 
-    if (m_appPort.value(appName) == 0) {
-        socketReply(socket, QString());
-        return;
+    if (m_appPort.value(appName) != 0) {
+        if (autoLaunch) {
+            sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
+        }
+
+        m_appPort.remove(appName);
+        m_appSocket.remove(socket);
+        qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
     }
 
-    if (autoLaunch) {
-        sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
-    }
-
-    m_appPort.remove(appName);
-    m_appSocket.remove(socket);
-    qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
     socketReply(socket, QString());
 
     if (socket->isOpen()) {
