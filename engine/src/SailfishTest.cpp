@@ -193,19 +193,12 @@ void SailfishTest::clickContextMenuItem(QQuickItem *item, int index)
 
 QVariantList SailfishTest::openContextMenu(QQuickItem *item)
 {
+    QVariantList contextMenus;
     if (!item) {
         return QVariantList();
     }
     pressAndHoldItem(item, 1200);
-    const QVariantList contextMenus = findItemsByClassName(QStringLiteral("ContextMenu"), item);
-    if (contextMenus.count() < 1) {
-        return QVariantList();
-    }
-    const QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), contextMenus.first().value<QQuickItem*>());
-    if (columns.count() < 1) {
-        return QVariantList();
-    }
-    return findItemsByClassName(QStringLiteral("MenuItem"), columns.first().value<QQuickItem*>());
+    return findItemsByClassName(QStringLiteral("MenuItem"), item);
 }
 
 QVariantList SailfishTest::filterVisibleItems(const QVariantList &items)
