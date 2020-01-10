@@ -440,6 +440,7 @@ QVariantList QAEngine::findItemsByXpath(const QString &xpath, QQuickItem *parent
             const uint integer = address.toUInt(NULL, 16);
             QQuickItem *item = reinterpret_cast<QQuickItem*>(integer);
             items.append(QVariant::fromValue(item));
+            reader.skipCurrentElement();
         }
     }
 
