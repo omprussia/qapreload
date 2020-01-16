@@ -1,5 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS = \
+    hook \
     engine \
     bridge \
     service
