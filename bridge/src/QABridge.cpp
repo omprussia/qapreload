@@ -29,7 +29,9 @@
 
 #include <connman-qt5/networkmanager.h>
 
+#ifdef USE_SYSTEMD
 #include <systemd/sd-daemon.h>
+#endif
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -78,11 +80,14 @@ void QABridge::start()
 {
     qDebug() << Q_FUNC_INFO;
 
+#ifdef USE_SYSTEMD
     if (sd_listen_fds(0) == 1) {
         int fd = SD_LISTEN_FDS_START;
         qDebug() << Q_FUNC_INFO << "Using systemd socket descriptor:" << fd <<
                     m_server->setSocketDescriptor(fd);
-    } else if (!m_server->listen(QHostAddress::AnyIPv4, 8888)) {
+    } else
+#endif
+    if (!m_server->listen(QHostAddress::AnyIPv4, 8888)) {
         qWarning() << Q_FUNC_INFO << m_server->errorString();
         qApp->quit();
         return;
