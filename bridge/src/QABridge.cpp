@@ -24,8 +24,10 @@
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
 
+#ifdef USE_PACKAGEKIT
 #include <Transaction>
 #include <Daemon>
+#endif
 
 #include <connman-qt5/networkmanager.h>
 
@@ -260,6 +262,8 @@ void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QString &appId)
 void QABridge::installAppBootstrap(QTcpSocket *socket, const QString &appPath)
 {
     qDebug() << Q_FUNC_INFO << appPath;
+
+#ifdef USE_PACKAGEKIT
     QEventLoop loop;
     PackageKit::Transaction *tx = PackageKit::Daemon::installFile(appPath, PackageKit::Transaction::TransactionFlagNone);
     connect(tx, &PackageKit::Transaction::finished, [&loop, socket, this](PackageKit::Transaction::Exit status, uint) {
@@ -269,11 +273,13 @@ void QABridge::installAppBootstrap(QTcpSocket *socket, const QString &appPath)
         loop.quit();
     });
     loop.exec();
+#endif
 }
 
 void QABridge::removeAppBootstrap(QTcpSocket *socket, const QString &appName)
 {
     qDebug() << Q_FUNC_INFO << appName;
+#ifdef USE_PACKAGEKIT
     QEventLoop loop;
     PackageKit::Transaction *r = PackageKit::Daemon::resolve(appName, PackageKit::Transaction::FilterInstalled);
     connect(r, &PackageKit::Transaction::finished, [&loop, socket, this](PackageKit::Transaction::Exit status, uint) {
@@ -296,6 +302,7 @@ void QABridge::removeAppBootstrap(QTcpSocket *socket, const QString &appName)
         });
     });
     loop.exec();
+#endif
 }
 
 void QABridge::isAppInstalledBootstrap(QTcpSocket *socket, const QString &rpmName)
