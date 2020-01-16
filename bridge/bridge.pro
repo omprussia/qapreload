@@ -28,11 +28,13 @@ dbusConf.path = /etc/dbus-1/system.d/
 INSTALLS += dbusConf
 
 SOURCES += \
+    src/QAScreenRecorder.cpp \
     src/main.cpp \
     src/QABridge.cpp
 
 HEADERS += \
-    src/QABridge.hpp
+    src/QABridge.hpp \
+    src/QAScreenRecorder.hpp
 
 bridge_dbus_adaptor.files = ../dbus/ru.omprussia.qabridge.xml
 bridge_dbus_adaptor.source_flags = -c QABridgeAdaptor
