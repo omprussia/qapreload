@@ -7,6 +7,7 @@ PKGCONFIG += mlite5
 
 SOURCES += \
     src/engine.cpp \
+    src/QAPreloadEngine.cpp \
     src/QAEngine.cpp \
     src/QAMouseEngine.cpp \
     src/QAKeyEngine.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
     src/QASocketService.cpp
 
 HEADERS += \
+    src/QAPreloadEngine.hpp \
     src/QAEngine.hpp \
     src/QAMouseEngine.hpp \
     src/QAKeyEngine.hpp \
@@ -28,7 +30,7 @@ HEADERS += \
     src/QASocketService.hpp
 
 TARGET = qaengine
-target.path = /usr/lib/qtpreloadplugins
+target.path = /usr/lib
 
 INSTALLS = target
 

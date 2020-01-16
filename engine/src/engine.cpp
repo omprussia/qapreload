@@ -1,11 +1,6 @@
-#include "QAEngine.hpp"
+#include "QAPreloadEngine.hpp"
 
-extern "C" void loadPlugin(QQuickItem *rootItem)
-{
-    QAEngine::instance()->initialize(rootItem);
-}
-
-extern "C" void rootReady()
-{
-    QAEngine::instance()->ready();
+__attribute__((constructor))
+static void libConstructor() {
+    QAPreloadEngine::initialize();
 }
