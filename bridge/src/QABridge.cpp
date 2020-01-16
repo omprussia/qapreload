@@ -19,10 +19,12 @@
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusReply>
 
+#ifdef USE_RPM
 #include <rpm/rpmlib.h>
 #include <rpm/header.h>
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
+#endif
 
 #ifdef USE_PACKAGEKIT
 #include <Transaction>
@@ -986,7 +988,18 @@ bool QABridge::isAppInstalled(const QString &rpmName)
 {
     qDebug() << Q_FUNC_INFO << rpmName;
 
-    rpmReadConfigFiles(NULL, NULL);
+#ifdef USE_RPM
+    static bool rpmConfigRead = false;
+    if (!rpmConfigRead)
+    {
+        rpmConfigRead = true;
+        if (rpmReadConfigFiles(NULL, NULL))
+        {
+            qWarning()
+                << Q_FUNC_INFO
+                << "Error reading rpm config";
+        }
+    }
     rpmts transactionSet = rpmtsCreate();
     rpmdbMatchIterator it = rpmtsInitIterator(transactionSet, RPMTAG_NAME, rpmName.toLatin1().constData(), 0);
 
@@ -998,6 +1011,9 @@ bool QABridge::isAppInstalled(const QString &rpmName)
     rpmtsFree(transactionSet);
 
     return isInstalled;
+#else
+    return true;
+#endif
 }
 
 void QABridge::socketReply(QTcpSocket *socket, const QVariant &value, int status)
