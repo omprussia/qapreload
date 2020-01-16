@@ -31,7 +31,9 @@
 #include <Daemon>
 #endif
 
+#ifdef USE_CONNMAN
 #include <connman-qt5/networkmanager.h>
+#endif
 
 #ifdef USE_SYSTEMD
 #include <systemd/sd-daemon.h>
@@ -390,6 +392,7 @@ void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, double connecti
     const int networkConnectionType = static_cast<int>(connectionType);
     qDebug() << Q_FUNC_INFO << networkConnectionType;
 
+#ifdef USE_CONNMAN
     NetworkManager *nm = NetworkManager::instance();
     if (nm->getTechnologies().isEmpty()) {
         QEventLoop loop;
@@ -430,6 +433,7 @@ void QABridge::setNetworkConnectionBootstrap(QTcpSocket *socket, double connecti
     } else {
         qDebug() << "Data not available";
     }
+#endif
 
     socketReply(socket, QString());
 }
@@ -963,6 +967,7 @@ void QABridge::connectAppSocket(const QString &appName)
 
 int QABridge::getNetworkConnection() const
 {
+#ifdef USE_CONNMAN
     NetworkManager *nm = NetworkManager::instance();
     if (nm->getTechnologies().isEmpty()) {
         QEventLoop loop;
@@ -982,6 +987,9 @@ int QABridge::getNetworkConnection() const
         }
     }
     return connection;
+#else
+    return NetworkConnectionWifi;
+#endif
 }
 
 bool QABridge::isAppInstalled(const QString &rpmName)
