@@ -2,14 +2,16 @@ QT = core dbus network
 CONFIG += link_pkgconfig
 PKGCONFIG += \
     libshadowutils \
-    connman-qt5 \
-    rpm
+    connman-qt5
 
 DEFINES += USE_SYSTEMD
 PKGCONFIG += libsystemd-daemon
 
 DEFINES += USE_PACKAGEKIT
 PKGCONFIG += packagekitqt5
+
+DEFINES += USE_RPM
+PKGCONFIG += rpm
 
 TEMPLATE = app
 TARGET = qabridge
