@@ -85,7 +85,7 @@ public slots:
     void waitForPageChange(int timeout = 1000);
     void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
 
-    void assert(const QString &text);
+    void showAssert(const QString &text);
     void message(const QString &text);
 
     void assertEqual(const QVariant &value1, const QVariant &value2, const QString &text = QString());

@@ -86,6 +86,9 @@ private slots:
     void forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params);
 
 private:
+    void processAppCommand(const QJsonObject &app);
+    bool processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params);
+
     QByteArray actionData(const QString &action, const QVariant &params);
     bool isServiceRegistered(const QString &appName);
 

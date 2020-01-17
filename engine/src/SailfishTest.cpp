@@ -12,7 +12,11 @@
 #include <QQmlEngine>
 
 #include <private/qv4engine_p.h>
+
+#include <QtGlobal>
+#if QT_VERSION <= QT_VERSION_CHECK(5, 6, 0)
 #include <private/qv8engine_p.h>
+#endif
 
 /*!
     \qmltype SailfishTest
@@ -867,8 +871,9 @@ void SailfishTest::onPropertyChanged()
     }
 }
 
-void SailfishTest::assert(const QString &text)
+void SailfishTest::showAssert(const QString &text)
 {
+#if QT_VERSION <= QT_VERSION_CHECK(5, 6, 0)
     QQmlEngine *engine = qmlEngine(this);
     if (!engine) {
         return;
@@ -885,6 +890,7 @@ void SailfishTest::assert(const QString &text)
     tr->success = false;
     tr->message = text;
     tr->raise();
+#endif
 }
 
 void SailfishTest::message(const QString &text)
@@ -904,7 +910,7 @@ void SailfishTest::message(const QString &text)
 void SailfishTest::assertEqual(const QVariant &value1, const QVariant &value2, const QString &text)
 {
     if (!compareEqual(value1, value2)) {
-        assert(text.isEmpty() ? QStringLiteral("Assert: %1 != %2").arg(value1.toString(), value2.toString()) : text);
+        showAssert(text.isEmpty() ? QStringLiteral("Assert: %1 != %2").arg(value1.toString(), value2.toString()) : text);
     }
 }
 
@@ -920,7 +926,7 @@ void SailfishTest::assertEqual(const QVariant &value1, const QVariant &value2, c
 void SailfishTest::assertNotEqual(const QVariant &value1, const QVariant &value2, const QString &text)
 {
     if (!compareNotEqual(value1, value2)) {
-        assert(text.isEmpty() ? QStringLiteral("Assert: %1 == %2").arg(value1.toString(), value2.toString()) : text);
+        showAssert(text.isEmpty() ? QStringLiteral("Assert: %1 == %2").arg(value1.toString(), value2.toString()) : text);
     }
 }
 
@@ -936,7 +942,7 @@ void SailfishTest::assertNotEqual(const QVariant &value1, const QVariant &value2
 void SailfishTest::assertTrue(bool value, const QString &text)
 {
     if (!compareTrue(value)) {
-        assert(text.isEmpty() ? QStringLiteral("Assert: %1 is False").arg(value) : text);
+        showAssert(text.isEmpty() ? QStringLiteral("Assert: %1 is False").arg(value) : text);
     }
 }
 
@@ -952,7 +958,7 @@ void SailfishTest::assertTrue(bool value, const QString &text)
 void SailfishTest::assertFalse(bool value, const QString &text)
 {
     if (!compareFalse(value)) {
-        assert(text.isEmpty() ? QStringLiteral("Assert: %1 is True").arg(value) : text);
+        showAssert(text.isEmpty() ? QStringLiteral("Assert: %1 is True").arg(value) : text);
     }
 }
 
