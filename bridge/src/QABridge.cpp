@@ -1,6 +1,4 @@
 #include "QABridge.hpp"
-#include "QAScreenRecorder.hpp"
-#include "qabridge_adaptor.h"
 
 #include <QDebug>
 #include <QTcpServer>
@@ -15,9 +13,15 @@
 
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QProcess>
+
+#ifdef USE_DBUS
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusReply>
+#include "qabridge_adaptor.h"
+#include "QAScreenRecorder.hpp"
+#endif
 
 #ifdef USE_RPM
 #include <rpm/rpmlib.h>
@@ -39,9 +43,7 @@
 #include <systemd/sd-daemon.h>
 #endif
 
-#include <sys/socket.h>
-#include <sys/un.h>
-
+#ifdef USE_DBUS
 static QDBusConnection getSessionBus()
 {
     static const QString s_sessionBusConnection = QStringLiteral("qabridge-connection");
@@ -62,6 +64,11 @@ static QDBusConnection getSessionBus()
     }
     return s_bus;
 }
+#endif
+
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
 
 static inline QGenericArgument qVariantToArgument(const QVariant &variant) {
     if (variant.isValid() && !variant.isNull()) {
@@ -75,8 +82,6 @@ QABridge::QABridge(QObject *parent)
     , m_server(new QTcpServer(this))
     , m_connectLoop(new QEventLoop(this))
 {
-    qputenv("DBUS_SESSION_BUS_ADDRESS", QByteArrayLiteral("unix:path=/run/user/100000/dbus/user_bus_socket"));
-
     connect(m_server, &QTcpServer::newConnection, this, &QABridge::newConnection);
 
     qRegisterMetaType<QTcpSocket*>();
@@ -99,6 +104,7 @@ void QABridge::start()
         return;
     }
 
+#ifdef USE_DBUS
     if (m_adaptor) {
         return;
     }
@@ -124,6 +130,9 @@ void QABridge::start()
     qDebug() << Q_FUNC_INFO << "Started D-Bus service" << DBUS_SERVICE_NAME;
 
     m_adaptor = new QABridgeAdaptor(this);
+#else
+
+#endif
 }
 
 void QABridge::newConnection()
@@ -277,6 +286,8 @@ void QABridge::installAppBootstrap(QTcpSocket *socket, const QString &appPath)
         loop.quit();
     });
     loop.exec();
+#else
+    socketReply(socket, QString(), 0);
 #endif
 }
 
@@ -306,6 +317,8 @@ void QABridge::removeAppBootstrap(QTcpSocket *socket, const QString &appName)
         });
     });
     loop.exec();
+#else
+    socketReply(socket, QString(), 0);
 #endif
 }
 
@@ -359,6 +372,7 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
         QByteArray appReplyData = sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
         qDebug() << Q_FUNC_INFO << appReplyData;
 
+#ifdef USE_DBUS
         QEventLoop loop;
         QTimer timer;
         QDBusConnection sessionBus = getSessionBus();
@@ -375,6 +389,9 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
         });
         timer.start(500);
         loop.exec();
+#else
+
+#endif
         socketReply(socket, QString());
     } else {
         qWarning() << Q_FUNC_INFO << "App" << appName << "is not active";
@@ -463,6 +480,7 @@ void QABridge::getDeviceTimeBootstrap(QTcpSocket *socket, const QString &dateFor
 
 void QABridge::startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments)
 {
+#ifdef USE_DBUS
     if (!m_screenrecorder) {
         m_screenrecorder = new QAScreenRecorder(this);
     }
@@ -473,10 +491,14 @@ void QABridge::startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant 
     }
 
     socketReply(socket, QStringLiteral("started"));
+#else
+    socketReply(socket, QStringLiteral("not_implemented"));
+#endif
 }
 
 void QABridge::stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments)
 {
+#ifdef USE_DBUS
     if (!m_screenrecorder) {
         m_screenrecorder = new QAScreenRecorder(this);
     }
@@ -488,6 +510,9 @@ void QABridge::stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &
     }
 
     socketReply(socket, m_screenrecorder->lastFilename());
+#else
+    socketReply(socket, QStringLiteral("not_implemented"));
+#endif
 }
 
 void QABridge::executeBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg)
@@ -652,6 +677,13 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
     }
 
     QJsonObject object = json.object();
+
+    if (object.contains(QStringLiteral("app"))) {
+        const QJsonObject app = object.value(QStringLiteral("app")).toObject();
+        processAppCommand(app);
+        return;
+    }
+
     if (!object.contains(QStringLiteral("cmd"))) {
         return;
     }
@@ -667,43 +699,15 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
     const QString action = object.value(QStringLiteral("action")).toVariant().toString();
     const QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
 
-    const QString methodName = QStringLiteral("%1Bootstrap").arg(action);
+    if (!processAppiumCommand(socket, action, params)) {
+        qDebug() << Q_FUNC_INFO << "Process command is finished for:" << action << m_appSocket.contains(socket);
 
-    for (int i = metaObject()->methodOffset(); i < metaObject()->methodOffset() + metaObject()->methodCount(); i++) {
-        if (metaObject()->method(i).name() == methodName.toLatin1()) {
-            const QMetaMethod method = metaObject()->method(i);
-            QGenericArgument arguments[9] = { QGenericArgument() };
-            for (int i = 0; i < (method.parameterCount() - 1) && params.count() > i; i++) {
-                if (method.parameterType(i + 1) == QMetaType::QVariant) {
-                    arguments[i] = Q_ARG(QVariant, params[i]);
-                } else {
-                    arguments[i] = qVariantToArgument(params[i]);
-                }
-            }
-            QMetaObject::invokeMethod(this,
-                                      methodName.toLatin1().constData(),
-                                      Qt::DirectConnection,
-                                      Q_ARG(QTcpSocket*, socket),
-                                      arguments[0],
-                                      arguments[1],
-                                      arguments[2],
-                                      arguments[3],
-                                      arguments[4],
-                                      arguments[5],
-                                      arguments[6],
-                                      arguments[7],
-                                      arguments[8]);
-            return;
-        }
+        QMetaObject::invokeMethod(this,
+                                  "forwardToApp",
+                                  Qt::DirectConnection,
+                                  Q_ARG(QTcpSocket*, socket),
+                                  Q_ARG(QByteArray, cmd));
     }
-
-    qDebug() << Q_FUNC_INFO << "Process command is finished for:" << action << m_appSocket.contains(socket);
-
-    QMetaObject::invokeMethod(this,
-                              "forwardToApp",
-                              Qt::DirectConnection,
-                              Q_ARG(QTcpSocket*, socket),
-                              Q_ARG(QByteArray, cmd));
 }
 
 void QABridge::getCurrentContextBootstrap(QTcpSocket *socket)
@@ -753,6 +757,7 @@ void QABridge::setGeoLocationBootstrap(QTcpSocket *socket, const QVariant &locat
 
 void QABridge::lockBootstrap(QTcpSocket *socket, double seconds)
 {
+#ifdef USE_DBUS
     QDBusMessage lock = QDBusMessage::createMethodCall(
                 QStringLiteral("com.nokia.mce"),
                 QStringLiteral("/com/nokia/mce/request"),
@@ -765,6 +770,9 @@ void QABridge::lockBootstrap(QTcpSocket *socket, double seconds)
     } else {
         socketReply(socket, QString(), 1);
     }
+#else
+    socketReply(socket, QString());
+#endif
 }
 
 void QABridge::pushFileBootstrap(QTcpSocket *socket, const QString &path, const QString &data)
@@ -808,6 +816,7 @@ void QABridge::pullFileBootstrap(QTcpSocket *socket, const QString &path)
 void QABridge::unlockBootstrap(QTcpSocket *socket)
 {
     qDebug() << Q_FUNC_INFO;
+#ifdef USE_DBUS
     QDBusMessage unlock = QDBusMessage::createMethodCall(
                 QStringLiteral("com.nokia.mce"),
                 QStringLiteral("/com/nokia/mce/request"),
@@ -832,11 +841,15 @@ void QABridge::unlockBootstrap(QTcpSocket *socket)
     } else {
         socketReply(socket, QString(), 1);
     }
+#else
+    socketReply(socket, QString());
+#endif
 }
 
 void QABridge::isLockedBootstrap(QTcpSocket *socket)
 {
     qDebug() << Q_FUNC_INFO;
+#ifdef USE_DBUS
     QDBusMessage lock = QDBusMessage::createMethodCall(
                 QStringLiteral("com.nokia.mce"),
                 QStringLiteral("/com/nokia/mce/request"),
@@ -850,6 +863,9 @@ void QABridge::isLockedBootstrap(QTcpSocket *socket)
     } else {
         socketReply(socket, QString(), 1);
     }
+#else
+    socketReply(socket, QString());
+#endif
 }
 
 void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
@@ -878,6 +894,53 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QString &action, const QVa
     forwardToApp(socket, actionData(action, params));
 }
 
+void QABridge::processAppCommand(const QJsonObject &app)
+{
+    const QString appName = app.value(QStringLiteral("appName")).toString();
+    const int port = app.value(QStringLiteral("port")).toInt();
+
+    m_appPort.insert(appName, port);
+
+    if (m_appPort.value(appName) != 0 && m_connectLoop->isRunning()) {
+        m_connectLoop->quit();
+    }
+}
+
+bool QABridge::processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params)
+{
+    const QString methodName = QStringLiteral("%1Bootstrap").arg(action);
+
+    for (int i = metaObject()->methodOffset(); i < metaObject()->methodOffset() + metaObject()->methodCount(); i++) {
+        if (metaObject()->method(i).name() == methodName.toLatin1()) {
+            const QMetaMethod method = metaObject()->method(i);
+            QGenericArgument arguments[9] = { QGenericArgument() };
+            for (int i = 0; i < (method.parameterCount() - 1) && params.count() > i; i++) {
+                if (method.parameterType(i + 1) == QMetaType::QVariant) {
+                    arguments[i] = Q_ARG(QVariant, params[i]);
+                } else {
+                    arguments[i] = qVariantToArgument(params[i]);
+                }
+            }
+            QMetaObject::invokeMethod(this,
+                                      methodName.toLatin1().constData(),
+                                      Qt::DirectConnection,
+                                      Q_ARG(QTcpSocket*, socket),
+                                      arguments[0],
+                                      arguments[1],
+                                      arguments[2],
+                                      arguments[3],
+                                      arguments[4],
+                                      arguments[5],
+                                      arguments[6],
+                                      arguments[7],
+                                      arguments[8]);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 QByteArray QABridge::actionData(const QString &action, const QVariant &params)
 {
     QJsonObject json;
@@ -889,17 +952,25 @@ QByteArray QABridge::actionData(const QString &action, const QVariant &params)
 
 bool QABridge::isServiceRegistered(const QString &appName)
 {
+#ifdef USE_DBUS
     return getSessionBus().interface()->isServiceRegistered(QStringLiteral("ru.omprussia.qaservice.%1").arg(appName));
+#else
+    return true;
+#endif
 }
 
 bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
 {
+#ifdef USE_DBUS
     QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
                                                          QStringLiteral("/ru/omprussia/qaservice"),
                                                          QStringLiteral("ru.omprussia.qaservice"),
                                                          QStringLiteral("launchApp"));
     launch.setArguments({ appName, arguments });
     return getSessionBus().send(launch);
+#else
+    return true;
+#endif
 }
 
 QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &data)
@@ -951,6 +1022,8 @@ QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &d
 
 void QABridge::connectAppSocket(const QString &appName)
 {
+    qDebug() << Q_FUNC_INFO << appName;
+#ifdef USE_DBUS
     QDBusMessage startAppSocket = QDBusMessage::createMethodCall(
                 QStringLiteral("ru.omprussia.qaservice.%1").arg(appName),
                 QStringLiteral("/ru/omprussia/qaservice"),
@@ -963,6 +1036,7 @@ void QABridge::connectAppSocket(const QString &appName)
     if (m_appPort.value(appName) != 0 && m_connectLoop->isRunning()) {
         m_connectLoop->quit();
     }
+#endif
 }
 
 int QABridge::getNetworkConnection() const

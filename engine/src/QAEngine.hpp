@@ -5,6 +5,7 @@
 #include <QObject>
 
 class QQmlEngine;
+class QQuickItem;
 class TestResult : public QObject
 {
     Q_OBJECT
@@ -29,7 +30,7 @@ private:
 };
 Q_DECLARE_METATYPE(TestResult)
 
-class QQuickItem;
+#ifdef USE_DBUS
 class TouchFilter : public QObject
 {
     Q_OBJECT
@@ -43,6 +44,7 @@ private:
     QQuickItem *m_touchIndicator = nullptr;
 
 };
+#endif
 
 class QDBusMessage;
 class QMouseEvent;
@@ -94,6 +96,7 @@ public:
     static void print(const QString &text);
 
 private slots:
+#ifdef USE_DBUS
     void dumpTree(const QDBusMessage &message);
     void dumpCurrentPage(const QDBusMessage &message);
 
@@ -108,17 +111,17 @@ private slots:
     void pressBackspace(int count, const QDBusMessage &message);
     void pressKeys(const QString &keys, const QDBusMessage &message);
 
-    void clearFocus();
-
     void executeInPage(const QString &jsCode, const QDBusMessage &message);
     void executeInWindow(const QString &jsCode, const QDBusMessage &message);
 
     void loadSailfishTest(const QString &fileName, const QDBusMessage &message);
-    void clearComponentCache();
 
     void setEventFilterEnabled(bool enable, const QDBusMessage &message);
     void setTouchIndicatorEnabled(bool enable, const QDBusMessage &message);
     void hideTouchIndicator(const QDBusMessage &message);
+#endif
+    void clearFocus();
+    void clearComponentCache();
 
     void onTouchEvent(const QTouchEvent &event);
     void onKeyEvent(QKeyEvent *event);
@@ -130,19 +133,19 @@ private:
     friend class SailfishTest;
     friend class LipstickTestHelper;
     friend class QASocketService;
-    friend class TouchFilter;
 
+#ifdef USE_DBUS
+    friend class TouchFilter;
     void setTouchIndicator(bool enable);
 
+    TouchFilter *m_touchFilter = nullptr;
+#endif
     QQmlEngine *getEngine();
     TestResult *getTestResult(const QString &functionName);
 
     void recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth = 0);
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0) const;
     QJsonObject dumpObject(QQuickItem *item, int depth = 0) const;
-
-    QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &property, const QString &value);
-    QStringList recursiveFindObjects(QQuickItem *parentItem, const QString &className);
 
     void sendGrabbedObject(QQuickItem *item, const QDBusMessage &message);
 
@@ -155,8 +158,6 @@ private:
     QAKeyEngine *m_keyEngine = nullptr;
 
     QHash<QString, TestResult*> m_testResults;
-
-    TouchFilter *m_touchFilter = nullptr;
 
     QHash<QString, QStringList> m_blacklistedProperties;
 };
