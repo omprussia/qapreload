@@ -1,7 +1,5 @@
 QT = core dbus network
 CONFIG += link_pkgconfig
-PKGCONFIG += \
-    libshadowutils
 
 DEFINES += USE_SYSTEMD
 PKGCONFIG += libsystemd-daemon
