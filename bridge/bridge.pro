@@ -29,14 +29,29 @@ contains(DEFINES, USE_DBUS) {
 contains(DEFINES, USE_SYSTEMD) {
     PKGCONFIG += libsystemd-daemon
 
-DEFINES += USE_PACKAGEKIT
-PKGCONFIG += packagekitqt5
+    autostart.files = \
+        systemd/qabridge.service \
+        systemd/qabridge.socket
+    autostart.path = /lib/systemd/system
+    INSTALLS += autostart
+}
 
-DEFINES += USE_RPM
-PKGCONFIG += rpm
+#DEFINES += USE_PACKAGEKIT
+contains(DEFINES, USE_PACKAGEKIT) {
+    PKGCONFIG += packagekitqt5
 
-DEFINES += USE_CONNMAN
-PKGCONFIG += connman-qt5
+    INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
+}
+
+#DEFINES += USE_RPM
+contains(DEFINES, USE_RPM) {
+    PKGCONFIG += rpm
+}
+
+#DEFINES += USE_CONNMAN
+contains(DEFINES, USE_CONNMAN) {
+    PKGCONFIG += connman-qt5
+}
 
 TEMPLATE = app
 TARGET = qabridge
@@ -50,5 +65,3 @@ SOURCES += \
 
 HEADERS += \
     src/QABridge.hpp
-INCLUDEPATH += /usr/include
-INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
