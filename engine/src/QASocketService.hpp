@@ -13,6 +13,7 @@ class QASocketService: public QObject
 public:
     static QASocketService *instance();
     void setAttribute(QTcpSocket *socket, const QString &attribute, const QString &value, const QString &elementId);
+    void connectToBridge();
 
 public slots:
     quint16 serverPort();

@@ -1,9 +1,9 @@
 #include "QAEngine.hpp"
 #include "QAKeyEngine.hpp"
 #include "SailfishTest.hpp"
-#include "qaservice_adaptor.h"
 #include "QASocketService.hpp"
 
+#include <QFileInfo>
 #include <QTcpServer>
 #include <QTcpSocket>
 
@@ -19,7 +19,25 @@
 
 #include <private/qquickwindow_p.h>
 
+#include <QCoreApplication>
+#include <QMetaMethod>
+
+#include <QBuffer>
+#include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QStandardPaths>
+#include <QTimer>
+
+#include <QDebug>
+
+#ifdef USE_MLITE5
 #include <mlite5/MGConfItem>
+#endif
+
+#ifdef USE_DBUS
+#include "qaservice_adaptor.h"
+#endif
 
 static QASocketService *s_instance = nullptr;
 static QHash<QString, QQuickItem*> s_items;
@@ -92,7 +110,7 @@ bool QASocketService::invoke(QTcpSocket *socket, const QString &methodName, cons
 void QASocketService::elementReply(QTcpSocket *socket, const QVariantList &elements, bool multiple)
 {
     QVariantList value;
-    for (const QVariant vitem : elements) {
+    for (const QVariant &vitem : elements) {
         QQuickItem *item = vitem.value<QQuickItem*>();
         if (!item) {
             continue;
@@ -501,6 +519,33 @@ void QASocketService::setAttribute(QTcpSocket *socket, const QString &attribute,
     }
 }
 
+void QASocketService::connectToBridge()
+{
+    qDebug() << Q_FUNC_INFO;
+
+    QTcpSocket appSocket;
+    appSocket.connectToHost(QHostAddress(QHostAddress::LocalHost), 8888);
+    appSocket.waitForConnected();
+    if (!appSocket.isOpen()) {
+        qWarning() << Q_FUNC_INFO << "Can't connect to bridge socket";
+        return;
+    }
+
+    QJsonObject root;
+    QJsonObject app;
+    app.insert(QStringLiteral("port"), serverPort());
+    const QString appName = qApp->arguments().first().section(QLatin1Char('/'), -1);
+    app.insert(QStringLiteral("appName"), appName);
+
+    root.insert(QStringLiteral("app"), app);
+
+    QByteArray data = QJsonDocument(root).toJson(QJsonDocument::Compact);
+
+    qWarning() << Q_FUNC_INFO << "Writing to bridge socket:" <<
+    appSocket.write(data) <<
+    appSocket.waitForBytesWritten();
+}
+
 void QASocketService::replaceValueBootstrap(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
     qDebug() << Q_FUNC_INFO << value << elementId;
@@ -569,12 +614,17 @@ void QASocketService::isKeyboardShownBootstrap(QTcpSocket *socket)
 
 void QASocketService::availableIMEEnginesBootstrap(QTcpSocket *socket)
 {
+#ifdef USE_MLITE5
     MGConfItem enabled(QStringLiteral("/sailfish/text_input/enabled_layouts"));
     socketReply(socket, enabled.value().toStringList());
+#else
+    socketReply(socket, QStringList());
+#endif
 }
 
 void QASocketService::activateIMEEngineBootstrap(QTcpSocket *socket, const QVariant &engine)
 {
+#ifdef USE_MLITE5
     const QString layout = engine.toString();
     qDebug() << Q_FUNC_INFO << layout;
     MGConfItem enabled(QStringLiteral("/sailfish/text_input/enabled_layouts"));
@@ -585,14 +635,18 @@ void QASocketService::activateIMEEngineBootstrap(QTcpSocket *socket, const QVari
 
     MGConfItem active(QStringLiteral("/sailfish/text_input/active_layout"));
     active.set(layout);
-
+#endif
     socketReply(socket, QString());
 }
 
 void QASocketService::getActiveIMEEngineBootstrap(QTcpSocket *socket)
 {
+#ifdef USE_MLITE5
     MGConfItem active(QStringLiteral("/sailfish/text_input/active_layout"));
     socketReply(socket, active.value().toString());
+#else
+    socketReply(socket, QString());
+#endif
 }
 
 void QASocketService::deactivateIMEEngineBootstrap(QTcpSocket *socket)
@@ -914,6 +968,7 @@ void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, cons
         screnshotDir.mkpath(QStringLiteral("."));
     }
 
+#ifdef USE_DBUS
     QDBusMessage screenShot = QDBusMessage::createMethodCall(
                 QStringLiteral("org.nemomobile.lipstick"),
                 QStringLiteral("/org/nemomobile/lipstick/screenshot"),
@@ -927,6 +982,9 @@ void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, cons
     } else {
         socketReply(socket, QString(), 1);
     }
+#else
+    socketReply(socket, QString());
+#endif
 }
 
 void QASocketService::performTouchBootstrap(QTcpSocket *socket, const QVariant &paramsArg)

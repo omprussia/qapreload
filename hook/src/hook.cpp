@@ -6,13 +6,14 @@
 typedef void(*StartupCallback)();
 
 static int qa_loaded = 0;
-static int is_nemo = 0;
+static int is_user = 0;
 
 static StartupCallback next_startup_hook = nullptr;
 static const int StartupHookIndex = 5;
 
 StartupCallback qtHookData[100];
 
+#ifdef SAILFISH_OS
 inline uid_t nemo_uid()
 {
     static struct passwd *nemo_pwd;
@@ -24,12 +25,13 @@ inline uid_t nemo_uid()
         }
     }
 
-    return nemo_pwd->pw_uid;
+    return nemo_pwd->pw_uid; 
 }
+#endif
 
 extern "C" void qt_startup_hook()
 {
-    if (!is_nemo) {
+    if (!is_user) {
         return;
     }
     if (qa_loaded) {
@@ -48,7 +50,11 @@ extern "C" void qt_startup_hook()
 
 __attribute__((constructor))
 static void libConstructor() {
-    is_nemo = getuid() == nemo_uid();
+#ifdef SAILFISH_OS
+    is_user = getuid() == nemo_uid();
+#else
+    is_user = true;
+#endif
 
     next_startup_hook = reinterpret_cast<StartupCallback>(qtHookData[StartupHookIndex]);
     qtHookData[StartupHookIndex] = reinterpret_cast<StartupCallback>(&qt_startup_hook);
