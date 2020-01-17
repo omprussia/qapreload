@@ -1,9 +1,13 @@
 #include "QAEngine.hpp"
-#include "QADBusService.hpp"
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
 #include "QAPendingEvent.hpp"
 #include "SailfishTest.hpp"
+
+#ifdef USE_DBUS
+#include "QADBusService.hpp"
+#include <QDBusMessage>
+#endif
 
 #include <QDebug>
 
@@ -15,6 +19,9 @@
 
 #include <QTimer>
 
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
 #include <QQuickItem>
@@ -22,8 +29,7 @@
 #include <QQuickView>
 #include <QXmlQuery>
 #include <QXmlResultItems>
-
-#include <QDBusMessage>
+#include <QXmlStreamWriter>
 
 #include <private/qquickwindow_p.h>
 #include <private/qquickitem_p.h>
@@ -33,6 +39,7 @@
 
 #include "SailfishTest.hpp"
 #include "LipstickTestHelper.hpp"
+#include "QASocketService.hpp"
 
 static QAEngine *s_instance = nullptr;
 
@@ -56,9 +63,11 @@ void QAEngine::ready()
     m_keyEngine = new QAKeyEngine(this);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
+#ifdef USE_DBUS
     if (QFileInfo::exists(QStringLiteral("/etc/qapreload-touch-indicator"))) {
         setTouchIndicator(true);
     }
+#endif
 
     QFile blacklist(QStringLiteral("/etc/qapreload-blacklist"));
     if (blacklist.exists() && blacklist.open(QFile::ReadOnly)) {
@@ -76,11 +85,17 @@ void QAEngine::ready()
     const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
 
     if (testArgIndex < 0) {
+#ifdef USE_DBUS
         QADBusService::instance()->initialize();
         connect(qGuiApp, &QGuiApplication::aboutToQuit, QADBusService::instance(), &QADBusService::deinitialize);
+#else
+        QASocketService::instance()->connectToBridge();
+#endif
     } else if (testArgIndex > 0 && testArgIndex == args.length() - 2) {
+#ifdef USE_DBUS
         const QString testName = args.at(testArgIndex + 1);
         loadSailfishTest(testName, QDBusMessage());
+#endif
         qApp->quit();
     }
 }
@@ -127,6 +142,29 @@ QJsonObject QAEngine::recursiveDumpTree(QQuickItem *rootItem, int depth) const
 
     return object;
 }
+
+#ifdef USE_DBUS
+void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
+{
+    QSharedPointer<QQuickItemGrabResult> grabber = item->grabToImage();
+    connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, message]() {
+        QByteArray arr;
+        QBuffer buffer(&arr);
+        buffer.open(QIODevice::WriteOnly);
+        bool success = grabber->image().save(&buffer, "PNG");
+
+        if (!success) {
+            qWarning() << Q_FUNC_INFO << "Error saving image!";
+        }
+
+        if (arr.isEmpty()) {
+            qWarning() << Q_FUNC_INFO << "Saved empty image!";
+        }
+
+        QADBusService::sendMessageReply(message, arr);
+    });
+}
+#endif
 
 QJsonObject QAEngine::dumpObject(QQuickItem *item, int depth) const
 {
@@ -235,27 +273,6 @@ QQuickItem *QAEngine::getPageStack()
         }
     }
     return pageStack;
-}
-
-void QAEngine::sendGrabbedObject(QQuickItem *item, const QDBusMessage &message)
-{
-    QSharedPointer<QQuickItemGrabResult> grabber = item->grabToImage();
-    connect(grabber.data(), &QQuickItemGrabResult::ready, [grabber, message]() {
-        QByteArray arr;
-        QBuffer buffer(&arr);
-        buffer.open(QIODevice::WriteOnly);
-        bool success = grabber->image().save(&buffer, "PNG");
-
-        if (!success) {
-            qWarning() << Q_FUNC_INFO << "Error saving image!";
-        }
-
-        if (arr.isEmpty()) {
-            qWarning() << Q_FUNC_INFO << "Saved empty image!";
-        }
-
-        QADBusService::sendMessageReply(message, arr);
-    });
 }
 
 void QAEngine::onTouchEvent(const QTouchEvent &event)
@@ -551,6 +568,7 @@ QQuickItem *QAEngine::applicationWindow() const
     return applicationWindow;
 }
 
+#ifdef USE_DBUS
 void QAEngine::dumpTree(const QDBusMessage &message)
 {
     QJsonObject tree = recursiveDumpTree(QAEngine::instance()->rootItem());
@@ -641,16 +659,6 @@ void QAEngine::pressKeys(const QString &keys, const QDBusMessage &message)
             &QAPendingEvent::completed, [message](){
         QADBusService::sendMessageReply(message, QVariantList());
     });
-}
-
-void QAEngine::clearFocus()
-{
-    if (!rootItem()) {
-        return;
-    }
-
-    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(rootItem()->window());
-    wp->clearFocusObject();
 }
 
 void QAEngine::executeInPage(const QString &jsCode, const QDBusMessage &message)
@@ -760,15 +768,6 @@ void QAEngine::loadSailfishTest(const QString &fileName, const QDBusMessage &mes
     }
 }
 
-void QAEngine::clearComponentCache()
-{
-    QQmlEngine *engine = getEngine();
-    if (!engine) {
-        return;
-    }
-    engine->clearComponentCache();
-}
-
 void QAEngine::setEventFilterEnabled(bool enable, const QDBusMessage &message)
 {
     qWarning() << Q_FUNC_INFO << enable;
@@ -795,6 +794,26 @@ void QAEngine::hideTouchIndicator(const QDBusMessage &message)
         m_touchFilter->hideImmediately();
     }
     QADBusService::sendMessageReply(message, QVariantList());
+}
+#endif
+
+void QAEngine::clearFocus()
+{
+    if (!rootItem()) {
+        return;
+    }
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(rootItem()->window());
+    wp->clearFocusObject();
+}
+
+void QAEngine::clearComponentCache()
+{
+    QQmlEngine *engine = getEngine();
+    if (!engine) {
+        return;
+    }
+    engine->clearComponentCache();
 }
 
 bool QAEngine::eventFilter(QObject *watched, QEvent *event)
@@ -836,6 +855,7 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
     return QObject::eventFilter(watched, event);
 }
 
+#ifdef USE_DBUS
 void QAEngine::setTouchIndicator(bool enable)
 {
     qDebug() << Q_FUNC_INFO << enable;
@@ -852,6 +872,7 @@ void QAEngine::setTouchIndicator(bool enable)
         m_touchFilter = nullptr;
     }
 }
+#endif
 
 QQmlEngine *QAEngine::getEngine()
 {
@@ -886,10 +907,13 @@ TestResult::TestResult(const TestResult &other)
 
 void TestResult::raise()
 {
+#if QT_VERSION <= QT_VERSION_CHECK(5, 6, 0)
     QV4::ExecutionEngine *eEngine = QV8Engine::getV4(m_engine);
     eEngine->throwError(message);
+#endif
 }
 
+#ifdef USE_DBUS
 TouchFilter::TouchFilter(QObject *parent)
     : QObject(parent)
 {
@@ -977,3 +1001,4 @@ bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
     }
     return QObject::eventFilter(watched, event);
 }
+#endif
