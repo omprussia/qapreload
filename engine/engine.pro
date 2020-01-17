@@ -3,7 +3,11 @@ QT = core network quick quick-private core-private xmlpatterns
 CONFIG += plugin
 CONFIG += c++11
 CONFIG += link_pkgconfig
-PKGCONFIG += mlite5
+
+#DEFINES += USE_MLITE5
+contains(DEFINES, USE_MLITE5) {
+    PKGCONFIG += mlite5
+}
 
 #DEFINES += USE_DBUS
 contains(DEFINES, USE_DBUS) {
@@ -62,13 +66,15 @@ qml.files = qmldir
 qml.path = /usr/lib/qt5/qml/ru/omprussia/sailfishtest
 INSTALLS += qml
 
-CONFIG += mer-qdoc-template
-MER_QDOC.project = qapreload
-MER_QDOC.config = doc/qapreload.qdocconf
-MER_QDOC.style = offline
-MER_QDOC.path = /usr/share/doc/qapreload
 
-OTHER_FILES += \
-    doc/src/index.qdoc
+#DEFINES += USE_QDOC
+contains(DEFINES, USE_QDOC) {
+    CONFIG += mer-qdoc-template
+    MER_QDOC.project = qapreload
+    MER_QDOC.config = doc/qapreload.qdocconf
+    MER_QDOC.style = offline
+    MER_QDOC.path = /usr/share/doc/qapreload
 
-
+    OTHER_FILES += \
+        doc/src/index.qdoc
+}

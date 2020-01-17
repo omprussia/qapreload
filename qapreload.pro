@@ -2,8 +2,12 @@ TEMPLATE = subdirs
 SUBDIRS = \
     hook \
     engine \
-    bridge \
-    service
+    bridge
+
+#DEFINES += USE_NONPRIVILEGED_SERVICE
+contains(DEFINES, USE_NONPRIVILEGED_SERVICE) {
+    SUBDIRS += service
+}
 
 #DEFINES += USE_DBUS
 contains(DEFINES, USE_DBUS) {
