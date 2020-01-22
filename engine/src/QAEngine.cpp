@@ -59,6 +59,7 @@ void QAEngine::ready()
 {
     m_mouseEngine = new QAMouseEngine(this);
     connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &QAEngine::onTouchEvent);
+    connect(m_mouseEngine, &QAMouseEngine::mouseEvent, this, &QAEngine::onMouseEvent);
 
     m_keyEngine = new QAKeyEngine(this);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
@@ -278,7 +279,19 @@ QQuickItem *QAEngine::getPageStack()
 void QAEngine::onTouchEvent(const QTouchEvent &event)
 {
     QWindowSystemInterface::handleTouchEvent(rootItem()->window(), event.timestamp(), event.device(),
-        QWindowSystemInterfacePrivate::toNativeTouchPoints(event.touchPoints(), rootItem()->window()));
+                                             QWindowSystemInterfacePrivate::toNativeTouchPoints(event.touchPoints(), rootItem()->window()));
+}
+
+void QAEngine::onMouseEvent(const QMouseEvent &event)
+{
+    QWindowSystemInterface::handleMouseEvent(
+        rootItem()->window(),
+        event.timestamp(),
+        event.localPos(),
+        event.globalPos(),
+        event.buttons(),
+        event.button(),
+        event.type());
 }
 
 void QAEngine::onKeyEvent(QKeyEvent *event)

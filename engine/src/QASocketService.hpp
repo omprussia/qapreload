@@ -3,7 +3,6 @@
 
 #include <QObject>
 
-class QTcpServer;
 class QTcpSocket;
 class QQuickItem;
 class SailfishTest;
@@ -15,13 +14,7 @@ public:
     void setAttribute(QTcpSocket *socket, const QString &attribute, const QString &value, const QString &elementId);
     void connectToBridge();
 
-public slots:
-    quint16 serverPort();
-    bool isListening();
-    void stopListen();
-
 private slots:
-    void newConnection();
     void readSocket();
 
     void activateAppBootstrap(QTcpSocket *socket, const QString &appName);
@@ -130,7 +123,6 @@ private slots:
 
 private:
     explicit QASocketService(QObject *parent = nullptr);
-    void initialize();
 
     bool invoke(QTcpSocket *socket, const QString &methodName, const QVariantList &parameters);
 
@@ -139,7 +131,7 @@ private:
 
     void grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground = false);
 
-    QTcpServer *m_server = nullptr;
+    QTcpSocket *m_socket = nullptr;
 
     SailfishTest *m_sailfishTest = nullptr;
 };

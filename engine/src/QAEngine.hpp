@@ -124,6 +124,7 @@ private slots:
     void clearComponentCache();
 
     void onTouchEvent(const QTouchEvent &event);
+    void onMouseEvent(const QMouseEvent &event);
     void onKeyEvent(QKeyEvent *event);
 
 protected:

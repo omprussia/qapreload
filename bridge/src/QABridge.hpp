@@ -86,7 +86,7 @@ private slots:
     void forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params);
 
 private:
-    void processAppCommand(const QJsonObject &app);
+    void processAppCommand(QTcpSocket *socket, const QJsonObject &app);
     bool processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params);
 
     QByteArray actionData(const QString &action, const QVariant &params);
@@ -101,8 +101,8 @@ private:
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0);
 
     QTcpServer *m_server = nullptr;
-    QHash<QTcpSocket*, QString> m_appSocket;
-    QHash<QString, int> m_appPort;
+    QHash<QTcpSocket*, QString> m_clientSocket;
+    QHash<QString, QTcpSocket*> m_applicationSocket;
 
     QByteArray m_dataStream;
 

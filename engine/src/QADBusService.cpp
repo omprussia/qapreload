@@ -248,11 +248,11 @@ void QADBusService::hideTouchIndicator()
                               Q_ARG(QDBusMessage, message()));
 }
 
-int QADBusService::startSocket()
+void QADBusService::startSocket()
 {
     qWarning() << Q_FUNC_INFO;
     QASocketService *socket = QASocketService::instance();
-    return socket->serverPort();
+    socket->connectToBridge();
 }
 
 void QADBusService::quit()

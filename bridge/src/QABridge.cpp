@@ -164,10 +164,9 @@ void QABridge::removeSocket()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
     qDebug() << Q_FUNC_INFO << socket;
-    if (m_appSocket.contains(socket)) {
-        qDebug() << Q_FUNC_INFO << m_appSocket.value(socket);
-        m_appPort.remove(m_appSocket.value(socket));
-        m_appSocket.remove(socket);
+    if (m_clientSocket.contains(socket)) {
+        qDebug() << Q_FUNC_INFO << m_clientSocket.value(socket);
+        m_clientSocket.remove(socket);
     }
 }
 
@@ -175,30 +174,29 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
 {
     qDebug() << Q_FUNC_INFO << appName << socket;
 
-    if (m_appSocket.contains(socket)) {
-        qWarning() << Q_FUNC_INFO << "Socket already known:" << m_appSocket.value(socket);
+    if (m_clientSocket.contains(socket)) {
+        qWarning() << Q_FUNC_INFO << "Socket already known:" << m_clientSocket.value(socket);
     }
-    m_appSocket.insert(socket, appName);
+    m_clientSocket.insert(socket, appName);
     if (appName == QLatin1String("headless")) {
         return;
     }
-    if (!m_appPort.contains(appName)) {
+    if (!m_applicationSocket.contains(appName)) {
         connectAppSocket(appName);
     }
 }
 
 void QABridge::appConnectBootstrap(QTcpSocket *socket)
 {
-    const QString appName = m_appSocket.value(socket);
+    const QString appName = m_clientSocket.value(socket);
     if (appName == QLatin1String("headless")) {
         socketReply(socket, QString());
         return;
     }
 
     connectAppSocket(appName);
-    qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
 
-    if (m_appPort.value(appName) == 0) {
+    if (m_applicationSocket.value(appName) != nullptr) {
         QTimer maxTimer;
         connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
         maxTimer.start(30000);
@@ -208,22 +206,21 @@ void QABridge::appConnectBootstrap(QTcpSocket *socket)
         maxTimer.stop();
     }
 
-    qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
+    qDebug() << Q_FUNC_INFO << appName;
     socketReply(socket, QString());
 }
 
 void QABridge::appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch)
 {
-    const QString appName = m_appSocket.value(socket);
+    const QString appName = m_clientSocket.value(socket);
 
-    if (m_appPort.value(appName) != 0) {
+    if (m_applicationSocket.value(appName) != nullptr) {
         if (autoLaunch) {
             sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
         }
 
-        m_appPort.remove(appName);
-        m_appSocket.remove(socket);
-        qDebug() << Q_FUNC_INFO << m_appPort.value(appName);
+        m_clientSocket.remove(socket);
+        qDebug() << Q_FUNC_INFO << appName;
     }
 
     socketReply(socket, QString());
@@ -248,9 +245,9 @@ void QABridge::startActivityBootstrap(QTcpSocket *socket, const QString &appName
 
 void QABridge::activateAppBootstrap(QTcpSocket *socket, const QString &appId)
 {
-    const QString appName = m_appSocket.value(socket);
+    const QString appName = m_clientSocket.value(socket);
     qDebug() << Q_FUNC_INFO << appName << appId;
-    if (m_appPort.value(appName, 0) == 0) {
+    if (m_applicationSocket.value(appName, nullptr) == nullptr) {
         QStringList arguments;
         QABridge::launchApp(appName, arguments);
     } else {
@@ -261,11 +258,11 @@ void QABridge::activateAppBootstrap(QTcpSocket *socket, const QString &appId)
 
 void QABridge::terminateAppBootstrap(QTcpSocket *socket, const QString &appId)
 {
-    const QString appName = m_appSocket.value(socket);
+    const QString appName = m_clientSocket.value(socket);
     qDebug() << Q_FUNC_INFO << appName << appId;
-    if (m_appPort.value(appName) != 0) {
+    if (m_applicationSocket.value(appName) != nullptr) {
         forwardToApp(socket, QStringLiteral("closeApp"), QStringList({appName}));
-        m_appPort.insert(appName, 0);
+        m_applicationSocket.insert(appName, nullptr);
     } else {
         qWarning() << Q_FUNC_INFO << "App" << appName << "is not active";
         socketReply(socket, false, 1);
@@ -333,7 +330,7 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName
 {
     if (!isServiceRegistered(appName)) {
         socketReply(socket, QStringLiteral("NOT_RUNNING"));
-    } else if (m_appPort.value(appName, 0) == 0) {
+    } else if (m_applicationSocket.value(appName, nullptr) == nullptr) {
         socketReply(socket, QStringLiteral("CLOSING"));
     } else {
         forwardToApp(socket, QStringLiteral("queryAppState"), QStringList({appName}));
@@ -342,12 +339,12 @@ void QABridge::queryAppStateBootstrap(QTcpSocket *socket, const QString &appName
 
 void QABridge::launchAppBootstrap(QTcpSocket *socket)
 {
-    const QString appName = m_appSocket.value(socket);
-    qDebug() << Q_FUNC_INFO << appName << m_appPort.value(appName, -1);
-    if (m_appPort.value(appName, 0) != 0) {
+    const QString appName = m_clientSocket.value(socket);
+    qDebug() << Q_FUNC_INFO << appName << m_applicationSocket.value(appName);
+    if (m_applicationSocket.value(appName, nullptr) != nullptr) {
         forwardToApp(socket, QStringLiteral("activateApp"), QStringList({appName}));
     } else {
-        m_appPort.insert(appName, 0);
+        m_applicationSocket.insert(appName, nullptr);
         qDebug() << Q_FUNC_INFO << appName;
         QStringList arguments;
         QABridge::launchApp(appName, arguments);
@@ -367,8 +364,8 @@ void QABridge::launchAppBootstrap(QTcpSocket *socket)
 void QABridge::closeAppBootstrap(QTcpSocket *socket)
 {
     qDebug() << Q_FUNC_INFO;
-    const QString appName = m_appSocket.value(socket);
-    if (m_appPort.value(appName) != 0) {
+    const QString appName = m_clientSocket.value(socket);
+    if (m_applicationSocket.value(appName) != nullptr) {
         QByteArray appReplyData = sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
         qDebug() << Q_FUNC_INFO << appReplyData;
 
@@ -664,7 +661,7 @@ void QABridge::ApplicationReady(const QString &appName)
 void QABridge::ApplicationClose(const QString &appName)
 {
     qDebug() << Q_FUNC_INFO << appName;
-    m_appPort.remove(appName);
+    m_applicationSocket.remove(appName);
 }
 
 void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
@@ -680,7 +677,7 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 
     if (object.contains(QStringLiteral("app"))) {
         const QJsonObject app = object.value(QStringLiteral("app")).toObject();
-        processAppCommand(app);
+        processAppCommand(socket, app);
         return;
     }
 
@@ -700,7 +697,7 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
     const QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
 
     if (!processAppiumCommand(socket, action, params)) {
-        qDebug() << Q_FUNC_INFO << "Process command is finished for:" << action << m_appSocket.contains(socket);
+        qDebug() << Q_FUNC_INFO << "Process command is finished for:" << action << m_clientSocket.contains(socket);
 
         QMetaObject::invokeMethod(this,
                                   "forwardToApp",
@@ -870,13 +867,13 @@ void QABridge::isLockedBootstrap(QTcpSocket *socket)
 
 void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
 {
-    if (!m_appSocket.contains(socket)) {
+    if (!m_clientSocket.contains(socket)) {
         return;
     }
 
-    const QString appName = m_appSocket.value(socket);
+    const QString appName = m_clientSocket.value(socket);
 
-    if (!m_appPort.contains(appName)) {
+    if (!m_applicationSocket.contains(appName)) {
         qWarning() << Q_FUNC_INFO << "Unknown app:" << appName << socket;
         return;
     }
@@ -894,16 +891,28 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QString &action, const QVa
     forwardToApp(socket, actionData(action, params));
 }
 
-void QABridge::processAppCommand(const QJsonObject &app)
+void QABridge::processAppCommand(QTcpSocket *socket, const QJsonObject &app)
 {
+    if (m_clientSocket.contains(socket)) {
+        qDebug() << Q_FUNC_INFO << m_clientSocket.value(socket);
+        m_applicationSocket.remove(m_clientSocket.value(socket));
+        m_clientSocket.remove(socket);
+    }
+    disconnect(socket, 0, 0, 0);
+
     const QString appName = app.value(QStringLiteral("appName")).toString();
-    const int port = app.value(QStringLiteral("port")).toInt();
 
-    m_appPort.insert(appName, port);
-
-    if (m_appPort.value(appName) != 0 && m_connectLoop->isRunning()) {
+    if (m_applicationSocket.value(appName) != nullptr && m_connectLoop->isRunning()) {
         m_connectLoop->quit();
     }
+
+    connect(socket, &QTcpSocket::stateChanged, [socket](QAbstractSocket::SocketState state) {
+        qDebug()
+            << Q_FUNC_INFO
+            << "socket:" << socket
+            << "state changed:" << state;
+    });
+    m_applicationSocket.insert(appName, socket);
 }
 
 bool QABridge::processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params)
@@ -982,40 +991,62 @@ QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &d
     QByteArray appReplyData = QJsonDocument(reply).toJson(QJsonDocument::Compact);
     bool haveData = false;
 
-    QTcpSocket appSocket;
+    QTcpSocket *socket = m_applicationSocket.value(appName, nullptr);
+    if (!socket) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No app socket for" << appName;
+    }
+
+    if (socket && !socket->isOpen()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "Can't connect to app socket:" << socket;
+        return appReplyData;
+    }
+
+    socket->write(data);
+    socket->waitForBytesWritten();
+
+    QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
     timer.setInterval(30000);
-    connect(&appSocket, &QAbstractSocket::readyRead, [&appReplyData, &appSocket, &timer, &haveData]() {
+
+    QMetaObject::Connection readyReadConnection = connect(socket, &QAbstractSocket::readyRead, [&appReplyData, socket, &loop, &timer, &haveData]() {
         if (!haveData) {
             haveData = true;
             appReplyData.clear();
         }
-        qDebug() << Q_FUNC_INFO << "Received bytes from app:" << appSocket.bytesAvailable();
-        appReplyData.append(appSocket.readAll());
-        timer.start();
+        qDebug() << Q_FUNC_INFO << "Received bytes from app:" << socket->bytesAvailable();
+        appReplyData.append(socket->readAll());
+
+        QJsonParseError jsonError;
+        QJsonDocument::fromJson(appReplyData, &jsonError);
+        if (jsonError.error == QJsonParseError::NoError) {
+            loop.quit();
+        } else {
+            timer.start();
+        }
+
     });
 
-    appSocket.connectToHost(QHostAddress(QHostAddress::LocalHost), m_appPort.value(appName));
-    qWarning() << Q_FUNC_INFO << "Connecting to app socket:" << m_appPort.value(appName) <<
-    appSocket.waitForConnected();
-    if (!appSocket.isOpen()) {
-        qWarning() << Q_FUNC_INFO << "Can't connect to app socket:" << m_appPort.value(appName);
+    if (socket->state() != QAbstractSocket::ConnectedState) {
         return appReplyData;
     }
-    qWarning() << Q_FUNC_INFO << "Writing to app socket:" <<
-    appSocket.write(data) <<
-    appSocket.waitForBytesWritten();
 
-    if (appSocket.state() == QAbstractSocket::ConnectedState) {
-        qDebug() << Q_FUNC_INFO << "Reading from app socket";
-        QEventLoop loop;
-        connect(&appSocket, &QAbstractSocket::stateChanged, &timer, &QTimer::stop);
-        connect(&appSocket, &QAbstractSocket::stateChanged, &loop, &QEventLoop::quit);
-        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        timer.start();
-        loop.exec();
-    }
+    QMetaObject::Connection stateChangedConnection = connect(socket, &QAbstractSocket::stateChanged, this, [&loop, &timer](QAbstractSocket::SocketState state) {
+        if (state != QAbstractSocket::ConnectedState) {
+            loop.quit();
+            timer.stop();
+        }
+    });
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start();
+    loop.exec();
+
+    disconnect(readyReadConnection);
+    disconnect(stateChangedConnection);
 
     return appReplyData;
 }
@@ -1029,13 +1060,7 @@ void QABridge::connectAppSocket(const QString &appName)
                 QStringLiteral("/ru/omprussia/qaservice"),
                 QStringLiteral("ru.omprussia.qaservice"),
                 QStringLiteral("startSocket"));
-    QDBusReply<int> reply = getSessionBus().call(startAppSocket);
-    m_appPort.insert(appName, reply.value());
-    qDebug() << Q_FUNC_INFO << appName << reply.value();
-
-    if (m_appPort.value(appName) != 0 && m_connectLoop->isRunning()) {
-        m_connectLoop->quit();
-    }
+    QDBusReply<void> reply = getSessionBus().call(startAppSocket);
 #endif
 }
 

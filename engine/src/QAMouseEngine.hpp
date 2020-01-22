@@ -8,6 +8,7 @@ class QAPendingEvent;
 class QElapsedTimer;
 class QTimer;
 class QTouchEvent;
+class QMouseEvent;
 class QTouchDevice;
 class QAMouseEngine : public QObject
 {
@@ -25,6 +26,7 @@ public:
 
 signals:
     void touchEvent(const QTouchEvent &event);
+    void mouseEvent(const QMouseEvent &event);
 
 private slots:
     void sendPress(const QPointF &point);

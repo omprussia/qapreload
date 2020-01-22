@@ -4,7 +4,6 @@
 #include "QASocketService.hpp"
 
 #include <QFileInfo>
-#include <QTcpServer>
 #include <QTcpSocket>
 
 #include <QPainter>
@@ -24,6 +23,7 @@
 
 #include <QBuffer>
 #include <QDir>
+#include <QHostAddress>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QStandardPaths>
@@ -61,19 +61,6 @@ QASocketService *QASocketService::instance()
         s_instance = new QASocketService(qApp);
     }
     return s_instance;
-}
-
-void QASocketService::initialize()
-{
-    if (m_server) {
-        return;
-    } else {
-        m_server = new QTcpServer(this);
-        connect(m_server, &QTcpServer::newConnection, this, &QASocketService::newConnection);
-        qWarning() << Q_FUNC_INFO << m_server->listen(QHostAddress(QHostAddress::LocalHost));
-
-        m_sailfishTest = new SailfishTest(m_server);
-    }
 }
 
 bool QASocketService::invoke(QTcpSocket *socket, const QString &methodName, const QVariantList &parameters)
@@ -150,7 +137,10 @@ void QASocketService::socketReply(QTcpSocket *socket, const QVariant &value, int
     qWarning() << Q_FUNC_INFO << "Written:" << socket->write(data) <<
         socket->waitForBytesWritten() <<
         socketError;
-    socket->close();
+
+    if (socket != m_socket) {
+        socket->close();
+    }
 }
 
 void QASocketService::grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground)
@@ -177,35 +167,6 @@ void QASocketService::grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool 
         }
         socketReply(socket, arr.toBase64());
     });
-}
-
-quint16 QASocketService::serverPort()
-{
-    initialize();
-    return m_server->serverPort();
-}
-
-bool QASocketService::isListening()
-{
-    return m_server && m_server->isListening();
-}
-
-void QASocketService::stopListen()
-{
-    if (!m_server || !m_server->isListening()) {
-        return;
-    }
-    m_server->close();
-    disconnect(m_server, 0, 0, 0);
-    m_server->deleteLater();
-    m_server = nullptr;
-}
-
-void QASocketService::newConnection()
-{
-    QTcpSocket *socket = m_server->nextPendingConnection();
-    connect(socket, &QTcpSocket::readyRead, this, &QASocketService::readSocket);
-    qDebug() << Q_FUNC_INFO << "New connection from" << socket->peerAddress().toString() << socket->peerPort();
 }
 
 void QASocketService::readSocket()
@@ -266,7 +227,6 @@ void QASocketService::closeAppBootstrap(QTcpSocket *socket, const QString &appNa
         return;
     }
     socketReply(socket, true);
-    stopListen();
     qApp->quit();
 }
 
@@ -523,17 +483,21 @@ void QASocketService::connectToBridge()
 {
     qDebug() << Q_FUNC_INFO;
 
-    QTcpSocket appSocket;
-    appSocket.connectToHost(QHostAddress(QHostAddress::LocalHost), 8888);
-    appSocket.waitForConnected();
-    if (!appSocket.isOpen()) {
+    if (!m_socket) {
+        m_socket = new QTcpSocket(this);
+        m_sailfishTest = new SailfishTest(m_socket);
+    }
+
+    m_socket->connectToHost(QHostAddress(QHostAddress::LocalHost), 8888);
+    m_socket->waitForConnected();
+    if (!m_socket->isOpen()) {
         qWarning() << Q_FUNC_INFO << "Can't connect to bridge socket";
+        m_socket->deleteLater();
         return;
     }
 
     QJsonObject root;
     QJsonObject app;
-    app.insert(QStringLiteral("port"), serverPort());
     const QString appName = qApp->arguments().first().section(QLatin1Char('/'), -1);
     app.insert(QStringLiteral("appName"), appName);
 
@@ -542,8 +506,10 @@ void QASocketService::connectToBridge()
     QByteArray data = QJsonDocument(root).toJson(QJsonDocument::Compact);
 
     qWarning() << Q_FUNC_INFO << "Writing to bridge socket:" <<
-    appSocket.write(data) <<
-    appSocket.waitForBytesWritten();
+    m_socket->write(data) <<
+    m_socket->waitForBytesWritten();
+
+    connect(m_socket, &QTcpSocket::readyRead, this, &QASocketService::readSocket);
 }
 
 void QASocketService::replaceValueBootstrap(QTcpSocket *socket, const QVariantList &value, const QString &elementId)

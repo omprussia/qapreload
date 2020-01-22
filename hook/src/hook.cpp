@@ -13,7 +13,7 @@ static const int StartupHookIndex = 5;
 
 StartupCallback qtHookData[100];
 
-#ifdef SAILFISH_OS
+#ifdef Q_OS_SAILFISH
 inline uid_t nemo_uid()
 {
     static struct passwd *nemo_pwd;
@@ -50,7 +50,7 @@ extern "C" void qt_startup_hook()
 
 __attribute__((constructor))
 static void libConstructor() {
-#ifdef SAILFISH_OS
+#ifdef Q_OS_SAILFISH
     is_user = getuid() == nemo_uid();
 #else
     is_user = true;

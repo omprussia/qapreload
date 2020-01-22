@@ -49,7 +49,7 @@ private slots:
     void setTouchIndicatorEnabled(bool enable);
     void hideTouchIndicator();
 
-    int startSocket();
+    void startSocket();
 
     void quit();
 
