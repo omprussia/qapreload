@@ -39,7 +39,7 @@ void QAPreloadEngine::initialize()
         return;
     }
 
-    QTimer::singleShot(0, QAPreloadEngine::instance(), &QAPreloadEngine::lateInitialization);
+    QTimer::singleShot(0, qApp, [](){ QAPreloadEngine::instance()->lateInitialization(); });
 }
 
 bool QAPreloadEngine::isLoaded()
