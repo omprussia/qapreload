@@ -1,8 +1,9 @@
 QT = core network
 CONFIG += link_pkgconfig
 
-#DEFINES += USE_DBUS
 contains(DEFINES, USE_DBUS) {
+    message("Building bridge with dbus support")
+
     QT += dbus
 
     bridge_dbus_adaptor.files = ../dbus/ru.omprussia.qabridge.xml
@@ -25,8 +26,8 @@ contains(DEFINES, USE_DBUS) {
         src/QAScreenRecorder.hpp
 }
 
-#DEFINES += USE_SYSTEMD
 contains(DEFINES, USE_SYSTEMD) {
+    message("Building bridge with systemd support")
     PKGCONFIG += libsystemd-daemon
 
     autostart.files = \
@@ -36,20 +37,20 @@ contains(DEFINES, USE_SYSTEMD) {
     INSTALLS += autostart
 }
 
-#DEFINES += USE_PACKAGEKIT
 contains(DEFINES, USE_PACKAGEKIT) {
+    message("Building bridge with packagekit support")
     PKGCONFIG += packagekitqt5
 
     INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
 }
 
-#DEFINES += USE_RPM
 contains(DEFINES, USE_RPM) {
+    message("Building bridge with rpm support")
     PKGCONFIG += rpm
 }
 
-#DEFINES += USE_CONNMAN
 contains(DEFINES, USE_CONNMAN) {
+    message("Building bridge with connman support")
     PKGCONFIG += connman-qt5
 }
 

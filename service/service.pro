@@ -3,6 +3,8 @@ CONFIG += link_pkgconfig
 PKGCONFIG += \
     contentaction5
 
+message("Building user service")
+
 TEMPLATE = app
 TARGET = qabridge-user
 TARGETPATH = /usr/bin

@@ -181,6 +181,7 @@ void QAMouseEngine::onMoveTimer()
 
 void QAMouseEngine::sendPress(const QPointF &point)
 {
+#ifdef Q_OS_SAILFISHOS
     QTouchEvent::TouchPoint tp(++m_tpId);
     tp.setState(Qt::TouchPointPressed);
 
@@ -204,10 +205,19 @@ void QAMouseEngine::sendPress(const QPointF &point)
     m_pressPoint = point;
 
     emit touchEvent(te);
+#else
+    QMouseEvent me(QEvent::MouseButtonPress,
+                   point,
+                   Qt::LeftButton,
+                   Qt::LeftButton,
+                   Qt::NoModifier);
+    emit mouseEvent(me);
+#endif
 }
 
 void QAMouseEngine::sendRelease(const QPointF &point)
 {
+#ifdef Q_OS_SAILFISHOS
     QTouchEvent::TouchPoint tp(m_tpId);
     tp.setState(Qt::TouchPointReleased);
 
@@ -240,6 +250,14 @@ void QAMouseEngine::sendRelease(const QPointF &point)
     m_previousPoint = point;
 
     emit touchEvent(te);
+#else
+    QMouseEvent me(QEvent::MouseButtonRelease,
+                   point,
+                   Qt::LeftButton,
+                   Qt::NoButton,
+                   Qt::NoModifier);
+    emit mouseEvent(me);
+#endif
 }
 
 void QAMouseEngine::sendRelease(const QPointF &point, int delay)
@@ -257,6 +275,7 @@ void QAMouseEngine::sendRelease(const QPointF &point, int delay)
 
 void QAMouseEngine::sendMove(const QPointF &point)
 {
+#ifdef Q_OS_SAILFISHOS
     QTouchEvent::TouchPoint tp(m_tpId);
     tp.setState(Qt::TouchPointMoved);
 
@@ -289,4 +308,12 @@ void QAMouseEngine::sendMove(const QPointF &point)
     m_previousPoint = point;
 
     emit touchEvent(te);
+#else
+    QMouseEvent me(QEvent::MouseMove,
+                   point,
+                   Qt::LeftButton,
+                   Qt::LeftButton,
+                   Qt::NoModifier);
+    emit mouseEvent(me);
+#endif
 }

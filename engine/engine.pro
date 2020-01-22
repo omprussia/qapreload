@@ -4,13 +4,13 @@ CONFIG += plugin
 CONFIG += c++11
 CONFIG += link_pkgconfig
 
-#DEFINES += USE_MLITE5
 contains(DEFINES, USE_MLITE5) {
+    message("Building engine with mlite5 support")
     PKGCONFIG += mlite5
 }
 
-#DEFINES += USE_DBUS
 contains(DEFINES, USE_DBUS) {
+    message("Building engine with dbus support")
     QT += dbus
 
     SOURCES += \
@@ -67,8 +67,8 @@ qml.path = /usr/lib/qt5/qml/ru/omprussia/sailfishtest
 INSTALLS += qml
 
 
-#DEFINES += USE_QDOC
-contains(DEFINES, USE_QDOC) {
+contains(DEFINES, USE_MER_QDOC) {
+    message("Building engine with mer qdoc support")
     CONFIG += mer-qdoc-template
     MER_QDOC.project = qapreload
     MER_QDOC.config = doc/qapreload.qdocconf

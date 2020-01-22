@@ -74,7 +74,15 @@ Requires:   %{name}
 
 %build
 
-%qtc_qmake5
+%qtc_qmake5 \
+    DEFINES+=Q_OS_SAILFISH \
+    DEFINES+=USE_DBUS \
+    DEFINES+=USE_SYSTEMD \
+    DEFINES+=USE_PACKAGEKIT \
+    DEFINES+=USE_RPM \
+    DEFINES+=USE_CONNMAN \
+    DEFINES+=USE_MLITE5 \
+    DEFINES+=USE_MER_QDOC
 %qtc_make %{?_smp_mflags}
 
 %install
