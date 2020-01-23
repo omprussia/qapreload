@@ -93,14 +93,10 @@ void QAEngine::ready()
     const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
 
     if (testArgIndex < 0) {
-#ifdef USE_DBUS
         QADBusService::instance()->initialize();
-        connect(qGuiApp, &QGuiApplication::aboutToQuit, QADBusService::instance(), &QADBusService::deinitialize);
-#else
         QASocketService::instance()->connectToBridge();
-#endif
     } else if (testArgIndex > 0 && testArgIndex == args.length() - 2) {
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
         const QString testName = args.at(testArgIndex + 1);
         loadSailfishTest(testName, QDBusMessage());
 #endif
@@ -1000,7 +996,7 @@ bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
     case QEvent::TouchBegin:
     {
         if (QAEngine::processName() != QLatin1String("lipstick")) {
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
             QDBusMessage hideTouchIndicator = QDBusMessage::createMethodCall(
                         QStringLiteral("ru.omprussia.qaservice.lipstick"),
                         QStringLiteral("/ru/omprussia/qaservice"),

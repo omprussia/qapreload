@@ -151,7 +151,9 @@ private:
     QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0) const;
     QJsonObject dumpObject(QQuickItem *item, int depth = 0) const;
 
+#ifdef USE_DBUS
     void sendGrabbedObject(QQuickItem *item, const QDBusMessage &message);
+#endif
 
     explicit QAEngine(QObject *parent = nullptr);
 

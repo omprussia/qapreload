@@ -19,7 +19,6 @@
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusReply>
-#include "qabridge_adaptor.h"
 #include "QAScreenRecorder.hpp"
 #endif
 
@@ -103,36 +102,6 @@ void QABridge::start()
         qApp->quit();
         return;
     }
-
-#ifdef USE_DBUS
-    if (m_adaptor) {
-        return;
-    }
-
-    if (QDBusConnection::systemBus().interface()->isServiceRegistered(DBUS_SERVICE_NAME)) {
-        qWarning() << Q_FUNC_INFO << "Service already registered!";
-        return;
-    }
-
-    bool success = false;
-    success = QDBusConnection::systemBus().registerObject(DBUS_PATH_NAME, this);
-    if (!success) {
-        qWarning() << Q_FUNC_INFO << "Failed to register object!";
-        return;
-    }
-
-    success = QDBusConnection::systemBus().registerService(DBUS_SERVICE_NAME);
-    if (!success) {
-        qWarning() << Q_FUNC_INFO << "Failed to register service!" << QDBusConnection::systemBus().lastError().message();
-        return;
-    }
-
-    qDebug() << Q_FUNC_INFO << "Started D-Bus service" << DBUS_SERVICE_NAME;
-
-    m_adaptor = new QABridgeAdaptor(this);
-#else
-
-#endif
 }
 
 void QABridge::newConnection()
@@ -181,9 +150,6 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
     if (appName == QLatin1String("headless")) {
         return;
     }
-    if (!m_applicationSocket.contains(appName)) {
-        connectAppSocket(appName);
-    }
 }
 
 void QABridge::appConnectBootstrap(QTcpSocket *socket)
@@ -193,8 +159,6 @@ void QABridge::appConnectBootstrap(QTcpSocket *socket)
         socketReply(socket, QString());
         return;
     }
-
-    connectAppSocket(appName);
 
     if (m_applicationSocket.value(appName) != nullptr) {
         QTimer maxTimer;
@@ -373,11 +337,7 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
         QTimer timer;
         int counter = 0;
         connect(&timer, &QTimer::timeout, [this, &loop, &counter, appName]() {
-#ifdef USE_DBUS
             if (!isServiceRegistered(appName)) {
-#else
-            if (!m_applicationSocket.contains(appName)) {
-#endif
                 loop.quit();
             } else {
                 counter++;
@@ -476,7 +436,7 @@ void QABridge::getDeviceTimeBootstrap(QTcpSocket *socket, const QString &dateFor
 
 void QABridge::startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments)
 {
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     if (!m_screenrecorder) {
         m_screenrecorder = new QAScreenRecorder(this);
     }
@@ -494,7 +454,7 @@ void QABridge::startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant 
 
 void QABridge::stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &arguments)
 {
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     if (!m_screenrecorder) {
         m_screenrecorder = new QAScreenRecorder(this);
     }
@@ -650,19 +610,6 @@ void QABridge::executeCommand_unlock(QTcpSocket *socket, const QVariant &executa
 
 }
 
-void QABridge::ApplicationReady(const QString &appName)
-{
-    qDebug() << Q_FUNC_INFO << appName;
-
-    connectAppSocket(appName);
-}
-
-void QABridge::ApplicationClose(const QString &appName)
-{
-    qDebug() << Q_FUNC_INFO << appName;
-    m_applicationSocket.remove(appName);
-}
-
 void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 {
     qDebug() << Q_FUNC_INFO << cmd;
@@ -766,7 +713,7 @@ void QABridge::setGeoLocationBootstrap(QTcpSocket *socket, const QVariant &locat
 
 void QABridge::lockBootstrap(QTcpSocket *socket, double seconds)
 {
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     QDBusMessage lock = QDBusMessage::createMethodCall(
                 QStringLiteral("com.nokia.mce"),
                 QStringLiteral("/com/nokia/mce/request"),
@@ -825,7 +772,7 @@ void QABridge::pullFileBootstrap(QTcpSocket *socket, const QString &path)
 void QABridge::unlockBootstrap(QTcpSocket *socket)
 {
     qDebug() << Q_FUNC_INFO;
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     QDBusMessage unlock = QDBusMessage::createMethodCall(
                 QStringLiteral("com.nokia.mce"),
                 QStringLiteral("/com/nokia/mce/request"),
@@ -858,7 +805,7 @@ void QABridge::unlockBootstrap(QTcpSocket *socket)
 void QABridge::isLockedBootstrap(QTcpSocket *socket)
 {
     qDebug() << Q_FUNC_INFO;
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     QDBusMessage lock = QDBusMessage::createMethodCall(
                 QStringLiteral("com.nokia.mce"),
                 QStringLiteral("/com/nokia/mce/request"),
@@ -923,11 +870,10 @@ void QABridge::processAppCommand(QTcpSocket *socket, const QJsonObject &app)
         m_connectLoop->quit();
     }
 
-    connect(socket, &QTcpSocket::stateChanged, [socket](QAbstractSocket::SocketState state) {
-        qDebug()
-            << Q_FUNC_INFO
-            << "socket:" << socket
-            << "state changed:" << state;
+    connect(socket, &QTcpSocket::stateChanged, [appName, socket, this](QAbstractSocket::SocketState state) {
+        if (state == QAbstractSocket::UnconnectedState) {
+            m_applicationSocket.remove(appName);
+        }
     });
     m_applicationSocket.insert(appName, socket);
 }
@@ -978,16 +924,12 @@ QByteArray QABridge::actionData(const QString &action, const QVariant &params)
 
 bool QABridge::isServiceRegistered(const QString &appName)
 {
-#ifdef USE_DBUS
-    return getSessionBus().interface()->isServiceRegistered(QStringLiteral("ru.omprussia.qaservice.%1").arg(appName));
-#else
     return m_applicationSocket.contains(appName);
-#endif
 }
 
 bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
 {
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
                                                          QStringLiteral("/ru/omprussia/qaservice"),
                                                          QStringLiteral("ru.omprussia.qaservice"),
@@ -1066,19 +1008,6 @@ QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &d
     disconnect(stateChangedConnection);
 
     return appReplyData;
-}
-
-void QABridge::connectAppSocket(const QString &appName)
-{
-    qDebug() << Q_FUNC_INFO << appName;
-#ifdef USE_DBUS
-    QDBusMessage startAppSocket = QDBusMessage::createMethodCall(
-                QStringLiteral("ru.omprussia.qaservice.%1").arg(appName),
-                QStringLiteral("/ru/omprussia/qaservice"),
-                QStringLiteral("ru.omprussia.qaservice"),
-                QStringLiteral("startSocket"));
-    QDBusReply<void> reply = getSessionBus().call(startAppSocket);
-#endif
 }
 
 int QABridge::getNetworkConnection() const

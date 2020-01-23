@@ -8,6 +8,6 @@ int main(int argc, char *argv[])
     QCoreApplication app(argc, argv);
 
     QAUserService service;
-    QTimer::singleShot(0, &service, &QAUserService::start);
+    QTimer::singleShot(0, qApp, [&service](){ service.start(); });
     return app.exec();
 }

@@ -35,7 +35,7 @@
 #include <mlite5/MGConfItem>
 #endif
 
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
 #include "qaservice_adaptor.h"
 #endif
 
@@ -528,6 +528,11 @@ void QASocketService::sendToApp(const QString &appName, const QString &command, 
     jsonData[QStringLiteral("params")] = QJsonValue::fromVariant(params);
 
     const QByteArray data = QJsonDocument(jsonData).toJson(QJsonDocument::Compact);
+
+    qDebug()
+        << Q_FUNC_INFO
+        << data;
+
     m_socket->write(data);
     m_socket->waitForBytesWritten();
 
@@ -1008,7 +1013,7 @@ void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, cons
         screnshotDir.mkpath(QStringLiteral("."));
     }
 
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     QDBusMessage screenShot = QDBusMessage::createMethodCall(
                 QStringLiteral("org.nemomobile.lipstick"),
                 QStringLiteral("/org/nemomobile/lipstick/screenshot"),
