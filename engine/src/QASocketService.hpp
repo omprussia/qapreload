@@ -13,6 +13,7 @@ public:
     static QASocketService *instance();
     void setAttribute(QTcpSocket *socket, const QString &attribute, const QString &value, const QString &elementId);
     void connectToBridge();
+    void sendToApp(const QString &appName, const QString &command, const QVariantList &params = {});
 
 private slots:
     void readSocket();
@@ -69,6 +70,8 @@ private slots:
 
     void executeBootstrap(QTcpSocket *socket, const QString &command, const QVariantList &params);
     void executeAsyncBootstrap(QTcpSocket *socket, const QString &command, const QVariantList &params);
+
+    void hideTouchIndicatorBootstrap(QTcpSocket *socket);
 
     void executeCommand_app_pullDownTo(QTcpSocket *socket, const QString &destination);
     void executeCommand_app_pullDownTo(QTcpSocket *socket, double destination);

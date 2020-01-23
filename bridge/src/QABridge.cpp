@@ -369,13 +369,15 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
         QByteArray appReplyData = sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
         qDebug() << Q_FUNC_INFO << appReplyData;
 
-#ifdef USE_DBUS
         QEventLoop loop;
         QTimer timer;
-        QDBusConnection sessionBus = getSessionBus();
         int counter = 0;
-        connect(&timer, &QTimer::timeout, [this, &loop, &counter, sessionBus, appName]() {
+        connect(&timer, &QTimer::timeout, [this, &loop, &counter, appName]() {
+#ifdef USE_DBUS
             if (!isServiceRegistered(appName)) {
+#else
+            if (!m_applicationSocket.contains(appName)) {
+#endif
                 loop.quit();
             } else {
                 counter++;
@@ -386,9 +388,6 @@ void QABridge::closeAppBootstrap(QTcpSocket *socket)
         });
         timer.start(500);
         loop.exec();
-#else
-
-#endif
         socketReply(socket, QString());
     } else {
         qWarning() << Q_FUNC_INFO << "App" << appName << "is not active";
@@ -681,11 +680,24 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
         return;
     }
 
+    if (object.contains(QStringLiteral("forward"))) {
+        const QString appName = object.value(QStringLiteral("forward")).toString();
+
+        QMetaObject::invokeMethod(this,
+                                  "forwardToApp",
+                                  Qt::DirectConnection,
+                                  Q_ARG(QTcpSocket*, socket),
+                                  Q_ARG(QString, appName),
+                                  Q_ARG(QByteArray, cmd));
+
+        return;
+    }
+
     if (!object.contains(QStringLiteral("cmd"))) {
         return;
     }
 
-    if (object.value(QStringLiteral("cmd")).toVariant().toString() != QStringLiteral("action")) {
+    if (object.value(QStringLiteral("cmd")).toVariant().toString() != QLatin1String("action")) {
         return;
     }
 
@@ -873,6 +885,11 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QByteArray &data)
 
     const QString appName = m_clientSocket.value(socket);
 
+    forwardToApp(socket, appName, data);
+}
+
+void QABridge::forwardToApp(QTcpSocket *socket, const QString &appName, const QByteArray &data)
+{
     if (!m_applicationSocket.contains(appName)) {
         qWarning() << Q_FUNC_INFO << "Unknown app:" << appName << socket;
         return;
@@ -964,7 +981,7 @@ bool QABridge::isServiceRegistered(const QString &appName)
 #ifdef USE_DBUS
     return getSessionBus().interface()->isServiceRegistered(QStringLiteral("ru.omprussia.qaservice.%1").arg(appName));
 #else
-    return true;
+    return m_applicationSocket.contains(appName);
 #endif
 }
 
