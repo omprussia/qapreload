@@ -41,7 +41,14 @@
 #include "LipstickTestHelper.hpp"
 #include "QASocketService.hpp"
 
-static QAEngine *s_instance = nullptr;
+namespace {
+
+QAEngine *s_instance = nullptr;
+
+QString s_processName;
+
+}
+
 
 bool QAEngine::isLoaded()
 {
@@ -64,7 +71,7 @@ void QAEngine::ready()
     m_keyEngine = new QAKeyEngine(this);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &QAEngine::onKeyEvent);
 
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     if (QFileInfo::exists(QStringLiteral("/etc/qapreload-touch-indicator"))) {
         setTouchIndicator(true);
     }
@@ -290,8 +297,12 @@ void QAEngine::onMouseEvent(const QMouseEvent &event)
         event.localPos(),
         event.globalPos(),
         event.buttons(),
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
         event.button(),
-        event.type());
+        event.type(),
+#endif
+        Qt::NoModifier,
+        Qt::MouseEventNotSynthesized);
 }
 
 void QAEngine::onKeyEvent(QKeyEvent *event)
@@ -528,6 +539,7 @@ QAEngine *QAEngine::instance()
 QAEngine::QAEngine(QObject *parent)
     : QObject(parent)
 {
+    s_processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
 }
 
 QAEngine::~QAEngine()
@@ -579,6 +591,11 @@ QQuickItem *QAEngine::applicationWindow() const
         applicationWindow = applicationWindow->childItems().first();
     }
     return applicationWindow;
+}
+
+QString QAEngine::processName()
+{
+    return s_processName;
 }
 
 #ifdef USE_DBUS
@@ -803,12 +820,17 @@ void QAEngine::setTouchIndicatorEnabled(bool enable, const QDBusMessage &message
 void QAEngine::hideTouchIndicator(const QDBusMessage &message)
 {
     qDebug() << Q_FUNC_INFO << m_touchFilter;
-    if (m_touchFilter) {
-        m_touchFilter->hideImmediately();
-    }
+    hideTouchIndicator();
     QADBusService::sendMessageReply(message, QVariantList());
 }
 #endif
+
+void QAEngine::hideTouchIndicator()
+{
+    if (m_touchFilter) {
+        m_touchFilter->hideImmediately();
+    }
+}
 
 void QAEngine::clearFocus()
 {
@@ -868,7 +890,7 @@ bool QAEngine::eventFilter(QObject *watched, QEvent *event)
     return QObject::eventFilter(watched, event);
 }
 
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
 void QAEngine::setTouchIndicator(bool enable)
 {
     qDebug() << Q_FUNC_INFO << enable;
@@ -926,7 +948,7 @@ void TestResult::raise()
 #endif
 }
 
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
 TouchFilter::TouchFilter(QObject *parent)
     : QObject(parent)
 {
@@ -977,7 +999,8 @@ bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
     switch (event->type()) {
     case QEvent::TouchBegin:
     {
-        if (QADBusService::processName() != QStringLiteral("lipstick")) {
+        if (QAEngine::processName() != QLatin1String("lipstick")) {
+#ifdef USE_DBUS
             QDBusMessage hideTouchIndicator = QDBusMessage::createMethodCall(
                         QStringLiteral("ru.omprussia.qaservice.lipstick"),
                         QStringLiteral("/ru/omprussia/qaservice"),
@@ -987,6 +1010,9 @@ bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
             if (reply.error().type() != QDBusError::NoError) {
                 qDebug() << Q_FUNC_INFO << reply.error().message();
             }
+#else
+            QASocketService::instance()->sendToApp(QStringLiteral("lipstick"), QStringLiteral("hideTouchIndicator"));
+#endif
         }
     }
     case QEvent::TouchUpdate:

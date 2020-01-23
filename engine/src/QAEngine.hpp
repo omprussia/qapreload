@@ -30,7 +30,7 @@ private:
 };
 Q_DECLARE_METATYPE(TestResult)
 
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
 class TouchFilter : public QObject
 {
     Q_OBJECT
@@ -73,6 +73,8 @@ public:
 
     Q_PROPERTY(QQuickItem *applicationWindow READ applicationWindow CONSTANT)
     QQuickItem *applicationWindow() const;
+
+    static QString processName();
 
     static QString getText(QQuickItem *item);
     static QString className(QObject *item);
@@ -120,6 +122,7 @@ private slots:
     void setTouchIndicatorEnabled(bool enable, const QDBusMessage &message);
     void hideTouchIndicator(const QDBusMessage &message);
 #endif
+    void hideTouchIndicator();
     void clearFocus();
     void clearComponentCache();
 
@@ -135,7 +138,7 @@ private:
     friend class LipstickTestHelper;
     friend class QASocketService;
 
-#ifdef USE_DBUS
+#ifdef Q_OS_SAILFISH
     friend class TouchFilter;
     void setTouchIndicator(bool enable);
 

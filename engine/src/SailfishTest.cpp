@@ -14,8 +14,11 @@
 #include <private/qv4engine_p.h>
 
 #include <QtGlobal>
-#if QT_VERSION <= QT_VERSION_CHECK(5, 6, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
 #include <private/qv8engine_p.h>
+#else
+#include <private/qv4engine_p.h>
+#include <private/qqmlengine_p.h>
 #endif
 
 /*!
@@ -76,7 +79,7 @@ QStringList SailfishTest::declarativeFunctions() const
     for (int i = mo->methodOffset(); i < mo->methodCount(); ++i) {
         objectFunctions.insert(QString::fromLatin1(mo->method(i).name()));
     }
-    return objectFunctions.toList();
+    return objectFunctions.values();
 }
 
 /*!
@@ -352,7 +355,7 @@ void SailfishTest::pullDownTo(int index)
         QMetaObject::invokeMethod(flickable, "scrollToTop", Qt::DirectConnection);
         while (!atYBeginning) {
             QEventLoop loop;
-#if QT_VERSION >= 0x051200
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
             connect(flickable, SIGNAL(atYBeginningChanged()), &loop, SLOT(quit()));
 #else
             connect(flickable, SIGNAL(isAtBoundaryChanged()), &loop, SLOT(quit()));
@@ -409,7 +412,7 @@ void SailfishTest::pushUpTo(const QString &text)
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
         while (!atYEnd) {
             QEventLoop loop;
-#if QT_VERSION >= 0x051200
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
             connect(flickable, SIGNAL(atYEndChanged()), &loop, SLOT(quit()));
 #else
             connect(flickable, SIGNAL(isAtBoundaryChanged()), &loop, SLOT(quit()));
@@ -466,7 +469,7 @@ void SailfishTest::pushUpTo(int index)
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
         while (!atYEnd) {
             QEventLoop loop;
-#if QT_VERSION >= 0x051200
+#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
             connect(flickable, SIGNAL(atYEndChanged()), &loop, SLOT(quit()));
 #else
             connect(flickable, SIGNAL(isAtBoundaryChanged()), &loop, SLOT(quit()));
@@ -873,16 +876,25 @@ void SailfishTest::onPropertyChanged()
 
 void SailfishTest::showAssert(const QString &text)
 {
-#if QT_VERSION <= QT_VERSION_CHECK(5, 6, 0)
     QQmlEngine *engine = qmlEngine(this);
     if (!engine) {
         return;
     }
-    QV4::ExecutionEngine *eEngine = QV8Engine::getV4(engine);
+    QV4::ExecutionEngine *eEngine =
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        QV8Engine::getV4(engine);
+#else
+        QQmlEnginePrivate::getV4Engine(engine);
+#endif
     if (!eEngine) {
         return;
     }
-    const QString functionName = eEngine->currentStackFrame().function;
+    const QString functionName =
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        eEngine->currentStackFrame().function;
+#else
+        eEngine->currentStackFrame->function();
+#endif
     TestResult *tr = QAEngine::instance()->getTestResult(functionName);
     if (!tr) {
         return;
@@ -890,7 +902,6 @@ void SailfishTest::showAssert(const QString &text)
     tr->success = false;
     tr->message = text;
     tr->raise();
-#endif
 }
 
 void SailfishTest::message(const QString &text)

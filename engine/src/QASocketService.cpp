@@ -512,6 +512,73 @@ void QASocketService::connectToBridge()
     connect(m_socket, &QTcpSocket::readyRead, this, &QASocketService::readSocket);
 }
 
+void QASocketService::sendToApp(const QString &appName, const QString &command, const QVariantList &params)
+{
+    if (!m_socket->isOpen()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "Socket is not open!";
+        return;
+    }
+
+    QJsonObject jsonData;
+    jsonData[QStringLiteral("forward")] = appName;
+    jsonData[QStringLiteral("cmd")] = QStringLiteral("action");
+    jsonData[QStringLiteral("action")] = command;
+    jsonData[QStringLiteral("params")] = QJsonValue::fromVariant(params);
+
+    const QByteArray data = QJsonDocument(jsonData).toJson(QJsonDocument::Compact);
+    m_socket->write(data);
+    m_socket->waitForBytesWritten();
+
+    QByteArray appReplyData;
+    bool haveData = false;
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    timer.setInterval(30000);
+
+    QMetaObject::Connection readyReadConnection = connect(m_socket, &QAbstractSocket::readyRead, [&appReplyData, this, &loop, &timer, &haveData]() {
+        if (!haveData) {
+            haveData = true;
+            appReplyData.clear();
+        }
+        qDebug() << Q_FUNC_INFO << "Received bytes from app:" << m_socket->bytesAvailable();
+        appReplyData.append(m_socket->readAll());
+
+        QJsonParseError jsonError;
+        QJsonDocument::fromJson(appReplyData, &jsonError);
+        if (jsonError.error == QJsonParseError::NoError) {
+            loop.quit();
+        } else {
+            timer.start();
+        }
+
+    });
+
+    if (m_socket->state() != QAbstractSocket::ConnectedState) {
+        return;
+    }
+
+    QMetaObject::Connection stateChangedConnection = connect(m_socket, &QAbstractSocket::stateChanged, this, [&loop, &timer](QAbstractSocket::SocketState state) {
+        if (state != QAbstractSocket::ConnectedState) {
+            loop.quit();
+            timer.stop();
+        }
+    });
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start();
+    loop.exec();
+
+    disconnect(readyReadConnection);
+    disconnect(stateChangedConnection);
+
+    qDebug()
+        << Q_FUNC_INFO
+        << appReplyData;
+}
+
 void QASocketService::replaceValueBootstrap(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
     qDebug() << Q_FUNC_INFO << value << elementId;
@@ -688,6 +755,13 @@ void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QString &c
     if (!handled) {
         qWarning() << Q_FUNC_INFO << fixCommand << "not handled!";
     }
+    socketReply(socket, QString());
+}
+
+void QASocketService::hideTouchIndicatorBootstrap(QTcpSocket *socket)
+{
+    qDebug() << Q_FUNC_INFO;
+    QAEngine::instance()->hideTouchIndicator();
     socketReply(socket, QString());
 }
 
