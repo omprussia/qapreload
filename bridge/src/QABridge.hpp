@@ -6,7 +6,6 @@
 #include <QVariant>
 
 class QAScreenRecorder;
-class QABridgeAdaptor;
 class QEventLoop;
 class QTcpServer;
 class QTcpSocket;
@@ -77,9 +76,6 @@ private slots:
     void executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
     void executeCommand_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
 
-    void ApplicationReady(const QString &appName);
-    void ApplicationClose(const QString &appName);
-
 private slots:
     void processCommand(QTcpSocket *socket, const QByteArray &cmd);
     void forwardToApp(QTcpSocket *socket, const QByteArray &data);
@@ -95,7 +91,6 @@ private:
 
     static bool launchApp(const QString &appName, const QStringList &arguments);
     QByteArray sendToAppSocket(const QString &appName, const QByteArray &data);
-    void connectAppSocket(const QString &appName);
     int getNetworkConnection() const;
     bool isAppInstalled(const QString &rpmName);
 
@@ -109,7 +104,6 @@ private:
 
     QEventLoop *m_connectLoop;
     QString m_connectAppName;
-    QABridgeAdaptor *m_adaptor = nullptr;
 
     QAScreenRecorder *m_screenrecorder = nullptr;
 };

@@ -139,11 +139,8 @@ fi
 %{_bindir}/qabridge-user
 /lib/systemd/system/qabridge.service
 /lib/systemd/system/qabridge.socket
-%{_datadir}/dbus-1/interfaces/ru.omprussia.qabridge.xml
-%{_sysconfdir}/dbus-1/system.d/ru.omprussia.qabridge.conf
 %{_libdir}/systemd/user/qaservice.service
 %{_datadir}/dbus-1/services/ru.omprussia.qaservice.service
-%{_datadir}/dbus-1/system-services/ru.omprussia.qabridge.service
 %{_datadir}/qapreload/qml/TouchIndicator.qml
 
 %files ld

@@ -2,7 +2,6 @@
 #include "QADBusService.hpp"
 #include "QASocketService.hpp"
 #include "qaservice_adaptor.h"
-#include "qabridge_interface.h"
 
 #include <QCoreApplication>
 #include <QDBusConnection>
@@ -59,15 +58,6 @@ void QADBusService::initialize()
 
     m_adaptor = new QAAdaptor(this);
     emit engineLoaded(QAEngine::isLoaded());
-
-    m_bridgeIface = new QABridgeInterface(DBUS_SERVICE_NAME, DBUS_PATH_NAME, QDBusConnection::systemBus(), this);
-    m_bridgeIface->ApplicationReady(s_processName);
-    qDebug() << Q_FUNC_INFO << s_processName << m_bridgeIface->lastError().message();
-}
-
-void QADBusService::deinitialize()
-{
-    m_bridgeIface->ApplicationClose(s_processName);
 }
 
 QADBusService *QADBusService::instance()
