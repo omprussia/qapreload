@@ -35,7 +35,12 @@
 #include <private/qquickitem_p.h>
 #include "qpa/qwindowsysteminterface_p.h"
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+#include <private/qv8engine_p.h>
+#else
 #include <private/qv4engine_p.h>
+#include <private/qqmlengine_p.h>
+#endif
 
 #include "SailfishTest.hpp"
 #include "LipstickTestHelper.hpp"
@@ -91,6 +96,7 @@ void QAEngine::ready()
         qDebug() << "Blacklist:" << m_blacklistedProperties;
     }
 
+#ifdef Q_OS_SAILFISH
     const QStringList args = qApp->arguments();
     const int testArgIndex = args.indexOf(QStringLiteral("--run-sailfish-test"));
 
@@ -98,12 +104,13 @@ void QAEngine::ready()
         QADBusService::instance()->initialize();
         QASocketService::instance()->connectToBridge();
     } else if (testArgIndex > 0 && testArgIndex == args.length() - 2) {
-#ifdef Q_OS_SAILFISH
         const QString testName = args.at(testArgIndex + 1);
-        loadSailfishTest(testName, QDBusMessage());
-#endif
+        loadSailfishTest(testName, QDBusMessage());        
         qApp->quit();
     }
+#else
+    QASocketService::instance()->connectToBridge();
+#endif
 }
 
 void QAEngine::recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth)
@@ -939,10 +946,13 @@ TestResult::TestResult(const TestResult &other)
 
 void TestResult::raise()
 {
-#if QT_VERSION <= QT_VERSION_CHECK(5, 6, 0)
-    QV4::ExecutionEngine *eEngine = QV8Engine::getV4(m_engine);
-    eEngine->throwError(message);
+    QV4::ExecutionEngine *eEngine =
+#if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
+        QV8Engine::getV4(engine);
+#else
+        QQmlEnginePrivate::getV4Engine(m_engine);
 #endif
+    eEngine->throwError(message);
 }
 
 #ifdef Q_OS_SAILFISH

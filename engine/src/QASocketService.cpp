@@ -1006,6 +1006,7 @@ void QASocketService::executeCommand_app_dumpCover(QTcpSocket *socket)
 
 void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName)
 {
+#ifdef Q_OS_SAILFISH
     const QString initialPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
     const QString screenShotPath = QStringLiteral("%1/Screenshots/%2").arg(initialPath, fileName);
     QFileInfo screenshot(screenShotPath);
@@ -1014,7 +1015,6 @@ void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, cons
         screnshotDir.mkpath(QStringLiteral("."));
     }
 
-#ifdef Q_OS_SAILFISH
     QDBusMessage screenShot = QDBusMessage::createMethodCall(
                 QStringLiteral("org.nemomobile.lipstick"),
                 QStringLiteral("/org/nemomobile/lipstick/screenshot"),
@@ -1029,7 +1029,7 @@ void QASocketService::executeCommand_app_saveScreenshot(QTcpSocket *socket, cons
         socketReply(socket, QString(), 1);
     }
 #else
-    socketReply(socket, QString());
+    socketReply(socket, QStringLiteral("not implemented"), 1);
 #endif
 }
 
