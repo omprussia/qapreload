@@ -122,7 +122,9 @@ private slots:
     void setTouchIndicatorEnabled(bool enable, const QDBusMessage &message);
     void hideTouchIndicator(const QDBusMessage &message);
 #endif
+#ifdef Q_OS_SAILFISH
     void hideTouchIndicator();
+#endif
     void clearFocus();
     void clearComponentCache();
 

@@ -767,8 +767,12 @@ void QASocketService::executeAsyncBootstrap(QTcpSocket *socket, const QString &c
 void QASocketService::hideTouchIndicatorBootstrap(QTcpSocket *socket)
 {
     qDebug() << Q_FUNC_INFO;
+#ifdef Q_OS_SAILFISH
     QAEngine::instance()->hideTouchIndicator();
     socketReply(socket, QString());
+#else
+    socketReply(socket, QStringLiteral("not implemented"), 1);
+#endif
 }
 
 void QASocketService::executeCommand_app_pullDownTo(QTcpSocket *socket, const QString &destination)

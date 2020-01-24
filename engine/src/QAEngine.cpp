@@ -829,12 +829,14 @@ void QAEngine::hideTouchIndicator(const QDBusMessage &message)
 }
 #endif
 
+#ifdef Q_OS_SAILFISH
 void QAEngine::hideTouchIndicator()
 {
     if (m_touchFilter) {
         m_touchFilter->hideImmediately();
     }
 }
+#endif
 
 void QAEngine::clearFocus()
 {
