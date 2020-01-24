@@ -42,8 +42,14 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#ifdef WIN32
+#include <winsock.h>
+#include "WinInjector.hpp"
+#else
 #include <sys/socket.h>
 #include <sys/un.h>
+#endif
+
 #include <unistd.h>
 
 namespace {
@@ -958,6 +964,9 @@ bool QABridge::isServiceRegistered(const QString &appName)
 
 bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
 {
+    QProcess *process = new QProcess;
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+
 #ifdef Q_OS_SAILFISH
     QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
                                                          QStringLiteral("/ru/omprussia/qaservice"),
@@ -965,8 +974,26 @@ bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
                                                          QStringLiteral("launchApp"));
     launch.setArguments({ appName, arguments });
     return getSessionBus().send(launch);
-#else
-    return true;
+#endif
+
+#ifdef Q_OS_LINUX
+    env.insert("LD_PRELOAD", "/usr/lib/libqapreloadhook.so");
+    process->setProcessEnvironment(env);
+
+    process->start(appName);
+    process->waitForStarted();
+    if (process->state() == QProcess::Running) {
+        return true;
+    } else return false;
+#endif
+#ifdef Q_OS_WINDOWS
+    Injector inject;
+
+    process->start(appName);
+    process->waitForStarted();
+    if (process->state() == QProcess::Running) {
+        return inject.injectDll(process->processId(), "qapreloadhook.dll");
+    } else return false;
 #endif
 }
 
