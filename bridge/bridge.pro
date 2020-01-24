@@ -43,9 +43,6 @@ contains(DEFINES, USE_CONNMAN) {
 
 TEMPLATE = app
 TARGET = qabridge
-TARGETPATH = /usr/bin
-target.path = $$TARGETPATH
-INSTALLS += target
 
 SOURCES += \
     src/main.cpp \
@@ -54,9 +51,20 @@ SOURCES += \
 HEADERS += \
     src/QABridge.hpp
 
+win32 {
+HEADERS += \
+    src/WinInjector.hpp
+
+SOURCES += src/WinInjector.cpp
+}
+
 contains(DEFINES, Q_OS_SAILFISH) {
     PKGCONFIG += libshadowutils
 
     INCLUDEPATH += /usr/include
     INCLUDEPATH += /usr/include/libshadowutils
+
+    TARGETPATH = /usr/bin
+    target.path = $$TARGETPATH
+    INSTALLS += target
 }
