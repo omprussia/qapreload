@@ -76,14 +76,19 @@ private slots:
     void executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
     void executeCommand_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
 
+signals:
+    void applicationReply(QTcpSocket *socket, const QString &appName, const QByteArray &data);
+
 private slots:
     void processCommand(QTcpSocket *socket, const QByteArray &cmd);
+    void processAppCommand(QTcpSocket *socket, const QString &appName, const QByteArray &cmd);
+
     void forwardToApp(QTcpSocket *socket, const QByteArray &data);
     void forwardToApp(QTcpSocket *socket, const QString &appName, const QByteArray &data);
     void forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params);
 
 private:
-    void processAppCommand(QTcpSocket *socket, const QJsonObject &app);
+    void processAppConnectCommand(QTcpSocket *socket, const QJsonObject &app);
     bool processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params);
 
     QByteArray actionData(const QString &action, const QVariant &params);

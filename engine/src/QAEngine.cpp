@@ -64,6 +64,8 @@ void QAEngine::initialize(QQuickItem *rootItem)
 
 void QAEngine::ready()
 {
+    s_processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
+
     m_mouseEngine = new QAMouseEngine(this);
     connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &QAEngine::onTouchEvent);
     connect(m_mouseEngine, &QAMouseEngine::mouseEvent, this, &QAEngine::onMouseEvent);
@@ -535,7 +537,6 @@ QAEngine *QAEngine::instance()
 QAEngine::QAEngine(QObject *parent)
     : QObject(parent)
 {
-    s_processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
 }
 
 QAEngine::~QAEngine()
@@ -996,19 +997,8 @@ bool TouchFilter::eventFilter(QObject *watched, QEvent *event)
     case QEvent::TouchBegin:
     {
         if (QAEngine::processName() != QLatin1String("lipstick")) {
-#ifdef Q_OS_SAILFISH
-            QDBusMessage hideTouchIndicator = QDBusMessage::createMethodCall(
-                        QStringLiteral("ru.omprussia.qaservice.lipstick"),
-                        QStringLiteral("/ru/omprussia/qaservice"),
-                        QStringLiteral("ru.omprussia.qaservice"),
-                        QStringLiteral("hideTouchIndicator"));
-            QDBusReply<void> reply = QDBusConnection::sessionBus().call(hideTouchIndicator, QDBus::NoBlock);
-            if (reply.error().type() != QDBusError::NoError) {
-                qDebug() << Q_FUNC_INFO << reply.error().message();
-            }
-#else
-            QASocketService::instance()->sendToApp(QStringLiteral("lipstick"), QStringLiteral("hideTouchIndicator"));
-#endif
+            QASocketService::instance()->sendToApp(QStringLiteral("lipstick"),
+                                                   QStringLiteral("hideTouchIndicator"));
         }
     }
     case QEvent::TouchUpdate:
