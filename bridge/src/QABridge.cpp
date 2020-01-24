@@ -458,7 +458,7 @@ void QABridge::startRecordingScreenBootstrap(QTcpSocket *socket, const QVariant 
 
     socketReply(socket, QStringLiteral("started"));
 #else
-    socketReply(socket, QStringLiteral("not_implemented"));
+    socketReply(socket, QStringLiteral("not_implemented"), 1);
 #endif
 }
 
@@ -477,7 +477,7 @@ void QABridge::stopRecordingScreenBootstrap(QTcpSocket *socket, const QVariant &
 
     socketReply(socket, m_screenrecorder->lastFilename());
 #else
-    socketReply(socket, QStringLiteral("not_implemented"));
+    socketReply(socket, QStringLiteral("not_implemented"), 1);
 #endif
 }
 
@@ -749,7 +749,7 @@ void QABridge::lockBootstrap(QTcpSocket *socket, double seconds)
         socketReply(socket, QString(), 1);
     }
 #else
-    socketReply(socket, QString());
+    socketReply(socket, QStringLiteral("not implemented"), 1);
 #endif
 }
 
@@ -820,7 +820,7 @@ void QABridge::unlockBootstrap(QTcpSocket *socket)
         socketReply(socket, QString(), 1);
     }
 #else
-    socketReply(socket, QString());
+    socketReply(socket, QStringLiteral("not implemented"), 1);
 #endif
 }
 
@@ -842,7 +842,7 @@ void QABridge::isLockedBootstrap(QTcpSocket *socket)
         socketReply(socket, QString(), 1);
     }
 #else
-    socketReply(socket, QString());
+    socketReply(socket, QStringLiteral("not implemented"), 1);
 #endif
 }
 
