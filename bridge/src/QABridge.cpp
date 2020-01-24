@@ -153,10 +153,16 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
 {
     qDebug() << Q_FUNC_INFO << appName << socket;
 
+    QString name = appName;
+    if (QFileInfo::exists(appName)) {
+        name = QFileInfo(appName).baseName();
+        m_clientFullPath.insert(socket, appName);
+    }
+
     if (m_clientSocket.contains(socket)) {
         qWarning() << Q_FUNC_INFO << "Socket already known:" << m_clientSocket.value(socket);
     }
-    m_clientSocket.insert(socket, appName);
+    m_clientSocket.insert(socket, name);
     if (appName == QLatin1String("headless")) {
         return;
     }
@@ -204,11 +210,15 @@ void QABridge::appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch)
     }
 }
 
-void QABridge::startActivityBootstrap(QTcpSocket *socket, const QString &appName, const QStringList &arguments)
+void QABridge::startActivityBootstrap(QTcpSocket *socket, const QString &appName, const QVariantList &arguments)
 {
     qDebug() << Q_FUNC_INFO << appName << arguments;
 
-    const bool success = QABridge::launchApp(appName, arguments);
+    QStringList args;
+    for (const QVariant &varg : arguments) {
+        args.append(varg.toString());
+    }
+    const bool success = QABridge::launchApp(appName, args);
 
     if (success) {
         socketReply(socket, QString());
@@ -222,8 +232,7 @@ void QABridge::activateAppBootstrap(QTcpSocket *socket, const QString &appId)
     const QString appName = m_clientSocket.value(socket);
     qDebug() << Q_FUNC_INFO << appName << appId;
     if (m_applicationSocket.value(appName, nullptr) == nullptr) {
-        QStringList arguments;
-        QABridge::launchApp(appName, arguments);
+        QABridge::launchApp(appName);
     } else {
         forwardToApp(socket, QStringLiteral("activateApp"), QStringList({appName}));
     }
@@ -320,8 +329,11 @@ void QABridge::launchAppBootstrap(QTcpSocket *socket)
     } else {
         m_applicationSocket.insert(appName, nullptr);
         qDebug() << Q_FUNC_INFO << appName;
-        QStringList arguments;
-        QABridge::launchApp(appName, arguments);
+        if (m_clientFullPath.contains(socket)) {
+            QABridge::launchApp(m_clientFullPath.value(socket));
+        } else {
+            QABridge::launchApp(appName);
+        }
 
         QTimer maxTimer;
         connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);

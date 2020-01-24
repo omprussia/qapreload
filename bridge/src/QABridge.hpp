@@ -37,7 +37,7 @@ private slots:
     void appConnectBootstrap(QTcpSocket *socket);
     void appDisconnectBootstrap(QTcpSocket *socket, bool autoLaunch);
 
-    void startActivityBootstrap(QTcpSocket *socket, const QString &appName, const QStringList &params);
+    void startActivityBootstrap(QTcpSocket *socket, const QString &appName, const QVariantList &params);
 
     void installAppBootstrap(QTcpSocket *socket, const QString &appPath);
     void activateAppBootstrap(QTcpSocket *socket, const QString &appId);
@@ -94,7 +94,7 @@ private:
     QByteArray actionData(const QString &action, const QVariant &params);
     bool isServiceRegistered(const QString &appName);
 
-    static bool launchApp(const QString &appName, const QStringList &arguments);
+    static bool launchApp(const QString &appName, const QStringList &arguments = {});
     QByteArray sendToAppSocket(const QString &appName, const QByteArray &data);
     int getNetworkConnection() const;
     bool isAppInstalled(const QString &rpmName);
@@ -103,6 +103,7 @@ private:
 
     QTcpServer *m_server = nullptr;
     QHash<QTcpSocket*, QString> m_clientSocket;
+    QHash<QTcpSocket*, QString> m_clientFullPath;
     QHash<QString, QTcpSocket*> m_applicationSocket;
 
     QByteArray m_dataStream;
