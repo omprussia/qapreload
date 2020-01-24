@@ -948,7 +948,7 @@ void TestResult::raise()
 {
     QV4::ExecutionEngine *eEngine =
 #if QT_VERSION < QT_VERSION_CHECK(5, 7, 0)
-        QV8Engine::getV4(engine);
+        QV8Engine::getV4(m_engine);
 #else
         QQmlEnginePrivate::getV4Engine(m_engine);
 #endif
