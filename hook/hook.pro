@@ -1,11 +1,13 @@
+TARGET = qapreloadhook
 TEMPLATE = lib
-QT =
+QT += core
 CONFIG += plugin
 
 SOURCES += \
     src/hook.cpp
 
-TARGET = qapreloadhook
-target.path = /usr/lib
+unix {
 
+target.path = /usr/lib
 INSTALLS = target
+}
