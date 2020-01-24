@@ -13,8 +13,12 @@
 
 #define METHOD_NAME_HERE funcName(Q_FUNC_INFO)
 
-static QADBusService *s_instance = nullptr;
-static QString s_processName;
+namespace
+{
+
+QADBusService *s_instance = nullptr;
+
+}
 
 QByteArray funcName(const char *line)
 {
@@ -31,13 +35,11 @@ void QADBusService::initialize()
         return;
     }
 
-    s_processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
-
     int serviceSuffix = 0;
-    QString finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1").arg(s_processName);
+    QString finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1").arg(QAEngine::processName());
 
     while (QDBusConnection::sessionBus().interface()->isServiceRegistered(finalServiceName)) {
-        finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1_xx_%2").arg(s_processName).arg(++serviceSuffix);
+        finalServiceName = QStringLiteral("ru.omprussia.qaservice.%1_xx_%2").arg(QAEngine::processName()).arg(++serviceSuffix);
     }
 
     bool success = false;
@@ -66,11 +68,6 @@ QADBusService *QADBusService::instance()
         s_instance = new QADBusService(qApp);
     }
     return s_instance;
-}
-
-QString QADBusService::processName()
-{
-    return s_processName;
 }
 
 QADBusService::QADBusService(QObject *parent)

@@ -498,10 +498,9 @@ void QASocketService::connectToBridge()
 
     QJsonObject root;
     QJsonObject app;
-    const QString appName = qApp->arguments().first().section(QLatin1Char('/'), -1);
-    app.insert(QStringLiteral("appName"), appName);
+    app.insert(QStringLiteral("appName"), QAEngine::processName());
 
-    root.insert(QStringLiteral("app"), app);
+    root.insert(QStringLiteral("appConnect"), app);
 
     QByteArray data = QJsonDocument(root).toJson(QJsonDocument::Compact);
 
@@ -533,8 +532,14 @@ void QASocketService::sendToApp(const QString &appName, const QString &command, 
         << Q_FUNC_INFO
         << data;
 
+    disconnect(m_socket, &QTcpSocket::readyRead, this, &QASocketService::readSocket);
+
     m_socket->write(data);
     m_socket->waitForBytesWritten();
+
+    if (m_socket->state() != QAbstractSocket::ConnectedState) {
+        return;
+    }
 
     QByteArray appReplyData;
     bool haveData = false;
@@ -559,12 +564,7 @@ void QASocketService::sendToApp(const QString &appName, const QString &command, 
         } else {
             timer.start();
         }
-
     });
-
-    if (m_socket->state() != QAbstractSocket::ConnectedState) {
-        return;
-    }
 
     QMetaObject::Connection stateChangedConnection = connect(m_socket, &QAbstractSocket::stateChanged, this, [&loop, &timer](QAbstractSocket::SocketState state) {
         if (state != QAbstractSocket::ConnectedState) {
@@ -578,6 +578,7 @@ void QASocketService::sendToApp(const QString &appName, const QString &command, 
 
     disconnect(readyReadConnection);
     disconnect(stateChangedConnection);
+    connect(m_socket, &QTcpSocket::readyRead, this, &QASocketService::readSocket);
 
     qDebug()
         << Q_FUNC_INFO

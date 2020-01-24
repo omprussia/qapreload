@@ -121,15 +121,21 @@ void QABridge::readSocket()
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
 
     qDebug() << Q_FUNC_INFO << socket << socket->bytesAvailable();
-    const QByteArray requestData = socket->readAll();
+    QByteArray requestData = socket->readAll();
     qDebug().noquote() << requestData;
+    requestData.replace("}{", "}\n{"); // workaround packets join
 
     const QList<QByteArray> commands = requestData.split('\n');
     for (const QByteArray &cmd : commands) {
         if (cmd.isEmpty()) {
             continue;
         }
-        processCommand(socket, cmd);
+        const QString appName = m_applicationSocket.key(socket);
+        if (appName.isEmpty()) {
+            processCommand(socket, cmd);
+        } else {
+            processAppCommand(socket, appName, cmd);
+        }
     }
 }
 
@@ -616,31 +622,15 @@ void QABridge::executeCommand_unlock(QTcpSocket *socket, const QVariant &executa
 
 void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 {
-    qDebug() << Q_FUNC_INFO << cmd;
-    QJsonParseError error;
-    QJsonDocument json = QJsonDocument::fromJson(cmd, &error);
-    if (error.error != QJsonParseError::NoError) {
-        return;
-    }
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << cmd;
 
-    QJsonObject object = json.object();
+    const QJsonObject object = QJsonDocument::fromJson(cmd).object();
 
-    if (object.contains(QStringLiteral("app"))) {
-        const QJsonObject app = object.value(QStringLiteral("app")).toObject();
-        processAppCommand(socket, app);
-        return;
-    }
-
-    if (object.contains(QStringLiteral("forward"))) {
-        const QString appName = object.value(QStringLiteral("forward")).toString();
-
-        QMetaObject::invokeMethod(this,
-                                  "forwardToApp",
-                                  Qt::DirectConnection,
-                                  Q_ARG(QTcpSocket*, socket),
-                                  Q_ARG(QString, appName),
-                                  Q_ARG(QByteArray, cmd));
-
+    if (object.contains(QStringLiteral("appConnect"))) {
+        const QJsonObject app = object.value(QStringLiteral("appConnect")).toObject();
+        processAppConnectCommand(socket, app);
         return;
     }
 
@@ -668,6 +658,34 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
                                   Q_ARG(QTcpSocket*, socket),
                                   Q_ARG(QByteArray, cmd));
     }
+}
+
+void QABridge::processAppCommand(QTcpSocket *socket, const QString &appName, const QByteArray &cmd)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << cmd;
+
+    const QJsonObject object = QJsonDocument::fromJson(cmd).object();
+
+    if (object.contains(QStringLiteral("forward"))) {
+        const QString forwardAppName = object.value(QStringLiteral("forward")).toString();
+        if (!m_applicationSocket.contains(forwardAppName)) {
+            qWarning() << Q_FUNC_INFO << "No socket for app" << forwardAppName;
+            return;
+        }
+
+        QMetaObject::invokeMethod(this,
+                                  "forwardToApp",
+                                  Qt::DirectConnection,
+                                  Q_ARG(QTcpSocket*, socket),
+                                  Q_ARG(QString, forwardAppName),
+                                  Q_ARG(QByteArray, cmd));
+
+        return;
+    }
+
+    emit applicationReply(socket, appName, cmd);
 }
 
 void QABridge::getCurrentContextBootstrap(QTcpSocket *socket)
@@ -850,8 +868,10 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QString &appName, const QB
     qDebug() << Q_FUNC_INFO << appReplyData;
 
     socket->write(appReplyData);
-    qWarning() << Q_FUNC_INFO << "Writing to appium socket:" <<
-                  socket->waitForBytesWritten();
+    qWarning()
+        << Q_FUNC_INFO
+        << "Writing to appium socket:"
+        << socket->waitForBytesWritten();
 }
 
 void QABridge::forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params)
@@ -859,14 +879,12 @@ void QABridge::forwardToApp(QTcpSocket *socket, const QString &action, const QVa
     forwardToApp(socket, actionData(action, params));
 }
 
-void QABridge::processAppCommand(QTcpSocket *socket, const QJsonObject &app)
+void QABridge::processAppConnectCommand(QTcpSocket *socket, const QJsonObject &app)
 {
     if (m_clientSocket.contains(socket)) {
         qDebug() << Q_FUNC_INFO << m_clientSocket.value(socket);
-        m_applicationSocket.remove(m_clientSocket.value(socket));
         m_clientSocket.remove(socket);
     }
-    disconnect(socket, 0, 0, 0);
 
     const QString appName = app.value(QStringLiteral("appName")).toString();
 
@@ -874,11 +892,6 @@ void QABridge::processAppCommand(QTcpSocket *socket, const QJsonObject &app)
         m_connectLoop->quit();
     }
 
-    connect(socket, &QTcpSocket::stateChanged, [appName, socket, this](QAbstractSocket::SocketState state) {
-        if (state == QAbstractSocket::UnconnectedState) {
-            m_applicationSocket.remove(appName);
-        }
-    });
     m_applicationSocket.insert(appName, socket);
 }
 
@@ -971,18 +984,24 @@ QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &d
     socket->write(data);
     socket->waitForBytesWritten();
 
+    if (socket->state() != QAbstractSocket::ConnectedState) {
+        return appReplyData;
+    }
+
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
     timer.setInterval(30000);
 
-    QMetaObject::Connection readyReadConnection = connect(socket, &QAbstractSocket::readyRead, [&appReplyData, socket, &loop, &timer, &haveData]() {
+    QMetaObject::Connection readyReadConnection = connect(this, &QABridge::applicationReply,
+                                                          [&appReplyData, socket, &loop, &timer, &haveData]
+                                                          (QTcpSocket *appSocket, const QString &appName, const QByteArray &data) {
         if (!haveData) {
             haveData = true;
             appReplyData.clear();
         }
-        qDebug() << Q_FUNC_INFO << "Received bytes from app:" << socket->bytesAvailable();
-        appReplyData.append(socket->readAll());
+        qDebug() << Q_FUNC_INFO << "Received bytes from app:" << appName << appSocket;
+        appReplyData.append(data);
 
         QJsonParseError jsonError;
         QJsonDocument::fromJson(appReplyData, &jsonError);
@@ -993,10 +1012,6 @@ QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &d
         }
 
     });
-
-    if (socket->state() != QAbstractSocket::ConnectedState) {
-        return appReplyData;
-    }
 
     QMetaObject::Connection stateChangedConnection = connect(socket, &QAbstractSocket::stateChanged, this, [&loop, &timer](QAbstractSocket::SocketState state) {
         if (state != QAbstractSocket::ConnectedState) {
