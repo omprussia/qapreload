@@ -42,8 +42,14 @@
 #include <systemd/sd-daemon.h>
 #endif
 
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+
+namespace {
+
 #ifdef USE_DBUS
-static QDBusConnection getSessionBus()
+QDBusConnection getSessionBus()
 {
     static const QString s_sessionBusConnection = QStringLiteral("qabridge-connection");
     static QDBusConnection s_bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, s_sessionBusConnection);
@@ -65,15 +71,13 @@ static QDBusConnection getSessionBus()
 }
 #endif
 
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
-
-static inline QGenericArgument qVariantToArgument(const QVariant &variant) {
+inline QGenericArgument qVariantToArgument(const QVariant &variant) {
     if (variant.isValid() && !variant.isNull()) {
         return QGenericArgument(variant.typeName(), variant.constData());
     }
     return QGenericArgument();
+}
+
 }
 
 QABridge::QABridge(QObject *parent)
