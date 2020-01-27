@@ -905,12 +905,11 @@ void QABridge::processAppConnectCommand(QTcpSocket *socket, const QJsonObject &a
     }
 
     const QString appName = app.value(QStringLiteral("appName")).toString();
+    m_applicationSocket.insert(appName, socket);
 
     if (m_applicationSocket.value(appName) != nullptr && m_connectLoop->isRunning()) {
         m_connectLoop->quit();
     }
-
-    m_applicationSocket.insert(appName, socket);
 }
 
 bool QABridge::processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params)
