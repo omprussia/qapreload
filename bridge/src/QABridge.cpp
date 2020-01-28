@@ -551,6 +551,7 @@ void QABridge::executeAsyncBootstrap(QTcpSocket *socket, const QString &command,
     }
 }
 
+#ifdef Q_OS_SAILFISH
 void QABridge::executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
 {
     const QString executable = executableArg.toString();
@@ -637,6 +638,7 @@ void QABridge::executeCommand_unlock(QTcpSocket *socket, const QVariant &executa
     socketReply(socket, QString());
 
 }
+#endif
 
 void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 {

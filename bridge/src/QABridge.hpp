@@ -73,8 +73,10 @@ private slots:
     void executeBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg);
     void executeAsyncBootstrap(QTcpSocket *socket, const QString &command, const QVariant &paramsArg);
 
+#ifdef Q_OS_SAILFISH
     void executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
     void executeCommand_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
+#endif
 
 signals:
     void applicationReply(QTcpSocket *socket, const QString &appName, const QByteArray &data);
