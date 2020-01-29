@@ -1,8 +1,8 @@
 #include "WinInjector.hpp"
-#include "windows.h"
+#include <windows.h>
 #include <QDebug>
 
-bool Injector::injectDll(qint64 processId, const char *dllPath)
+bool Injector::injectDll(long long processId, const char *dllPath)
 {
     HANDLE h_process = OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);             //retrieving a handle to the target process
 

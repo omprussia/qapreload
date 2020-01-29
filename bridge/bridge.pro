@@ -52,10 +52,11 @@ HEADERS += \
     src/QABridge.hpp
 
 win32 {
-HEADERS += \
-    src/WinInjector.hpp
+    HEADERS += \
+        src/WinInjector.hpp
 
-SOURCES += src/WinInjector.cpp
+    SOURCES += \
+        src/WinInjector.cpp
 }
 
 contains(DEFINES, Q_OS_SAILFISH) {

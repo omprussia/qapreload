@@ -551,7 +551,6 @@ void QABridge::executeAsyncBootstrap(QTcpSocket *socket, const QString &command,
     }
 }
 
-#ifdef Q_OS_SAILFISH
 void QABridge::executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
 {
     const QString executable = executableArg.toString();
@@ -568,6 +567,7 @@ void QABridge::executeCommand_shell(QTcpSocket *socket, const QVariant &executab
     socketReply(socket, stdout);
 }
 
+#ifdef Q_OS_SAILFISH
 void QABridge::executeCommand_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
 {
     qDebug() << executableArg << paramsArg;
@@ -907,11 +907,12 @@ void QABridge::processAppConnectCommand(QTcpSocket *socket, const QJsonObject &a
     }
 
     const QString appName = app.value(QStringLiteral("appName")).toString();
-    m_applicationSocket.insert(appName, socket);
 
     if (m_applicationSocket.value(appName) != nullptr && m_connectLoop->isRunning()) {
         m_connectLoop->quit();
     }
+
+    m_applicationSocket.insert(appName, socket);
 }
 
 bool QABridge::processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params)
@@ -965,9 +966,6 @@ bool QABridge::isServiceRegistered(const QString &appName)
 
 bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
 {
-    QProcess *process = new QProcess;
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-
 #ifdef Q_OS_SAILFISH
     QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
                                                          QStringLiteral("/ru/omprussia/qaservice"),
@@ -975,27 +973,25 @@ bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
                                                          QStringLiteral("launchApp"));
     launch.setArguments({ appName, arguments });
     return getSessionBus().send(launch);
-#endif
-
+#else
+    QProcess process;
 #ifdef Q_OS_LINUX
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert("LD_PRELOAD", "/usr/lib/libqapreloadhook.so");
-    process->setProcessEnvironment(env);
-
+    process.setProcessEnvironment(env);
+#endif
     process->start(appName);
     process->waitForStarted();
     if (process->state() == QProcess::Running) {
-        return true;
-    } else return false;
-#endif
 #ifdef Q_OS_WINDOWS
-    Injector inject;
-
-    process->start(appName);
-    process->waitForStarted();
-    if (process->state() == QProcess::Running) {
-        return inject.injectDll(process->processId(), "qapreloadhook.dll");
-    } else return false;
+        return Injector::injectDll(process->processId(), "qapreloadhook.dll");
+#else
+        return true;
 #endif
+    }
+    return false;
+#endif
+
 }
 
 QByteArray QABridge::sendToAppSocket(const QString &appName, const QByteArray &data)
