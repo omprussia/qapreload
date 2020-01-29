@@ -1,13 +1,12 @@
-#ifdef WIN32
+#include <QCoreApplication>
+
+#ifdef Q_OS_WINDOWS
 #include <windows.h>
-#include <iostream>
-#include <stdio.h>
 #else
 #include <pwd.h>
 #include <dlfcn.h>
 #endif
 
-#include <QCoreApplication>
 
 typedef void(*StartupCallback)();
 

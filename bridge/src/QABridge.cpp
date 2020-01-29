@@ -42,7 +42,7 @@
 #include <systemd/sd-daemon.h>
 #endif
 
-#ifdef WIN32
+#ifdef Q_OS_WINDOWS
 #include <winsock.h>
 #include "WinInjector.hpp"
 #else
@@ -153,6 +153,10 @@ void QABridge::removeSocket()
         qDebug() << Q_FUNC_INFO << m_clientSocket.value(socket);
         m_clientSocket.remove(socket);
     }
+    QString appName = m_applicationSocket.key(socket);
+    if (!appName.isEmpty()) {
+        m_applicationSocket.remove(appName);
+    }
 }
 
 void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
@@ -177,6 +181,7 @@ void QABridge::initializeBootstrap(QTcpSocket *socket, const QString &appName)
 void QABridge::appConnectBootstrap(QTcpSocket *socket)
 {
     const QString appName = m_clientSocket.value(socket);
+
     if (appName == QLatin1String("headless")) {
         socketReply(socket, QString());
         return;
@@ -560,11 +565,12 @@ void QABridge::executeCommand_shell(QTcpSocket *socket, const QVariant &executab
     p.start(executable, params);
     p.waitForFinished();
 
-    const QString stdout = QString::fromUtf8(p.readAllStandardOutput());
-    const QString stderr = QString::fromUtf8(p.readAllStandardError());
-    qDebug() << Q_FUNC_INFO << "stdout:" << stdout;
-    qDebug() << Q_FUNC_INFO << "stderr:" << stderr;
-    socketReply(socket, stdout);
+
+    const QString stdOut = QString::fromUtf8(p.readAllStandardOutput());
+    const QString stdErr = QString::fromUtf8(p.readAllStandardError());
+    qDebug() << Q_FUNC_INFO << "stdout:" << stdOut;
+    qDebug() << Q_FUNC_INFO << "stderr:" << stdErr;
+    socketReply(socket, stdOut);
 }
 
 #ifdef Q_OS_SAILFISH
@@ -908,7 +914,7 @@ void QABridge::processAppConnectCommand(QTcpSocket *socket, const QJsonObject &a
 
     const QString appName = app.value(QStringLiteral("appName")).toString();
 
-    if (m_applicationSocket.value(appName) != nullptr && m_connectLoop->isRunning()) {
+    if (m_applicationSocket.value(appName) == nullptr && m_connectLoop->isRunning()) {
         m_connectLoop->quit();
     }
 
@@ -980,11 +986,11 @@ bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
     env.insert("LD_PRELOAD", "/usr/lib/libqapreloadhook.so");
     process.setProcessEnvironment(env);
 #endif
-    process->start(appName);
-    process->waitForStarted();
-    if (process->state() == QProcess::Running) {
+    qint64 pid = 0;
+    process.setProgram(appName);
+    if (process.startDetached(&pid)) {
 #ifdef Q_OS_WINDOWS
-        return Injector::injectDll(process->processId(), "qapreloadhook.dll");
+        return Injector::injectDll(pid, "qapreloadhook.dll");
 #else
         return true;
 #endif
