@@ -7,7 +7,6 @@ SOURCES += \
     src/hook.cpp
 
 unix {
-
-target.path = /usr/lib
-INSTALLS = target
+    target.path = /usr/lib
+    INSTALLS = target
 }
