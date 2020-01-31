@@ -986,6 +986,11 @@ bool QABridge::launchApp(const QString &appName, const QStringList &arguments)
     env.insert("LD_PRELOAD", "/usr/lib/libqapreloadhook.so");
     process.setProcessEnvironment(env);
 #endif
+#ifdef Q_OS_MACOS
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert("DYLD_INSERT_LIBRARIES", "/usr/local/lib/libqapreloadhook.dylib");
+    process.setProcessEnvironment(env);
+#endif
     qint64 pid = 0;
     process.setProgram(appName);
     if (process.startDetached(&pid)) {
