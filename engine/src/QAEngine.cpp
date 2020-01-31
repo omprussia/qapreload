@@ -69,7 +69,7 @@ void QAEngine::initialize(QQuickItem *rootItem)
 
 void QAEngine::ready()
 {
-    s_processName = qApp->arguments().first().section(QLatin1Char('/'), -1);
+    s_processName = QFileInfo(qApp->applicationFilePath()).baseName();
 
     m_mouseEngine = new QAMouseEngine(this);
     connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &QAEngine::onTouchEvent);

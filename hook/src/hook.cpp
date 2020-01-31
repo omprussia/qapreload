@@ -1,7 +1,12 @@
-#include <unistd.h>
-#include <pwd.h>
+#include <QCoreApplication>
 
+#ifdef Q_OS_WINDOWS
+#include <windows.h>
+#else
+#include <pwd.h>
 #include <dlfcn.h>
+#endif
+
 
 typedef void(*StartupCallback)();
 
@@ -11,7 +16,7 @@ static int is_user = 0;
 static StartupCallback next_startup_hook = nullptr;
 static const int StartupHookIndex = 5;
 
-StartupCallback qtHookData[100];
+extern StartupCallback qtHookData[100];
 
 #ifdef Q_OS_SAILFISH
 inline uid_t nemo_uid()
@@ -25,9 +30,24 @@ inline uid_t nemo_uid()
         }
     }
 
-    return nemo_pwd->pw_uid; 
+    return nemo_pwd->pw_uid;
 }
 #endif
+
+void loadEngine()
+{
+#ifdef Q_OS_WINDOWS
+    LoadLibraryA("qaengine.dll");
+#else
+#ifdef Q_OS_MACOS
+    dlopen("libqaengine.dylib", RTLD_LAZY);
+#else
+    dlopen("libqaengine.so", RTLD_LAZY);
+#endif
+#endif
+
+    qa_loaded = 1;
+}
 
 extern "C" void qt_startup_hook()
 {
@@ -37,15 +57,8 @@ extern "C" void qt_startup_hook()
     if (qa_loaded) {
         return;
     }
-    dlopen("libqaengine.so", RTLD_LAZY);
-    qa_loaded = 1;
 
-    static StartupCallback next_qt_startup_hook = reinterpret_cast<StartupCallback>(dlsym(RTLD_NEXT, "qt_startup_hook"));
-    next_qt_startup_hook();
-
-    if (next_startup_hook) {
-        next_startup_hook();
-    }
+    loadEngine();
 }
 
 __attribute__((constructor))
@@ -56,7 +69,11 @@ static void libConstructor() {
     is_user = true;
 #endif
 
-    next_startup_hook = reinterpret_cast<StartupCallback>(qtHookData[StartupHookIndex]);
-    qtHookData[StartupHookIndex] = reinterpret_cast<StartupCallback>(&qt_startup_hook);
-}
+    if (qApp) {
+        loadEngine();
+    } else {
+        next_startup_hook = reinterpret_cast<StartupCallback>(qtHookData[StartupHookIndex]);
+        qtHookData[StartupHookIndex] = reinterpret_cast<StartupCallback>(&qt_startup_hook);
+    }
 
+}
