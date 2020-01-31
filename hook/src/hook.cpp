@@ -16,7 +16,7 @@ static int is_user = 0;
 static StartupCallback next_startup_hook = nullptr;
 static const int StartupHookIndex = 5;
 
-StartupCallback qtHookData[100];
+extern StartupCallback qtHookData[100];
 
 #ifdef Q_OS_SAILFISH
 inline uid_t nemo_uid()
@@ -39,7 +39,11 @@ void loadEngine()
 #ifdef Q_OS_WINDOWS
     LoadLibraryA("qaengine.dll");
 #else
+#ifdef Q_OS_MACOS
+    dlopen("libqaengine.dylib", RTLD_LAZY);
+#else
     dlopen("libqaengine.so", RTLD_LAZY);
+#endif
 #endif
 
     qa_loaded = 1;
