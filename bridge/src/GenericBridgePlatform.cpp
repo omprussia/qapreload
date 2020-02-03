@@ -3,9 +3,11 @@
 #include <QDateTime>
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QProcess>
 #include <QTcpSocket>
 #include <QTimer>
 #include <QVariantList>
@@ -14,8 +16,86 @@
 
 GenericBridgePlatform::GenericBridgePlatform(QObject *parent)
     : IBridgePlatform(parent)
+    , m_connectLoop(new QEventLoop(this))
 {
 
+}
+
+void GenericBridgePlatform::appConnect(QTcpSocket *socket, const QString &appName)
+{
+    if (m_socketAppName.contains(socket)) {
+        m_socketAppName.remove(socket);
+    }
+
+    if (m_applicationSocket.value(appName) == nullptr && m_connectLoop->isRunning()) {
+        m_connectLoop->quit();
+    }
+
+    m_applicationSocket.insert(appName, socket);
+}
+
+void GenericBridgePlatform::appReply(QTcpSocket *socket, const QByteArray &cmd)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << cmd;
+
+    const QString appName = m_applicationSocket.key(socket);
+    if (appName.isEmpty()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No app for" << socket;
+        return;
+    }
+
+    emit applicationReply(socket, appName, cmd);
+}
+
+void GenericBridgePlatform::removeClient(QTcpSocket *socket)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
+
+    if (m_socketAppName.contains(socket)) {
+        qDebug()
+            << Q_FUNC_INFO
+            << "removing client socket:" << m_socketAppName.take(socket);
+    }
+    QString appName = m_applicationSocket.key(socket);
+    if (!appName.isEmpty()) {
+        qDebug()
+            << Q_FUNC_INFO
+            << "removing application socket:" << appName << m_applicationSocket.take(appName);
+    }
+}
+
+void GenericBridgePlatform::initializeCommand(QTcpSocket *socket, const QString &appName)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appName;
+
+    QString name = appName;
+    if (QFileInfo::exists(appName)) {
+        name = QFileInfo(appName).baseName();
+        qDebug()
+            << Q_FUNC_INFO
+            << socket
+            << "Got app name:" << name
+            << "Got full path:" << appName;
+        m_clientFullPath.insert(socket, appName);
+    }
+
+    if (m_socketAppName.contains(socket)) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "Socket already known:" << m_socketAppName.value(socket);
+    }
+    m_socketAppName.insert(socket, name);
+    if (appName == QLatin1String("headless")) {
+        return;
+    }
 }
 
 void GenericBridgePlatform::appConnectCommand(QTcpSocket *socket)
@@ -30,7 +110,19 @@ void GenericBridgePlatform::appConnectCommand(QTcpSocket *socket)
         return;
     }
 
-    // TODO synchronous wait for application
+    if (m_applicationSocket.value(appName) != nullptr) {
+        QTimer maxTimer;
+        connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
+        maxTimer.start(30000);
+        qDebug()
+            << Q_FUNC_INFO
+            << "Starting eventloop connect";
+        m_connectLoop->exec();
+        qDebug()
+            << Q_FUNC_INFO
+            << "Exiting eventloop connect";
+        maxTimer.stop();
+    }
 
     socketReply(socket, QString());
 }
@@ -40,7 +132,16 @@ void GenericBridgePlatform::appDisconnectCommand(QTcpSocket *socket, bool autoLa
     const QString appName = m_socketAppName.value(socket);
     qDebug()
         << Q_FUNC_INFO
-        << socket << appName << autoLaunch;
+        << socket << autoLaunch << appName;
+
+    if (m_applicationSocket.value(appName) != nullptr) {
+        if (autoLaunch) {
+            sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
+        }
+
+        m_socketAppName.remove(socket);
+        qDebug() << Q_FUNC_INFO << appName;
+    }
 
     socketReply(socket, QString());
 
@@ -48,6 +149,100 @@ void GenericBridgePlatform::appDisconnectCommand(QTcpSocket *socket, bool autoLa
         socket->close();
     }
 
+}
+
+void GenericBridgePlatform::startActivityCommand(QTcpSocket *socket, const QString &appName, const QVariantList &params)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << appName << params;
+
+    QStringList args;
+    for (const QVariant &varg : params) {
+        args.append(varg.toString());
+    }
+    const bool success = lauchAppStandalone(appName, args);
+
+    if (success) {
+        socketReply(socket, QString());
+    } else {
+        socketReply(socket, QString(), 1);
+    }
+
+}
+
+void GenericBridgePlatform::installAppCommand(QTcpSocket *socket, const QString &appPath)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appPath;
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::activateAppCommand(QTcpSocket *socket, const QString &appId)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appId;
+
+    const QString appName = m_socketAppName.value(socket);
+    qDebug() << Q_FUNC_INFO << appName << appId;
+    if (m_applicationSocket.value(appName, nullptr) == nullptr) {
+        lauchAppPlatform(socket);
+    } else {
+        forwardToApp(socket, QStringLiteral("activateApp"), QStringList({appName}));
+    }
+
+    socketReply(socket, QString());
+
+}
+
+void GenericBridgePlatform::terminateAppCommand(QTcpSocket *socket, const QString &appId)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appId;
+
+    const QString appName = m_socketAppName.value(socket);
+    if (m_applicationSocket.value(appName) != nullptr) {
+        forwardToApp(socket, QStringLiteral("closeApp"), QStringList({appName}));
+        m_applicationSocket.insert(appName, nullptr);
+    } else {
+        qWarning()
+            << Q_FUNC_INFO
+            << "App" << appName << "is not active";
+        socketReply(socket, false, 1);
+    }
+}
+
+void GenericBridgePlatform::removeAppCommand(QTcpSocket *socket, const QString &appName)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appName;
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::isAppInstalledCommand(QTcpSocket *socket, const QString &rpmName)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << rpmName;
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::queryAppStateCommand(QTcpSocket *socket, const QString &appName)
+{
+    if (!m_applicationSocket.contains(appName)) {
+        socketReply(socket, QStringLiteral("NOT_RUNNING"));
+    } else if (m_applicationSocket.value(appName, nullptr) == nullptr) {
+        socketReply(socket, QStringLiteral("CLOSING"));
+    } else {
+        forwardToApp(socket, QStringLiteral("queryAppState"), QStringList({appName}));
+    }
 }
 
 void GenericBridgePlatform::pushFileCommand(QTcpSocket *socket, const QString &path, const QString &data)
@@ -102,6 +297,108 @@ void GenericBridgePlatform::pullFileCommand(QTcpSocket *socket, const QString &p
     socketReply(socket, data.toBase64());
 }
 
+void GenericBridgePlatform::lockCommand(QTcpSocket *socket, double seconds)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << seconds;
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::unlockCommand(QTcpSocket *socket)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::isLockedCommand(QTcpSocket *socket)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::launchAppCommand(QTcpSocket *socket)
+{
+    const QString appName = m_socketAppName.value(socket);
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appName << m_applicationSocket.value(appName);
+    if (m_applicationSocket.value(appName, nullptr) != nullptr) {
+        forwardToApp(socket, QStringLiteral("activateApp"), QStringList({appName}));
+    } else {
+        m_applicationSocket.insert(appName, nullptr);
+        qDebug()
+            << Q_FUNC_INFO
+            << appName;
+        lauchAppPlatform(socket);
+
+        QTimer maxTimer;
+        connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
+        maxTimer.start(30000);
+        qDebug()
+            << Q_FUNC_INFO
+            << "Starting eventloop connect";
+        m_connectLoop->exec();
+        qDebug()
+            << Q_FUNC_INFO
+            << "Exiting eventloop connect";
+        maxTimer.stop();
+    }
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::closeAppCommand(QTcpSocket *socket)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
+
+    const QString appName = m_socketAppName.value(socket);
+    if (m_applicationSocket.value(appName) != nullptr) {
+        QByteArray appReplyData = sendToAppSocket(appName, actionData(QStringLiteral("closeApp"), QStringList({appName})));
+        qDebug() << Q_FUNC_INFO << appReplyData;
+
+        QEventLoop loop;
+        QTimer timer;
+        int counter = 0;
+        connect(&timer, &QTimer::timeout, [this, &loop, &counter, appName]() {
+            if (!m_applicationSocket.contains(appName)) {
+                loop.quit();
+            } else {
+                counter++;
+                if (counter > 10) {
+                    loop.quit();
+                }
+            }
+        });
+        timer.start(500);
+        loop.exec();
+        socketReply(socket, QString());
+    } else {
+        qWarning()
+            << Q_FUNC_INFO
+            << "App" << appName << "is not active";
+        socketReply(socket, QString(), 1);
+    }
+}
+
+void GenericBridgePlatform::getCurrentContextCommand(QTcpSocket *socket)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
+
+    socketReply(socket, QString());
+}
+
 void GenericBridgePlatform::getDeviceTimeCommand(QTcpSocket *socket, const QString &dateFormat)
 {
     qDebug()
@@ -113,6 +410,24 @@ void GenericBridgePlatform::getDeviceTimeCommand(QTcpSocket *socket, const QStri
                          ? now.toString(Qt::TextDate)
                          : now.toString(dateFormat);
     socketReply(socket, time);
+}
+
+void GenericBridgePlatform::setNetworkConnectionCommand(QTcpSocket *socket, double connectionType)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << connectionType;
+
+    socketReply(socket, QString());
+}
+
+void GenericBridgePlatform::getNetworkConnectionCommand(QTcpSocket *socket)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
+
+    socketReply(socket, NetworkConnectionWifi);
 }
 
 void GenericBridgePlatform::resetCommand(QTcpSocket *socket)
@@ -277,6 +592,31 @@ void GenericBridgePlatform::executeAsyncCommand(QTcpSocket *socket, const QStrin
     socketReply(socket, QString());
 }
 
+void GenericBridgePlatform::executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << executableArg << paramsArg;
+
+    const QString executable = executableArg.toString();
+    const QStringList params = paramsArg.toStringList();
+
+    QProcess p;
+    p.start(executable, params);
+    p.waitForFinished();
+
+
+    const QString stdOut = QString::fromUtf8(p.readAllStandardOutput());
+    const QString stdErr = QString::fromUtf8(p.readAllStandardError());
+    qDebug()
+        << Q_FUNC_INFO
+        << "stdout:" << stdOut;
+    qDebug()
+        << Q_FUNC_INFO
+        << "stderr:" << stdErr;
+    socketReply(socket, stdOut);
+}
+
 void GenericBridgePlatform::socketReply(QTcpSocket *socket, const QVariant &value, int status)
 {
     QJsonObject reply;
@@ -310,6 +650,10 @@ void GenericBridgePlatform::forwardToApp(QTcpSocket *socket, const QString &appN
             << "Unknown app:" << appName << socket;
         return;
     }
+
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appName << data;
 
     QByteArray appReplyData = sendToAppSocket(appName, data);
     qDebug()

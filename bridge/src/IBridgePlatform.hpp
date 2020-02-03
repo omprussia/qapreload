@@ -18,6 +18,14 @@ public:
     };
     Q_ENUM(NetworkConnection)
 
+    virtual void appConnect(QTcpSocket *socket, const QString &appName) = 0;
+    virtual void appReply(QTcpSocket *socket, const QByteArray &cmd) = 0;
+
+    virtual void removeClient(QTcpSocket *socket) = 0;
+
+signals:
+    void applicationReply(QTcpSocket *socket, const QString &appName, const QByteArray &data);
+
 private slots:
     virtual void initializeCommand(QTcpSocket *socket, const QString &appName) = 0;
     virtual void appConnectCommand(QTcpSocket *socket) = 0;
@@ -39,7 +47,7 @@ private slots:
     virtual void getCurrentContextCommand(QTcpSocket *socket) = 0;
     virtual void getDeviceTimeCommand(QTcpSocket *socket, const QString &dateFormat = QString()) = 0;
     virtual void setNetworkConnectionCommand(QTcpSocket *socket, double connectionType) = 0;
-    virtual void getNetworkConnectionCommand(QTcpSocket *socket) = 0;
+    virtual void getNetworkConnectionCommand(QTcpSocket *socket) = 0;    
     virtual void resetCommand(QTcpSocket *socket) = 0;
     virtual void mobileShakeCommand(QTcpSocket *socket) = 0;
     virtual void getSettingsCommand(QTcpSocket *socket) = 0;
