@@ -45,18 +45,41 @@ TEMPLATE = app
 TARGET = qabridge
 
 SOURCES += \
+    src/GenericBridgePlatform.cpp \
+    src/QABridgeSocketServer.cpp \
     src/main.cpp \
     src/QABridge.cpp
 
 HEADERS += \
-    src/QABridge.hpp
+    src/GenericBridgePlatform.hpp \
+    src/IBridgePlatform.hpp \
+    src/QABridge.hpp \
+    src/QABridgeSocketServer.hpp
 
 win32 {
     HEADERS += \
-        src/WinInjector.hpp
+        src/WinInjector.hpp \
+        src/WindowsBridgePlatform.hpp
 
     SOURCES += \
-        src/WinInjector.cpp
+        src/WinInjector.cpp \
+        src/WindowsBridgePlatform.cpp
+}
+
+linux {
+    SOURCES += \
+        src/LinuxBridgePlatform.cpp \
+
+    HEADERS += \
+        src/LinuxBridgePlatform.hpp
+}
+
+macx {
+    SOURCES += \
+        src/MacBridgePlatform.cpp
+
+    HEADERS += \
+        src/MacBridgePlatform.hpp
 }
 
 contains(DEFINES, Q_OS_SAILFISH) {
@@ -64,6 +87,13 @@ contains(DEFINES, Q_OS_SAILFISH) {
 
     INCLUDEPATH += /usr/include
     INCLUDEPATH += /usr/include/libshadowutils
+    INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
+
+    SOURCES += \
+        src/SailfishBridgePlatform.cpp \
+
+    HEADERS += \
+        src/SailfishBridgePlatform.hpp
 
     TARGETPATH = /usr/bin
     target.path = $$TARGETPATH
