@@ -198,7 +198,7 @@ QVariant QAEngine::executeJS(const QString &jsCode, QQuickItem *item)
     if (expr.hasError()) {
         qWarning() << Q_FUNC_INFO << expr.error().toString();
     }
-    return isUndefined ? QVariant(QStringLiteral("undefined")) : reply.toString();
+    return isUndefined ? QVariant(QStringLiteral("undefined")) : reply;
 }
 
 void QAEngine::print(const QString &text)
