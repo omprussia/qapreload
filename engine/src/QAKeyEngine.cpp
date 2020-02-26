@@ -13,8 +13,8 @@ QAPendingEvent *QAKeyEngine::pressEnter(int count)
     QAPendingEvent *pending = new QAPendingEvent(this);
 
     for (int i = 0; i < count; i++) {
-        sendPress('\b', Qt::Key_Enter);
-        sendRelease('\b', Qt::Key_Enter);
+        sendPress('\n', Qt::Key_Enter);
+        sendRelease('\n', Qt::Key_Enter);
     }
 
     QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);

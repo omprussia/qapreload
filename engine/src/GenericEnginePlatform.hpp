@@ -26,6 +26,9 @@ protected:
     QAMouseEngine *m_mouseEngine;
     QAKeyEngine *m_keyEngine;
 
+private:
+    void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params);
+
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
     virtual void closeAppCommand(QTcpSocket *socket, const QString &appName) override;

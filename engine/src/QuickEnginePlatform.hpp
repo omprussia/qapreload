@@ -58,5 +58,8 @@ private slots:
     virtual void replaceValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
     virtual void setValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
     virtual void clickCommand(QTcpSocket *socket, const QString &elementId) override;
+    virtual void clearCommand(QTcpSocket *socket, const QString &elementId) override;
+    virtual void submitCommand(QTcpSocket *socket, const QString &elementId) override;
+    virtual void getPageSourceCommand(QTcpSocket *socket) override;
 };
 
