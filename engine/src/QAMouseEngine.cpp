@@ -34,6 +34,16 @@ bool QAMouseEngine::isRunning() const
     return m_timer->isActive();
 }
 
+QAMouseEngine::MouseMode QAMouseEngine::mode()
+{
+    return m_mode;
+}
+
+void QAMouseEngine::setMode(QAMouseEngine::MouseMode mode)
+{
+    m_mode = mode;
+}
+
 QAPendingEvent *QAMouseEngine::press(const QPointF &point)
 {
     QAPendingEvent *pending = new QAPendingEvent(this);
@@ -181,83 +191,83 @@ void QAMouseEngine::onMoveTimer()
 
 void QAMouseEngine::sendPress(const QPointF &point)
 {
-#ifdef Q_OS_SAILFISHOS
-    QTouchEvent::TouchPoint tp(++m_tpId);
-    tp.setState(Qt::TouchPointPressed);
+    if (m_mode == TouchEventMode) {
+        QTouchEvent::TouchPoint tp(++m_tpId);
+        tp.setState(Qt::TouchPointPressed);
 
-    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
-    tp.setRect(rect);
-    tp.setSceneRect(rect);
-    tp.setScreenRect(rect);
-    tp.setLastPos(point);
-    tp.setStartPos(point);
-    tp.setPressure(1);
+        QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+        tp.setRect(rect);
+        tp.setSceneRect(rect);
+        tp.setScreenRect(rect);
+        tp.setLastPos(point);
+        tp.setStartPos(point);
+        tp.setPressure(1);
 
-    QTouchEvent te(QEvent::TouchBegin,
-                   m_touchDevice,
-                   Qt::NoModifier,
-                   Qt::TouchPointPressed,
-                   { tp });
-    const quint64 timestamp = m_eta->elapsed();
-    te.setTimestamp(timestamp);
-    m_previousEventTimestamp = timestamp;
-    m_previousPoint = point;
-    m_pressPoint = point;
+        QTouchEvent te(QEvent::TouchBegin,
+                       m_touchDevice,
+                       Qt::NoModifier,
+                       Qt::TouchPointPressed,
+                       { tp });
+        const quint64 timestamp = m_eta->elapsed();
+        te.setTimestamp(timestamp);
+        m_previousEventTimestamp = timestamp;
+        m_previousPoint = point;
+        m_pressPoint = point;
 
-    emit touchEvent(te);
-#else
-    QMouseEvent me(QEvent::MouseButtonPress,
-                   point,
-                   Qt::LeftButton,
-                   Qt::LeftButton,
-                   Qt::NoModifier);
-    emit mouseEvent(me);
-#endif
+        emit touchEvent(te);
+    } else {
+        QMouseEvent me(QEvent::MouseButtonPress,
+                       point,
+                       Qt::LeftButton,
+                       Qt::LeftButton,
+                       Qt::NoModifier);
+        emit mouseEvent(me);
+    }
 }
 
 void QAMouseEngine::sendRelease(const QPointF &point)
 {
-#ifdef Q_OS_SAILFISHOS
-    QTouchEvent::TouchPoint tp(m_tpId);
-    tp.setState(Qt::TouchPointReleased);
+    if (m_mode == TouchEventMode) {
+        QTouchEvent::TouchPoint tp(m_tpId);
+        tp.setState(Qt::TouchPointReleased);
 
-    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
-    tp.setRect(rect);
-    tp.setSceneRect(rect);
-    tp.setScreenRect(rect);
-    tp.setLastPos(m_previousPoint);
-    tp.setStartPos(m_pressPoint);
-    tp.setPressure(0);
+        QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+        tp.setRect(rect);
+        tp.setSceneRect(rect);
+        tp.setScreenRect(rect);
+        tp.setLastPos(m_previousPoint);
+        tp.setStartPos(m_pressPoint);
+        tp.setPressure(0);
 
-    const quint64 timestamp = m_eta->elapsed();
-    const quint64 timeDelta = timestamp - m_previousEventTimestamp;
+        const quint64 timestamp = m_eta->elapsed();
+        const quint64 timeDelta = timestamp - m_previousEventTimestamp;
 
-    if (timeDelta > 0) {
-        QVector2D velocity;
-        velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
-        velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
+        if (timeDelta > 0) {
+            QVector2D velocity;
+            velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
+            velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
 
-        tp.setVelocity(velocity);
+            tp.setVelocity(velocity);
+        }
+
+        QTouchEvent te(QEvent::TouchEnd,
+                       m_touchDevice,
+                       Qt::NoModifier,
+                       Qt::TouchPointReleased,
+                       { tp });
+        te.setTimestamp(timestamp);
+        m_previousEventTimestamp = timestamp;
+        m_previousPoint = point;
+
+        emit touchEvent(te);
+    } else {
+        QMouseEvent me(QEvent::MouseButtonRelease,
+                       point,
+                       Qt::LeftButton,
+                       Qt::NoButton,
+                       Qt::NoModifier);
+        emit mouseEvent(me);
     }
-
-    QTouchEvent te(QEvent::TouchEnd,
-                   m_touchDevice,
-                   Qt::NoModifier,
-                   Qt::TouchPointReleased,
-                   { tp });
-    te.setTimestamp(timestamp);
-    m_previousEventTimestamp = timestamp;
-    m_previousPoint = point;
-
-    emit touchEvent(te);
-#else
-    QMouseEvent me(QEvent::MouseButtonRelease,
-                   point,
-                   Qt::LeftButton,
-                   Qt::NoButton,
-                   Qt::NoModifier);
-    emit mouseEvent(me);
-#endif
 }
 
 void QAMouseEngine::sendRelease(const QPointF &point, int delay)
@@ -275,45 +285,45 @@ void QAMouseEngine::sendRelease(const QPointF &point, int delay)
 
 void QAMouseEngine::sendMove(const QPointF &point)
 {
-#ifdef Q_OS_SAILFISHOS
-    QTouchEvent::TouchPoint tp(m_tpId);
-    tp.setState(Qt::TouchPointMoved);
+    if (m_mode == TouchEventMode) {
+        QTouchEvent::TouchPoint tp(m_tpId);
+        tp.setState(Qt::TouchPointMoved);
 
-    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
-    tp.setRect(rect);
-    tp.setSceneRect(rect);
-    tp.setScreenRect(rect);
-    tp.setLastPos(m_previousPoint);
-    tp.setStartPos(m_pressPoint);
-    tp.setPressure(1);
+        QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+        tp.setRect(rect);
+        tp.setSceneRect(rect);
+        tp.setScreenRect(rect);
+        tp.setLastPos(m_previousPoint);
+        tp.setStartPos(m_pressPoint);
+        tp.setPressure(1);
 
-    const quint64 timestamp = m_eta->elapsed();
-    const quint64 timeDelta = timestamp - m_previousEventTimestamp;
+        const quint64 timestamp = m_eta->elapsed();
+        const quint64 timeDelta = timestamp - m_previousEventTimestamp;
 
-    if (timeDelta > 0) {
-        QVector2D velocity;
-        velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
-        velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
+        if (timeDelta > 0) {
+            QVector2D velocity;
+            velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
+            velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
 
-        tp.setVelocity(velocity);
+            tp.setVelocity(velocity);
+        }
+
+        QTouchEvent te(QEvent::TouchUpdate,
+                       m_touchDevice,
+                       Qt::NoModifier,
+                       Qt::TouchPointPressed,
+                       { tp });
+        te.setTimestamp(timestamp);
+        m_previousEventTimestamp = timestamp;
+        m_previousPoint = point;
+
+        emit touchEvent(te);
+    } else {
+        QMouseEvent me(QEvent::MouseMove,
+                       point,
+                       Qt::LeftButton,
+                       Qt::LeftButton,
+                       Qt::NoModifier);
+        emit mouseEvent(me);
     }
-
-    QTouchEvent te(QEvent::TouchUpdate,
-                   m_touchDevice,
-                   Qt::NoModifier,
-                   Qt::TouchPointPressed,
-                   { tp });
-    te.setTimestamp(timestamp);
-    m_previousEventTimestamp = timestamp;
-    m_previousPoint = point;
-
-    emit touchEvent(te);
-#else
-    QMouseEvent me(QEvent::MouseMove,
-                   point,
-                   Qt::LeftButton,
-                   Qt::LeftButton,
-                   Qt::NoModifier);
-    emit mouseEvent(me);
-#endif
 }

@@ -17,6 +17,13 @@ public:
     explicit QAMouseEngine(QObject *parent = nullptr);
     bool isRunning() const;
 
+    enum MouseMode {
+        MouseEventMode,
+        TouchEventMode,
+    };
+    MouseMode mode();
+    void setMode(MouseMode mode);
+
     QAPendingEvent *press(const QPointF &point);
     QAPendingEvent *release(const QPointF &point);
     QAPendingEvent *click(const QPointF &point);
@@ -38,6 +45,8 @@ private slots:
 
 private:
     QElapsedTimer *m_eta;
+
+    MouseMode m_mode = MouseEventMode;
 
     // MOVE POLYANA
     QTimer *m_timer;
