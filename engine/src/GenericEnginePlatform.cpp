@@ -1,5 +1,8 @@
 #include "GenericEnginePlatform.hpp"
 #include "QAEngine.hpp"
+#include "QAKeyEngine.hpp"
+#include "QAMouseEngine.hpp"
+#include "QAPendingEvent.hpp"
 
 #include <QClipboard>
 #include <QGuiApplication>
@@ -12,6 +15,8 @@
 
 GenericEnginePlatform::GenericEnginePlatform(QObject *parent)
     : IEnginePlatform(parent)
+    , m_mouseEngine(new QAMouseEngine(this))
+    , m_keyEngine(new QAKeyEngine(this))
 {
     QTimer::singleShot(0, this, &GenericEnginePlatform::initialize);
 }
@@ -74,6 +79,18 @@ QString GenericEnginePlatform::uniqueId(QObject *item)
 QObject *GenericEnginePlatform::getItem(const QString &elementId)
 {
     return m_items.value(elementId);
+}
+
+void GenericEnginePlatform::clickPoint(int posx, int posy)
+{
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    timer.setInterval(50);
+    connect(m_mouseEngine->click(QPointF(posx, posy)),
+            &QAPendingEvent::completed, &timer, static_cast<void (QTimer::*)()>(&QTimer::start));
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    loop.exec();
 }
 
 void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)
@@ -208,14 +225,6 @@ void GenericEnginePlatform::getElementScreenshotCommand(QTcpSocket *socket, cons
 }
 
 void GenericEnginePlatform::getScreenshotCommand(QTcpSocket *socket)
-{
-    qDebug()
-        << Q_FUNC_INFO
-        << socket;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
-}
-
-void GenericEnginePlatform::getScreenshotCoverCommand(QTcpSocket *socket)
 {
     qDebug()
         << Q_FUNC_INFO

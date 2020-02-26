@@ -2,6 +2,8 @@
 
 #include "IEnginePlatform.hpp"
 
+class QAMouseEngine;
+class QAKeyEngine;
 class GenericEnginePlatform : public IEnginePlatform
 {
 public:
@@ -17,8 +19,12 @@ public:
 public slots:
     virtual void initialize() = 0;
 
-private:
+protected:
+    void clickPoint(int posx, int posy);
+
     QHash<QString, QObject*> m_items;
+    QAMouseEngine *m_mouseEngine;
+    QAKeyEngine *m_keyEngine;
 
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
@@ -38,7 +44,6 @@ private slots:
     virtual void getTextCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void getElementScreenshotCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void getScreenshotCommand(QTcpSocket *socket) override;
-    virtual void getScreenshotCoverCommand(QTcpSocket *socket) override;
     virtual void elementEnabledCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void elementDisplayedCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void elementSelectedCommand(QTcpSocket *socket, const QString &elementId) override;

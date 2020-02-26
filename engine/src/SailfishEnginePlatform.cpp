@@ -4,9 +4,13 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 
+#include "QAMouseEngine.hpp"
+#include "QAKeyEngine.hpp"
+
 SailfishEnginePlatform::SailfishEnginePlatform(QObject *parent)
     : QuickEnginePlatform(parent)
 {
+    m_mouseEngine->setMode(QAMouseEngine::TouchEventMode);
 }
 
 void SailfishEnginePlatform::onChildrenChanged()
