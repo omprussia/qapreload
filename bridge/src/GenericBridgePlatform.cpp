@@ -23,6 +23,10 @@ GenericBridgePlatform::GenericBridgePlatform(QObject *parent)
 
 void GenericBridgePlatform::appConnect(QTcpSocket *socket, const QString &appName)
 {
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << appName;
+
     if (m_socketAppName.contains(socket)) {
         m_socketAppName.remove(socket);
     }

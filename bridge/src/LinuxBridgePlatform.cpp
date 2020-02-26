@@ -37,6 +37,13 @@ bool LinuxBridgePlatform::lauchAppStandalone(const QString &appName, const QStri
     process->setProgram(appName);
     process->setArguments(arguments);
     process->start();
+    connect(process, static_cast<void(QProcess::*)(int)>(&QProcess::finished), [process](int exitCode) {
+        qDebug()
+            << Q_FUNC_INFO
+            << "process" << process->program()
+            << "finished with code:" << exitCode;
+        process->deleteLater();
+    });
 
     return process->state() != QProcess::NotRunning;
 }

@@ -52,6 +52,8 @@ QABridge::QABridge(QObject *parent)
 #endif
     , m_socketServer(new QABridgeSocketServer(this))
 {
+    qRegisterMetaType<QTcpSocket*>();
+
     connect(m_socketServer, &QABridgeSocketServer::commandReceived,
             this, &QABridge::processCommand);
     connect(m_socketServer, &QABridgeSocketServer::clientLost,
@@ -133,7 +135,6 @@ bool QABridge::processAppiumCommand(QTcpSocket *socket, const QString &action, c
     qDebug()
         << Q_FUNC_INFO
         << socket << methodName << params;
-
 
     auto mo = m_platform->metaObject();
     do {

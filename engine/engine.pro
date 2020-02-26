@@ -4,6 +4,11 @@ CONFIG += plugin
 CONFIG += c++11
 CONFIG += link_pkgconfig
 
+! contains(DEFINES, Q_OS_SAILFISH) {
+    message("Building engine with widgets support")
+    QT += widgets
+}
+
 contains(DEFINES, USE_MLITE5) {
     message("Building engine with mlite5 support")
     PKGCONFIG += mlite5
@@ -26,6 +31,11 @@ contains(DEFINES, USE_DBUS) {
 }
 
 SOURCES += \
+    src/GenericEnginePlatform.cpp \
+    src/QAEngineSocketClient.cpp \
+    src/QuickEnginePlatform.cpp \
+    src/SailfishEnginePlatform.cpp \
+    src/WidgetsEnginePlatform.cpp \
     src/engine.cpp \
     src/QAPreloadEngine.cpp \
     src/QAEngine.cpp \
@@ -38,14 +48,20 @@ SOURCES += \
     src/QASocketService.cpp
 
 HEADERS += \
+    src/GenericEnginePlatform.hpp \
+    src/IEnginePlatform.hpp \
+    src/QAEngineSocketClient.hpp \
     src/QAPreloadEngine.hpp \
     src/QAEngine.hpp \
     src/QAMouseEngine.hpp \
     src/QAKeyEngine.hpp \
     src/QAPendingEvent.hpp \
+    src/QuickEnginePlatform.hpp \
+    src/SailfishEnginePlatform.hpp \
     src/SailfishTest.hpp \
     src/LipstickTestHelper.hpp \
-    src/QASocketService.hpp
+    src/QASocketService.hpp \
+    src/WidgetsEnginePlatform.hpp
 
 TARGET = qaengine
 target.path = /usr/lib

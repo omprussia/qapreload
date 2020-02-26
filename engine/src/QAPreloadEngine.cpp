@@ -8,6 +8,7 @@
 #include <QQuickItem>
 
 #include <QTimer>
+#include <QDebug>
 
 namespace {
 
@@ -34,11 +35,10 @@ void QAPreloadEngine::initialize()
         return;
     }
 
-    QGuiApplication *gui = qobject_cast<QGuiApplication*>(QCoreApplication::instance());
+    QGuiApplication *gui = qobject_cast<QGuiApplication*>(qApp);
     if (!gui) {
         return;
     }
-
     QTimer::singleShot(0, qApp, [](){ QAPreloadEngine::instance()->lateInitialization(); });
 }
 
@@ -64,7 +64,8 @@ bool QAPreloadEngine::isReady()
 
 void QAPreloadEngine::lateInitialization()
 {
-    setParent(qGuiApp);
+    QAEngine::instance()->initialize();
+    return;
 
     QWindow *window = qGuiApp->topLevelAt(QPoint(1, 1));
     if (!window) {
@@ -74,6 +75,7 @@ void QAPreloadEngine::lateInitialization()
         }
         window = windows.first();
     }
+
     QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
     if (!qWindow) {
         return;
@@ -84,7 +86,7 @@ void QAPreloadEngine::lateInitialization()
         return;
     }
 
-    QAEngine::instance()->initialize(s_rootItem);
+    QAEngine::instance()->setRootItem(s_rootItem);
 
     if (s_rootItem->childItems().isEmpty()) { // probably declarative cache
         connect(s_rootItem, &QQuickItem::childrenChanged, this, &QAPreloadEngine::onChildrenChanged); // let's wait for loading
@@ -114,5 +116,4 @@ void QAPreloadEngine::setReady()
 QAPreloadEngine::QAPreloadEngine()
     : QObject(nullptr)
 {
-
 }

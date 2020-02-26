@@ -1,7 +1,7 @@
 [Unit]
 Description=QABridge user service
-After=dbus.socket pre-user-session.target lipstick.service
-Requires=dbus.socket pre-user-session.target lipstick.service
+After=lipstick.service
+Requires=lipstick.service
 
 [Service]
 ExecStart=/usr/bin/qabridge-user

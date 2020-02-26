@@ -53,6 +53,10 @@ class QKeyEvent;
 class QAKeyEngine;
 class QAMouseEngine;
 class QXmlStreamWriter;
+
+class QAEngineSocketClient;
+class QTcpSocket;
+class IEnginePlatform;
 class QAEngine : public QObject
 {
     Q_OBJECT
@@ -60,7 +64,8 @@ public:
     static QAEngine *instance();
     static bool isLoaded();
 
-    void initialize(QQuickItem *rootItem);
+    void initialize();
+    void setRootItem(QQuickItem *rootItem);
     void ready();
 
     virtual ~QAEngine();
@@ -75,6 +80,7 @@ public:
     QQuickItem *applicationWindow() const;
 
     static QString processName();
+    static bool metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
 
     static QString getText(QQuickItem *item);
     static QString className(QObject *item);
@@ -98,6 +104,11 @@ public:
     static void print(const QString &text);
 
 private slots:
+    void processCommand(QTcpSocket *socket, const QByteArray &cmd);
+    bool processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params);
+
+    void onPlatformReady();
+
 #ifdef USE_DBUS
     void dumpTree(const QDBusMessage &message);
     void dumpCurrentPage(const QDBusMessage &message);
@@ -168,6 +179,10 @@ private:
     QHash<QString, TestResult*> m_testResults;
 
     QHash<QString, QStringList> m_blacklistedProperties;
+
+// Refactor
+    QAEngineSocketClient *m_client = nullptr;
+    IEnginePlatform *m_platform = nullptr;
 };
 
 #endif // QAENGINE_HPP
