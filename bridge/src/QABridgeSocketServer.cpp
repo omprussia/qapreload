@@ -15,9 +15,6 @@ QABridgeSocketServer::QABridgeSocketServer(QObject *parent)
     , m_server(new QTcpServer(this))
 {
     connect(m_server, &QTcpServer::newConnection, this, &QABridgeSocketServer::newConnection);
-
-    qRegisterMetaType<QTcpSocket*>();
-
 }
 
 void QABridgeSocketServer::start()

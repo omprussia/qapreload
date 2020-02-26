@@ -2,13 +2,13 @@
 #include <windows.h>
 #else
 #include <dlfcn.h>
-#include <unistd.h>
 #endif
 
 #ifndef Q_OS_SAILFISH
 #include <private/qhooks_p.h>
 #else
 #include <pwd.h>
+#include <unistd.h>
 
 typedef void(*StartupCallback)();
 static const int StartupHookIndex = 5;

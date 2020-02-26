@@ -1,14 +1,16 @@
 TARGET = qapreloadhook
 TEMPLATE = lib
-QT =
+
+contains(DEFINES, Q_OS_SAILFISH) {
+    QT =
+} else {
+    QT = core core-private
+}
+
 CONFIG += plugin
 
 SOURCES += \
     src/hook.cpp
-
-! contains(DEFINES, Q_OS_SAILFISH) {
-    QT += core core-private
-}
 
 unix {
     target.path = /usr/lib
