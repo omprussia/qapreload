@@ -93,6 +93,19 @@ void GenericEnginePlatform::clickPoint(int posx, int posy)
     loop.exec();
 }
 
+void GenericEnginePlatform::execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params)
+{
+    bool handled = false;
+    bool success = QAEngine::metaInvoke(socket, this, methodName, params, &handled);
+
+    if (!handled || !success) {
+        qWarning()
+            << Q_FUNC_INFO
+            << methodName << "not handled!";
+    }
+    socketReply(socket, QString());
+}
+
 void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)
 {
     qDebug()
@@ -469,7 +482,10 @@ void GenericEnginePlatform::executeCommand(QTcpSocket *socket, const QString &co
     qDebug()
         << Q_FUNC_INFO
         << socket << command << params;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    const QString fixCommand = QString(command).replace(QChar(':'), QChar('_'));
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(fixCommand);
+    execute(socket, methodName, params);
 }
 
 void GenericEnginePlatform::executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params)
@@ -477,5 +493,8 @@ void GenericEnginePlatform::executeAsyncCommand(QTcpSocket *socket, const QStrin
     qDebug()
         << Q_FUNC_INFO
         << socket << command << params;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    const QString fixCommand = QString(command).replace(QChar(':'), QChar('_'));
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(fixCommand); // executeCommandAsync_ ?
+    execute(socket, methodName, params);
 }

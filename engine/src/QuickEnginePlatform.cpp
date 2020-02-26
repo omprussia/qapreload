@@ -1,5 +1,7 @@
 #include "QAEngine.hpp"
 #include "QuickEnginePlatform.hpp"
+#include "QAMouseEngine.hpp"
+#include "QAKeyEngine.hpp"
 
 #include <QBuffer>
 #include <QDebug>
@@ -537,4 +539,34 @@ void QuickEnginePlatform::clickCommand(QTcpSocket *socket, const QString &elemen
     } else {
         socketReply(socket, QString(), 1);
     }
+}
+
+void QuickEnginePlatform::clearCommand(QTcpSocket *socket, const QString &elementId)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << elementId;
+
+    setProperty(socket, QStringLiteral("text"), QString(), elementId);
+}
+
+void QuickEnginePlatform::submitCommand(QTcpSocket *socket, const QString &elementId)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << elementId;
+
+    m_keyEngine->pressEnter(1);
+    socketReply(socket, QString());
+}
+
+void QuickEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    // TODO
+
+    socketReply(socket, QString());
 }
