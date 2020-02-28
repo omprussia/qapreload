@@ -15,6 +15,9 @@
 #include <QScreen>
 #include <QTimer>
 
+#include <private/qquickwindow_p.h>
+#include <private/qquickitem_p.h>
+
 QuickEnginePlatform::QuickEnginePlatform(QObject *parent)
     : GenericEnginePlatform(parent)
 {
@@ -25,7 +28,7 @@ QVariantList QuickEnginePlatform::findItemsByProperty(const QString &propertyNam
     QVariantList items;
 
     if (!parentItem) {
-        parentItem = m_rootItem;
+        parentItem = m_rootQuickItem;
     }
 
     QList<QQuickItem*> childItems = parentItem->childItems();
@@ -54,7 +57,7 @@ QPointF QuickEnginePlatform::getAbsPosition(QQuickItem *item)
     QPointF position(item->x(), item->y());
     QPoint abs;
     if (item->parentItem()) {
-        abs = m_rootItem->mapFromItem(item->parentItem(), position).toPoint();
+        abs = m_rootQuickItem->mapFromItem(item->parentItem(), position).toPoint();
     } else {
         abs = position.toPoint();
     }
@@ -106,20 +109,21 @@ void QuickEnginePlatform::initialize()
             << window << "is not QQuickWindow!";
         return;
     }
-    m_rootWindow = qWindow;
+    m_rootQuickWindow = qWindow;
+    m_rootWindow = window;
     qDebug()
         << Q_FUNC_INFO
         << qWindow;
-    m_rootItem = qWindow->contentItem();
-
-    if (!m_rootItem) {
+    m_rootQuickItem = qWindow->contentItem();
+    if (!m_rootQuickItem) {
         qWarning()
             << Q_FUNC_INFO
             << "No root item!";
         return;
     }
+    m_rootObject = m_rootQuickItem;
 
-    if (m_rootItem->childItems().isEmpty()) {
+    if (m_rootQuickItem->childItems().isEmpty()) {
         qWarning()
             << Q_FUNC_INFO
             << "No children items!";
@@ -143,15 +147,15 @@ void QuickEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &
         return;
     }
 
-    if (!m_rootWindow) {
+    if (!m_rootQuickWindow) {
         qWarning()
             << Q_FUNC_INFO
             << "No window!";
         return;
     }
 
-    m_rootWindow->show();
-    m_rootWindow->raise();
+    m_rootQuickWindow->show();
+    m_rootQuickWindow->raise();
 
     socketReply(socket, QString());
 }
@@ -170,7 +174,7 @@ void QuickEnginePlatform::closeAppCommand(QTcpSocket *socket, const QString &app
         return;
     }
 
-    if (!m_rootWindow) {
+    if (!m_rootQuickWindow) {
         qWarning()
             << Q_FUNC_INFO
             << "No window!";
@@ -195,14 +199,14 @@ void QuickEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QString
         return;
     }
 
-    if (!m_rootWindow) {
+    if (!m_rootQuickWindow) {
         qWarning()
             << Q_FUNC_INFO
             << "No window!";
         return;
     }
 
-    const bool isAppActive = m_rootWindow->isActive();
+    const bool isAppActive = m_rootQuickWindow->isActive();
     socketReply(socket, isAppActive ? QStringLiteral("RUNNING_IN_FOREGROUND") : QStringLiteral("RUNNING_IN_BACKGROUND"));
 }
 
@@ -212,7 +216,7 @@ void QuickEnginePlatform::backgroundCommand(QTcpSocket *socket, double seconds)
         << Q_FUNC_INFO
         << socket << seconds;
 
-    if (!m_rootWindow) {
+    if (!m_rootQuickWindow) {
         qWarning()
             << Q_FUNC_INFO
             << "No window!";
@@ -221,7 +225,7 @@ void QuickEnginePlatform::backgroundCommand(QTcpSocket *socket, double seconds)
 
     const int msecs = seconds * 1000;
 
-    m_rootWindow->lower();
+    m_rootQuickWindow->lower();
     if (msecs > 0) {
         QEventLoop loop;
         QTimer timer;
@@ -229,7 +233,7 @@ void QuickEnginePlatform::backgroundCommand(QTcpSocket *socket, double seconds)
         connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
         timer.start(msecs);
         loop.exec();
-        m_rootWindow->raise();
+        m_rootQuickWindow->raise();
     }
 
     socketReply(socket, QString());
@@ -327,6 +331,10 @@ void QuickEnginePlatform::setProperty(QTcpSocket *socket, const QString &propert
 void QuickEnginePlatform::clickItem(QQuickItem *item)
 {
     const QPointF itemAbs = getAbsPosition(item);
+    qWarning()
+        << Q_FUNC_INFO
+        << item << itemAbs;
+
     clickPoint(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
 }
 
@@ -336,6 +344,9 @@ QQuickItem *QuickEnginePlatform::getItem(const QString &elementId)
     if (m_items.contains(elementId)) {
         item = qobject_cast<QQuickItem*>(m_items.value(elementId));
     }
+    qWarning()
+        << Q_FUNC_INFO
+        << elementId << item;
 
     return item;
 }
@@ -447,7 +458,7 @@ void QuickEnginePlatform::getScreenshotCommand(QTcpSocket *socket)
         << Q_FUNC_INFO
         << socket;
 
-    grabScreenshot(socket, m_rootItem, true);
+    grabScreenshot(socket, m_rootQuickItem, true);
 }
 
 void QuickEnginePlatform::elementEnabledCommand(QTcpSocket *socket, const QString &elementId)
@@ -569,4 +580,10 @@ void QuickEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
     // TODO
 
     socketReply(socket, QString());
+}
+
+void QuickEnginePlatform::onKeyEvent(QKeyEvent *event)
+{
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootQuickWindow);
+    wp->deliverKeyEvent(event);
 }

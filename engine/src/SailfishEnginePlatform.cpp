@@ -15,7 +15,7 @@ SailfishEnginePlatform::SailfishEnginePlatform(QObject *parent)
 
 void SailfishEnginePlatform::onChildrenChanged()
 {
-    if (m_rootItem->childItems().isEmpty()) {
+    if (m_rootQuickItem->childItems().isEmpty()) {
         return;
     }
 
@@ -23,7 +23,7 @@ void SailfishEnginePlatform::onChildrenChanged()
         << Q_FUNC_INFO
         << "Congratilations! New childrens appeared!";
 
-    disconnect(m_rootItem, &QQuickItem::childrenChanged,
+    disconnect(m_rootQuickItem, &QQuickItem::childrenChanged,
                this, &SailfishEnginePlatform::onChildrenChanged);
 
     emit ready();
@@ -33,11 +33,11 @@ void SailfishEnginePlatform::initialize()
 {
     qWarning()
         << Q_FUNC_INFO
-        << m_rootItem;
+        << m_rootQuickItem;
 
     QuickEnginePlatform::initialize();
 
-    if (!m_rootItem) {
+    if (!m_rootQuickItem) {
         qWarning()
             << Q_FUNC_INFO
             << "No root item!";
@@ -46,13 +46,13 @@ void SailfishEnginePlatform::initialize()
 
     qDebug()
         << Q_FUNC_INFO
-        << m_rootItem->window();
+        << m_rootQuickItem->window();
 
-    if (m_rootItem->childItems().isEmpty()) { // probably declarative cache
+    if (m_rootQuickItem->childItems().isEmpty()) { // probably declarative cache
         qDebug()
             << Q_FUNC_INFO
             << "No childrens! Waiting for population...";
-        connect(m_rootItem, &QQuickItem::childrenChanged,
+        connect(m_rootQuickItem, &QQuickItem::childrenChanged,
                 this, &SailfishEnginePlatform::onChildrenChanged); // let's wait for loading
     }
 }

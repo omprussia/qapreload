@@ -22,8 +22,8 @@ public slots:
 protected:
     void clickItem(QQuickItem *item);
 
-    QQuickItem *m_rootItem = nullptr;
-    QQuickWindow *m_rootWindow = nullptr;
+    QQuickItem *m_rootQuickItem = nullptr;
+    QQuickWindow *m_rootQuickWindow = nullptr;
 
 private:
     QQuickItem *getItem(const QString &elementId);
@@ -61,5 +61,8 @@ private slots:
     virtual void clearCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void submitCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void getPageSourceCommand(QTcpSocket *socket) override;
+
+    // GenericEnginePlatform interface
+    virtual void onKeyEvent(QKeyEvent *event) override;
 };
 
