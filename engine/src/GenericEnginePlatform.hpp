@@ -4,6 +4,10 @@
 
 class QAMouseEngine;
 class QAKeyEngine;
+class QTouchEvent;
+class QMouseEvent;
+class QKeyEvent;
+class QWindow;
 class GenericEnginePlatform : public IEnginePlatform
 {
 public:
@@ -22,6 +26,9 @@ public slots:
 protected:
     void clickPoint(int posx, int posy);
 
+    QWindow *m_rootWindow;
+    QObject *m_rootObject;
+
     QHash<QString, QObject*> m_items;
     QAMouseEngine *m_mouseEngine;
     QAKeyEngine *m_keyEngine;
@@ -30,6 +37,10 @@ private:
     void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params);
 
 private slots:
+    virtual void onTouchEvent(const QTouchEvent &event);
+    virtual void onMouseEvent(const QMouseEvent &event);
+    virtual void onKeyEvent(QKeyEvent *event);
+
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
     virtual void closeAppCommand(QTcpSocket *socket, const QString &appName) override;
     virtual void queryAppStateCommand(QTcpSocket *socket, const QString &appName) override;

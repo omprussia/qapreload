@@ -13,11 +13,17 @@
 #include <QTcpSocket>
 #include <QTimer>
 
+#include "qpa/qwindowsysteminterface_p.h"
+
 GenericEnginePlatform::GenericEnginePlatform(QObject *parent)
     : IEnginePlatform(parent)
     , m_mouseEngine(new QAMouseEngine(this))
     , m_keyEngine(new QAKeyEngine(this))
 {
+    connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &GenericEnginePlatform::onTouchEvent);
+    connect(m_mouseEngine, &QAMouseEngine::mouseEvent, this, &GenericEnginePlatform::onMouseEvent);
+    connect(m_keyEngine, &QAKeyEngine::triggered, this, &GenericEnginePlatform::onKeyEvent);
+
     QTimer::singleShot(0, this, &GenericEnginePlatform::initialize);
 }
 
@@ -83,6 +89,10 @@ QObject *GenericEnginePlatform::getItem(const QString &elementId)
 
 void GenericEnginePlatform::clickPoint(int posx, int posy)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << posx << posy;
+
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
@@ -104,6 +114,43 @@ void GenericEnginePlatform::execute(QTcpSocket *socket, const QString &methodNam
             << methodName << "not handled!";
     }
     socketReply(socket, QString());
+}
+
+void GenericEnginePlatform::onTouchEvent(const QTouchEvent &event)
+{
+    QWindowSystemInterface::handleTouchEvent(
+        m_rootWindow,
+        event.timestamp(),
+        event.device(),
+        QWindowSystemInterfacePrivate::toNativeTouchPoints(
+            event.touchPoints(),
+            m_rootWindow));
+}
+
+void GenericEnginePlatform::onMouseEvent(const QMouseEvent &event)
+{
+    QWindowSystemInterface::handleMouseEvent(
+        m_rootWindow,
+        event.timestamp(),
+        event.localPos(),
+        event.globalPos(),
+        event.buttons(),
+#if QT_VERSION >= QT_VERSION_CHECK(5, 7, 0)
+        event.button(),
+        event.type(),
+#endif
+        Qt::NoModifier,
+        Qt::MouseEventNotSynthesized);
+}
+
+void GenericEnginePlatform::onKeyEvent(QKeyEvent *event)
+{
+    QWindowSystemInterface::handleKeyEvent(
+        m_rootWindow,
+        event->type(),
+        event->key(),
+        event->modifiers(),
+        event->text());
 }
 
 void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)

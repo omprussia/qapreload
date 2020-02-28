@@ -191,6 +191,10 @@ void QAMouseEngine::onMoveTimer()
 
 void QAMouseEngine::sendPress(const QPointF &point)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << m_mode << point;
+
     if (m_mode == TouchEventMode) {
         QTouchEvent::TouchPoint tp(++m_tpId);
         tp.setState(Qt::TouchPointPressed);
@@ -227,6 +231,10 @@ void QAMouseEngine::sendPress(const QPointF &point)
 
 void QAMouseEngine::sendRelease(const QPointF &point)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << m_mode << point;
+
     if (m_mode == TouchEventMode) {
         QTouchEvent::TouchPoint tp(m_tpId);
         tp.setState(Qt::TouchPointReleased);
@@ -272,6 +280,10 @@ void QAMouseEngine::sendRelease(const QPointF &point)
 
 void QAMouseEngine::sendRelease(const QPointF &point, int delay)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << m_mode << point << delay;
+
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
@@ -285,6 +297,10 @@ void QAMouseEngine::sendRelease(const QPointF &point, int delay)
 
 void QAMouseEngine::sendMove(const QPointF &point)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << m_mode << point;
+
     if (m_mode == TouchEventMode) {
         QTouchEvent::TouchPoint tp(m_tpId);
         tp.setState(Qt::TouchPointMoved);
