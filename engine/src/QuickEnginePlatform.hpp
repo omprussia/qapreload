@@ -2,6 +2,7 @@
 
 #include "GenericEnginePlatform.hpp"
 
+class QQmlEngine;
 class QQuickItem;
 class QQuickWindow;
 class QuickEnginePlatform : public GenericEnginePlatform
@@ -31,7 +32,10 @@ protected:
     void clickItem(QQuickItem *item);
     void pressAndHoldItem(QQuickItem *item, int delay = 800);
     void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
+    void clearFocus();
+    void clearComponentCache();
 
+    QQmlEngine *getEngine(QQuickItem *item = nullptr);
     QQuickItem *getItem(const QString &elementId);
 
     QQuickItem *m_rootQuickItem = nullptr;

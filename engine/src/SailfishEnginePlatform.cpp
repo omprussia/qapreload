@@ -14,6 +14,8 @@
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
 
+#include <mlite5/MGConfItem>
+
 SailfishEnginePlatform::SailfishEnginePlatform(QObject *parent)
     : QuickEnginePlatform(parent)
 {
@@ -460,6 +462,23 @@ void SailfishEnginePlatform::enterCode(const QString &code)
     }
 }
 
+void SailfishEnginePlatform::goBack()
+{
+    qWarning()
+        << Q_FUNC_INFO;
+
+    clickPoint(10, 10);
+}
+
+void SailfishEnginePlatform::goForward()
+{
+    qWarning()
+        << Q_FUNC_INFO;
+
+    QQuickItem *rootItem = getApplicationWindow();
+    clickPoint(rootItem->width() - 10, 10);
+}
+
 void SailfishEnginePlatform::initialize()
 {
     qWarning()
@@ -486,6 +505,127 @@ void SailfishEnginePlatform::initialize()
         connect(m_rootQuickItem, &QQuickItem::childrenChanged,
                 this, &SailfishEnginePlatform::onChildrenChanged); // let's wait for loading
     }
+}
+
+void SailfishEnginePlatform::backCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    goBack();
+    socketReply(socket, QString());
+}
+
+void SailfishEnginePlatform::forwardCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    goForward();
+    socketReply(socket, QString());
+}
+
+void SailfishEnginePlatform::getOrientationCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    QQuickItem *item = getApplicationWindow();
+    const int deviceOrientation = item->property("deviceOrientation").toInt();
+    socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QStringLiteral("LANDSCAPE") : QStringLiteral("PORTRAIT"));
+}
+
+void SailfishEnginePlatform::setOrientationCommand(QTcpSocket *socket, const QString &orientation)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << orientation;
+
+    QQuickItem *item = getApplicationWindow();
+    item->setProperty("deviceOrientation", orientation == QLatin1String("LANDSCAPE") ? 2 : 1);
+    socketReply(socket, QString());
+}
+
+void SailfishEnginePlatform::hideKeyboardCommand(QTcpSocket *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << strategy << key << keyCode << keyName;
+
+    clearFocus();
+    socketReply(socket, QString());
+}
+
+void SailfishEnginePlatform::isKeyboardShownCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    QInputMethod *ime = qApp->inputMethod();
+    if (!ime) {
+        socketReply(socket, false, 1);
+    }
+    socketReply(socket, ime->isVisible());
+}
+
+void SailfishEnginePlatform::activateIMEEngineCommand(QTcpSocket *socket, const QVariant &engine)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << engine;
+
+    const QString layout = engine.toString();
+    qDebug()
+        << Q_FUNC_INFO
+        << layout;
+    MGConfItem enabled(QStringLiteral("/sailfish/text_input/enabled_layouts"));
+    if (!enabled.value().toStringList().contains(layout)) {
+        socketReply(socket, QString());
+        return;
+    }
+
+    MGConfItem active(QStringLiteral("/sailfish/text_input/active_layout"));
+    active.set(layout);
+}
+
+void SailfishEnginePlatform::availableIMEEnginesCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    MGConfItem enabled(QStringLiteral("/sailfish/text_input/enabled_layouts"));
+    socketReply(socket, enabled.value().toStringList());
+}
+
+void SailfishEnginePlatform::getActiveIMEEngineCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+}
+
+void SailfishEnginePlatform::deactivateIMEEngineCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    MGConfItem active(QStringLiteral("/sailfish/text_input/active_layout"));
+    socketReply(socket, active.value().toString());
+}
+
+void SailfishEnginePlatform::isIMEActivatedCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    socketReply(socket, qApp->inputMethod() ? true : false);
 }
 
 void SailfishEnginePlatform::executeCommand_app_pullDownTo(QTcpSocket *socket, const QString &destination)
@@ -610,7 +750,7 @@ void SailfishEnginePlatform::executeCommand_app_goBack(QTcpSocket *socket)
         << Q_FUNC_INFO
         << socket;
 
-    clickPoint(10, 10);
+    goBack();
     socketReply(socket, QString());
 }
 
@@ -620,8 +760,7 @@ void SailfishEnginePlatform::executeCommand_app_goForward(QTcpSocket *socket)
         << Q_FUNC_INFO
         << socket;
 
-    QQuickItem *rootItem = getApplicationWindow();
-    clickPoint(rootItem->width() - 10, 10);
+    goForward();
     socketReply(socket, QString());
 }
 
