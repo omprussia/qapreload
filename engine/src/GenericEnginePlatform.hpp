@@ -26,7 +26,7 @@ public slots:
 protected:
     void clickPoint(int posx, int posy);
     void pressAndHold(int posx, int posy, int delay = 800);
-    void mouseSwipe(int startx, int starty, int stopx, int stopy);
+    void mouseMove(int startx, int starty, int stopx, int stopy);
     void mouseDrag(int startx, int starty, int stopx, int stopy, int delay = 1200);
 
     QWindow *m_rootWindow;

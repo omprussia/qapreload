@@ -22,6 +22,7 @@ public:
 
     QPointF getAbsPosition(QQuickItem *item);
     QString getText(QQuickItem *item);
+    QVariant executeJS(const QString &jsCode, QQuickItem *item);
 
 public slots:
     virtual void initialize() override;
@@ -29,6 +30,7 @@ public slots:
 protected:
     void clickItem(QQuickItem *item);
     void pressAndHoldItem(QQuickItem *item, int delay = 800);
+    void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
 
     QQuickItem *getItem(const QString &elementId);
 
@@ -72,5 +74,17 @@ private slots:
 
     // GenericEnginePlatform interface
     virtual void onKeyEvent(QKeyEvent *event) override;
+
+    // execute_%1 methods
+    void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
+    void executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy);
+    void executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
+    void executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
+    void executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params);
+    void executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode);
+    void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value);
+
+    // own stuff
+    void onPropertyChanged();
 };
 
