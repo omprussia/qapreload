@@ -9,6 +9,7 @@
 #include <QIODevice>
 #include <QJsonObject>
 #include <QPainter>
+#include <QQmlExpression>
 #include <QQuickItem>
 #include <QQuickItemGrabResult>
 #include <QQuickWindow>
@@ -238,11 +239,25 @@ QString QuickEnginePlatform::getText(QQuickItem *item)
     return QString();
 }
 
+QVariant QuickEnginePlatform::executeJS(const QString &jsCode, QQuickItem *item)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << jsCode << item;
+
+    QQmlExpression expr(qmlEngine(item)->rootContext(), item, jsCode);
+    bool isUndefined = false;
+    const QVariant reply = expr.evaluate(&isUndefined);
+    if (expr.hasError()) {
+        qWarning() << Q_FUNC_INFO << expr.error().toString();
+    }
+    return isUndefined ? QVariant(QStringLiteral("undefined")) : reply;
+}
+
 void QuickEnginePlatform::initialize()
 {
     qDebug()
         << Q_FUNC_INFO;
-
 
     QWindow *window = qGuiApp->topLevelWindows().first();
     if (!window) {
@@ -513,6 +528,44 @@ void QuickEnginePlatform::pressAndHoldItem(QQuickItem *item, int delay)
     pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2, delay);
 }
 
+void QuickEnginePlatform::waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << item << propertyName << value << timeout;
+
+    if (!item) {
+        qWarning() << "item is null" << item;
+        return;
+    }
+    int propertyIndex = item->metaObject()->indexOfProperty(propertyName.toLatin1().constData());
+    if (propertyIndex < 0) {
+        qWarning() << Q_FUNC_INFO << item << "property" << propertyName << "is not valid!";
+        return;
+    }
+    const QMetaProperty prop = item->metaObject()->property(propertyIndex);
+    if (prop.read(item) == value) {
+        return;
+    }
+    if (!prop.hasNotifySignal()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << item << "property" << propertyName << "have on notifySignal!";
+        return;
+    }
+    QEventLoop loop;
+    QTimer timer;
+    item->setProperty("WaitForPropertyChangeEventLoop", QVariant::fromValue(&loop));
+    item->setProperty("WaitForPropertyChangePropertyName", propertyName);
+    item->setProperty("WaitForPropertyChangePropertyValue", value);
+    const QMetaMethod propertyChanged = metaObject()->method(metaObject()->indexOfSlot("onPropertyChanged()"));
+    connect(item, prop.notifySignal(), this, propertyChanged);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start(timeout);
+    loop.exec();
+    disconnect(item, prop.notifySignal(), this, propertyChanged);
+}
+
 QQuickItem *QuickEnginePlatform::getItem(const QString &elementId)
 {
     QQuickItem *item = nullptr;
@@ -761,4 +814,129 @@ void QuickEnginePlatform::onKeyEvent(QKeyEvent *event)
 {
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootQuickWindow);
     wp->deliverKeyEvent(event);
+}
+
+void QuickEnginePlatform::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << elementId << propertyName << value << timeout;
+
+    QQuickItem *item = getItem(elementId);
+    if (item) {
+        waitForPropertyChange(item, propertyName, value, timeout);
+    }
+    socketReply(socket, QString());
+}
+
+void QuickEnginePlatform::executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << posx << posy;
+
+    pressAndHold(posx, posy);
+    socketReply(socket, QString());
+}
+
+void QuickEnginePlatform::executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << posx << posy << stopx << stopy;
+
+    mouseMove(posx, posy, stopx, stopy);
+    socketReply(socket, QString());
+}
+
+void QuickEnginePlatform::executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << posx << posy << stopx << stopy;
+
+    mouseDrag(posx, posy, stopx, stopy);
+    socketReply(socket, QString());
+}
+
+void QuickEnginePlatform::executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << elementId << method << params;
+
+    QQuickItem *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString());
+        return;
+    }
+
+    QGenericArgument arguments[10] = { QGenericArgument() };
+    for (int i = 0; i < params.length(); i++) {
+        arguments[i] = Q_ARG(QVariant, params[i]);
+    }
+
+    QVariant reply;
+    QMetaObject::invokeMethod(
+        item,
+        method.toLatin1().constData(),
+        Qt::DirectConnection,
+        Q_RETURN_ARG(QVariant, reply),
+        arguments[0],
+        arguments[1],
+        arguments[2],
+        arguments[3],
+        arguments[4],
+        arguments[5],
+        arguments[6],
+        arguments[7],
+        arguments[8],
+        arguments[9]);
+    socketReply(socket, reply);
+}
+
+void QuickEnginePlatform::executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << elementId << jsCode;
+
+    QQuickItem *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString());
+        return;
+    }
+
+    QVariant result = executeJS(jsCode, item);
+    qDebug()
+        << Q_FUNC_INFO
+        << result;
+    socketReply(socket, result);
+}
+
+void QuickEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << elementId << attribute << value;
+
+    setProperty(socket, attribute, value, elementId);
+}
+
+void QuickEnginePlatform::onPropertyChanged()
+{
+    QObject *item = sender();
+    QEventLoop *loop = item->property("WaitForPropertyChangeEventLoop").value<QEventLoop*>();
+    if (!loop) {
+        return;
+    }
+    const QString propertyName = item->property("WaitForPropertyChangePropertyName").toString();
+    const QVariant propertyValue = item->property("WaitForPropertyChangePropertyValue");
+    if (!propertyValue.isValid()) {
+        loop->quit();
+    }
+    const QVariant property = item->property(propertyName.toLatin1().constData());
+    if (property == propertyValue) {
+        loop->quit();
+    }
 }

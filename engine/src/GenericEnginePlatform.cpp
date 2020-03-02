@@ -115,7 +115,7 @@ void GenericEnginePlatform::pressAndHold(int posx, int posy, int delay)
     loop.exec();
 }
 
-void GenericEnginePlatform::mouseSwipe(int startx, int starty, int stopx, int stopy)
+void GenericEnginePlatform::mouseMove(int startx, int starty, int stopx, int stopy)
 {
     qWarning()
         << Q_FUNC_INFO
