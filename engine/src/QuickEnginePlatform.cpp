@@ -23,6 +23,44 @@ QuickEnginePlatform::QuickEnginePlatform(QObject *parent)
 {
 }
 
+QQuickItem *QuickEnginePlatform::findItemByObjectName(const QString &objectName, QQuickItem *parentItem)
+{
+    if (!parentItem) {
+        parentItem = m_rootQuickItem;
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        if (child->objectName() == objectName) {
+            return child;
+        }
+        QQuickItem *item = findItemByObjectName(objectName, child);
+        if (item) {
+            return item;
+        }
+    }
+    return nullptr;
+}
+
+QVariantList QuickEnginePlatform::findItemsByClassName(const QString &className, QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = m_rootQuickItem;
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        if (getClassName(child) == className) {
+            items.append(QVariant::fromValue(child));
+        }
+        QVariantList recursiveItems = findItemsByClassName(className, child);
+        items.append(recursiveItems);
+    }
+    return items;
+}
+
 QVariantList QuickEnginePlatform::findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem)
 {
     QVariantList items;
@@ -42,6 +80,26 @@ QVariantList QuickEnginePlatform::findItemsByProperty(const QString &propertyNam
     return items;
 }
 
+QVariantList QuickEnginePlatform::findItemsByText(const QString &text, bool partial, QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = m_rootQuickItem;
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        const QString &itemText = getText(child);
+        if ((partial && itemText.contains(text)) || (!partial && itemText == text)) {
+            items.append(QVariant::fromValue(child));
+        }
+        QVariantList recursiveItems = findItemsByText(text, partial, child);
+        items.append(recursiveItems);
+    }
+    return items;
+}
+
 void QuickEnginePlatform::findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple, QQuickItem *parentItem)
 {
     qDebug()
@@ -50,6 +108,19 @@ void QuickEnginePlatform::findByProperty(QTcpSocket *socket, const QString &prop
 
     QVariantList items = findItemsByProperty(propertyName, propertyValue, parentItem);
     elementReply(socket, items, multiple);
+}
+
+QVariantList QuickEnginePlatform::filterVisibleItems(const QVariantList &items)
+{
+    QVariantList result;
+    for (const QVariant &itemVariant : items) {
+        QQuickItem *item = itemVariant.value<QQuickItem*>();
+        if (!item || !item->isVisible()) {
+            continue;
+        }
+        result.append(itemVariant);
+    }
+    return result;
 }
 
 QPointF QuickEnginePlatform::getAbsPosition(QQuickItem *item)

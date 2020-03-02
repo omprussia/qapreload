@@ -70,14 +70,14 @@ void GenericEnginePlatform::elementReply(QTcpSocket *socket, const QVariantList 
     }
 }
 
-QString GenericEnginePlatform::className(QObject *item)
+QString GenericEnginePlatform::getClassName(QObject *item)
 {
     return QString::fromLatin1(item->metaObject()->className()).section(QChar(u'_'), 0, 0).section(QChar(u':'), -1);
 }
 
 QString GenericEnginePlatform::uniqueId(QObject *item)
 {
-    return QStringLiteral("%1_0x%2").arg(className(item))
+    return QStringLiteral("%1_0x%2").arg(getClassName(item))
             .arg(reinterpret_cast<quintptr>(item),
                  QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
 }
@@ -98,6 +98,55 @@ void GenericEnginePlatform::clickPoint(int posx, int posy)
     timer.setSingleShot(true);
     timer.setInterval(50);
     connect(m_mouseEngine->click(QPointF(posx, posy)),
+            &QAPendingEvent::completed, &timer, static_cast<void (QTimer::*)()>(&QTimer::start));
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
+void GenericEnginePlatform::pressAndHold(int posx, int posy, int delay)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << posx << posy << delay;
+
+    QEventLoop loop;
+    connect(m_mouseEngine->pressAndHold(QPointF(posx, posy), delay),
+            &QAPendingEvent::completed, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
+void GenericEnginePlatform::mouseSwipe(int startx, int starty, int stopx, int stopy)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << startx << starty << stopx << stopy;
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setInterval(800);
+    timer.setSingleShot(true);
+    connect(m_mouseEngine->move(
+                QPointF(startx, starty),
+                QPointF(stopx, stopy)),
+            &QAPendingEvent::completed, &timer, static_cast<void (QTimer::*)()>(&QTimer::start));
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    loop.exec();
+}
+
+void GenericEnginePlatform::mouseDrag(int startx, int starty, int stopx, int stopy, int delay)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << startx << starty << stopx << stopy << delay;
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setInterval(800);
+    timer.setSingleShot(true);
+    connect(m_mouseEngine->drag(
+                QPointF(startx, starty),
+                QPointF(stopx, stopy),
+                delay),
             &QAPendingEvent::completed, &timer, static_cast<void (QTimer::*)()>(&QTimer::start));
     connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     loop.exec();
