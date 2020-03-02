@@ -56,12 +56,14 @@ private slots:
     void executeCommand_app_enterCode(QTcpSocket *socket, const QString &code);
     void executeCommand_app_scrollToItem(QTcpSocket *socket, const QString &elementId);
     void executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName);
+    void executeCommand_app_dumpCurrentPage(QTcpSocket *socket);
+    void executeCommand_app_dumpCover(QTcpSocket *socket);
 
     // own methods
     void onChildrenChanged();
 
 private:
-    QQuickItem *coverItem();
+    QQuickItem *getCoverItem();
     QQuickItem *getPageStack();
     QQuickItem *getCurrentPage();
 

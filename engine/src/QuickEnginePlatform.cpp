@@ -7,6 +7,8 @@
 #include <QDebug>
 #include <QGuiApplication>
 #include <QIODevice>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QPainter>
 #include <QQmlExpression>
@@ -556,13 +558,13 @@ void QuickEnginePlatform::setProperty(QTcpSocket *socket, const QString &propert
 
 void QuickEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth)
 {
-    const QVariantMap object = dumpObject(rootItem, depth);
+    const QJsonObject object = dumpObject(rootItem, depth);
     writer->writeStartElement(object.value(QStringLiteral("classname")).toString());
     for (auto i = object.constBegin(), objEnd = object.constEnd(); i != objEnd; ++i) {
-        const QVariant& val = *i;
+        const QJsonValue& val = *i;
         const QString &name = i.key();
 
-        writer->writeAttribute(name, val.toString());
+        writer->writeAttribute(name, val.toVariant().toString());
     }
     if (object.contains(QStringLiteral("mainTextProperty"))) {
         writer->writeCharacters(object.value(QStringLiteral("mainTextProperty")).toString());
@@ -578,49 +580,64 @@ void QuickEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem 
     writer->writeEndElement();
 }
 
-QVariantMap QuickEnginePlatform::dumpObject(QQuickItem *item, int depth)
+QJsonObject QuickEnginePlatform::recursiveDumpTree(QQuickItem *rootItem, int depth)
 {
-    QVariantMap object;
+    QJsonObject object = dumpObject(rootItem, depth);
+    QJsonArray childArray;
+    QQuickItemPrivate *itemPrivate = QQuickItemPrivate::get(rootItem);
 
-    const QString className = QAEngine::className(item);
-    object.insert(QStringLiteral("classname"), className);
+    int z = 0;
+    for (QQuickItem *child : itemPrivate->paintOrderChildItems()) {
+        QJsonObject childObject = recursiveDumpTree(child, ++z);
+        childArray.append(QJsonValue(childObject));
+    }
 
-    const QString id = QAEngine::uniqueId(item);
-    object.insert(QStringLiteral("id"), id);
+    object.insert(QStringLiteral("children"), QJsonValue(childArray));
+
+    return object;
+}
+
+QJsonObject QuickEnginePlatform::dumpObject(QQuickItem *item, int depth)
+{
+    QJsonObject object;
+
+    const QString className = getClassName(item);
+    object.insert(QStringLiteral("classname"), QJsonValue(className));
+
+    const QString id = uniqueId(item);
+    object.insert(QStringLiteral("id"), QJsonValue(id));
 
     auto mo = item->metaObject();
     do {
-        const QString moClassName = QString::fromLatin1(mo->className());
-        std::vector<std::pair<QString, QVariant> > v;
-        v.reserve(mo->propertyCount() - mo->propertyOffset());
-        for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
-            const QString propertyName = QString::fromLatin1(mo->property(i).name());
-            if (m_blacklistedProperties.contains(moClassName) &&
-                    m_blacklistedProperties.value(moClassName).contains(propertyName)) {
-                qDebug()
-                    << "Found blacklisted:"
-                    << moClassName << propertyName;
-                continue;
-            }
-            v.emplace_back(propertyName,
-                           mo->property(i).read(item));
-        }
-        std::sort(v.begin(), v.end());
-        for (auto &i : v) {
-            if (!object.contains(i.first)
-                    && i.second.canConvert<QString>()) {
-                object.insert(i.first, i.second);
-            }
-        }
+      const QString moClassName = QString::fromLatin1(mo->className());
+      std::vector<std::pair<QString, QVariant> > v;
+      v.reserve(mo->propertyCount() - mo->propertyOffset());
+      for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+          const QString propertyName = QString::fromLatin1(mo->property(i).name());
+          if (m_blacklistedProperties.contains(moClassName) &&
+                  m_blacklistedProperties.value(moClassName).contains(propertyName)) {
+              qDebug() << "Found blacklisted:" << moClassName << propertyName;
+              continue;
+          }
+          v.emplace_back(propertyName,
+                         mo->property(i).read(item));
+      }
+      std::sort(v.begin(), v.end());
+      for (auto &i : v) {
+          if (!object.contains(i.first)
+                  && i.second.canConvert<QString>()) {
+              object.insert(i.first, QJsonValue::fromVariant(i.second));
+          }
+      }
     } while ((mo = mo->superClass()));
 
     QRectF rectF(item->x(), item->y(), item->width(), item->height());
     QRect rect = rectF.toRect();
-    object.insert(QStringLiteral("width"), rect.width());
-    object.insert(QStringLiteral("height"), rect.height());
-    object.insert(QStringLiteral("x"), rect.x());
-    object.insert(QStringLiteral("y"), rect.y());
-    object.insert(QStringLiteral("depth"), depth);
+    object.insert(QStringLiteral("width"), QJsonValue(rect.width()));
+    object.insert(QStringLiteral("height"), QJsonValue(rect.height()));
+    object.insert(QStringLiteral("x"), QJsonValue(rect.x()));
+    object.insert(QStringLiteral("y"), QJsonValue(rect.y()));
+    object.insert(QStringLiteral("depth"), QJsonValue(depth));
 
     QPointF position(item->x(), item->y());
     QPoint abs;
@@ -630,12 +647,12 @@ QVariantMap QuickEnginePlatform::dumpObject(QQuickItem *item, int depth)
         abs = position.toPoint();
     }
 
-    object.insert(QStringLiteral("abs_x"), abs.x());
-    object.insert(QStringLiteral("abs_y"), abs.y());
+    object.insert(QStringLiteral("abs_x"), QJsonValue(abs.x()));
+    object.insert(QStringLiteral("abs_y"), QJsonValue(abs.y()));
 
-    object.insert(QStringLiteral("objectName"), item->objectName());
-    object.insert(QStringLiteral("enabled"), item->isEnabled());
-    object.insert(QStringLiteral("visible"), item->isVisible());
+    object.insert(QStringLiteral("objectName"), QJsonValue(item->objectName()));
+    object.insert(QStringLiteral("enabled"), QJsonValue(item->isEnabled()));
+    object.insert(QStringLiteral("visible"), QJsonValue(item->isVisible()));
 
     object.insert(QStringLiteral("mainTextProperty"), getText(item));
 
@@ -1145,6 +1162,16 @@ void QuickEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, co
         << socket << elementId << attribute << value;
 
     setProperty(socket, attribute, value, elementId);
+}
+
+void QuickEnginePlatform::executeCommand_app_dumpTree(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    QJsonObject reply = recursiveDumpTree(m_rootQuickItem);
+    socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
 }
 
 void QuickEnginePlatform::onPropertyChanged()

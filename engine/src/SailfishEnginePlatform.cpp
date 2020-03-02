@@ -7,6 +7,9 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QStandardPaths>
@@ -22,7 +25,7 @@ SailfishEnginePlatform::SailfishEnginePlatform(QObject *parent)
     m_mouseEngine->setMode(QAMouseEngine::TouchEventMode);
 }
 
-QQuickItem *SailfishEnginePlatform::coverItem()
+QQuickItem *SailfishEnginePlatform::getCoverItem()
 {
     qWarning()
         << Q_FUNC_INFO;
@@ -828,5 +831,35 @@ void SailfishEnginePlatform::executeCommand_app_saveScreenshot(QTcpSocket *socke
         socketReply(socket, QString());
     } else {
         socketReply(socket, QString(), 1);
+    }
+}
+
+void SailfishEnginePlatform::executeCommand_app_dumpCurrentPage(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    QQuickItem *currentPage = getCurrentPage();
+    if (!currentPage) {
+        socketReply(socket, QString());
+        return;
+    }
+    QJsonObject reply = recursiveDumpTree(currentPage);
+    socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
+}
+
+void SailfishEnginePlatform::executeCommand_app_dumpCover(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket;
+
+    QQuickItem *coverItem = getCoverItem();
+    if (!coverItem) {
+        socketReply(socket, QString());
+    } else {
+        QJsonObject reply = recursiveDumpTree(coverItem);
+        socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
     }
 }
