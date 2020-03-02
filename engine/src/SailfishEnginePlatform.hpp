@@ -28,7 +28,18 @@ public slots:
     virtual void initialize() override;
 
 private slots:
-    // IEnginePlatform methods
+    // IEnginePlatform interface
+    virtual void backCommand(QTcpSocket *socket) override;
+    virtual void forwardCommand(QTcpSocket *socket) override;
+    virtual void getOrientationCommand(QTcpSocket *socket) override;
+    virtual void setOrientationCommand(QTcpSocket *socket, const QString &orientation) override;
+    virtual void hideKeyboardCommand(QTcpSocket *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName) override;
+    virtual void isKeyboardShownCommand(QTcpSocket *socket) override;
+    virtual void activateIMEEngineCommand(QTcpSocket *socket, const QVariant &engine) override;
+    virtual void availableIMEEnginesCommand(QTcpSocket *socket) override;
+    virtual void getActiveIMEEngineCommand(QTcpSocket *socket) override;
+    virtual void deactivateIMEEngineCommand(QTcpSocket *socket) override;
+    virtual void isIMEActivatedCommand(QTcpSocket *socket) override;
 
     // execute_%1 methods
     void executeCommand_app_pullDownTo(QTcpSocket *socket, const QString &destination);
@@ -66,5 +77,7 @@ private:
     void swipe(SwipeDirection direction);
     void peek(PeekDirection direction);
     void enterCode(const QString &code);
+    void goBack();
+    void goForward();
 };
 

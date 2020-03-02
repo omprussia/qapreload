@@ -566,6 +566,39 @@ void QuickEnginePlatform::waitForPropertyChange(QQuickItem *item, const QString 
     disconnect(item, prop.notifySignal(), this, propertyChanged);
 }
 
+void QuickEnginePlatform::clearFocus()
+{
+    qWarning()
+        << Q_FUNC_INFO;
+
+    QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootQuickWindow);
+    wp->clearFocusObject();
+}
+
+void QuickEnginePlatform::clearComponentCache()
+{
+    qWarning()
+        << Q_FUNC_INFO;
+
+    QQmlEngine *engine = getEngine();
+    if (!engine) {
+        return;
+    }
+    engine->clearComponentCache();
+}
+
+QQmlEngine *QuickEnginePlatform::getEngine(QQuickItem *item)
+{
+    if (!item) {
+        item = m_rootQuickItem;
+    }
+    QQmlEngine *engine = qmlEngine(item);
+    if (!engine) {
+        engine = qmlEngine(item->childItems().first());
+    }
+    return engine;
+}
+
 QQuickItem *QuickEnginePlatform::getItem(const QString &elementId)
 {
     QQuickItem *item = nullptr;
