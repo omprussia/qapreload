@@ -10,8 +10,13 @@ class QuickEnginePlatform : public GenericEnginePlatform
 public:
     explicit QuickEnginePlatform(QObject *parent);
 
+    QQuickItem *findItemByObjectName(const QString &objectName, QQuickItem *parentItem = nullptr);
+    QVariantList findItemsByClassName(const QString &getClassName, QQuickItem *parentItem = nullptr);
     QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
+    QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
     void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QQuickItem *parentItem = nullptr);
+
+    QVariantList filterVisibleItems(const QVariantList &items);
 
     QPointF getAbsPosition(QQuickItem *item);
     QString getText(QQuickItem *item);

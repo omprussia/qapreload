@@ -15,7 +15,7 @@ public:
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) override;
     void elementReply(QTcpSocket *socket, const QVariantList &elements, bool multiple = false) override;
 
-    static QString className(QObject *item);
+    static QString getClassName(QObject *item);
     static QString uniqueId(QObject *item);
 
     QObject *getItem(const QString &elementId);
@@ -25,6 +25,9 @@ public slots:
 
 protected:
     void clickPoint(int posx, int posy);
+    void pressAndHold(int posx, int posy, int delay = 800);
+    void mouseSwipe(int startx, int starty, int stopx, int stopy);
+    void mouseDrag(int startx, int starty, int stopx, int stopy, int delay = 1200);
 
     QWindow *m_rootWindow;
     QObject *m_rootObject;
