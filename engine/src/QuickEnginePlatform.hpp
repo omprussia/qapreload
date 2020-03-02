@@ -2,6 +2,8 @@
 
 #include "GenericEnginePlatform.hpp"
 
+#include <QJsonObject>
+
 class QQmlEngine;
 class QQuickItem;
 class QQuickWindow;
@@ -36,6 +38,12 @@ protected:
     void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
     void clearFocus();
     void clearComponentCache();
+    void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QQuickItem *item = nullptr);
+    void grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground = false);
+    void setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId);
+    void recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth = 0);
+    QJsonObject recursiveDumpTree(QQuickItem *rootItem, int depth = 0);
+    QJsonObject dumpObject(QQuickItem *item, int depth = 0);
 
     QQmlEngine *getEngine(QQuickItem *item = nullptr);
     QQuickItem *getItem(const QString &elementId);
@@ -44,13 +52,6 @@ protected:
     QQuickWindow *m_rootQuickWindow = nullptr;
 
     QHash<QString, QStringList> m_blacklistedProperties;
-
-private:
-    void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QQuickItem *item = nullptr);
-    void grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground = false);
-    void setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId);
-    void recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth = 0);
-    QVariantMap dumpObject(QQuickItem *item, int depth = 0);
 
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
@@ -101,8 +102,10 @@ private slots:
     void executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params);
     void executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode);
     void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value);
+    void executeCommand_app_dumpTree(QTcpSocket *socket);
 
     // own stuff
+
     void onPropertyChanged();
 };
 
