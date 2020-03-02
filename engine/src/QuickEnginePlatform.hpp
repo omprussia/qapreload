@@ -15,8 +15,10 @@ public:
     QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
     QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
     void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QQuickItem *parentItem = nullptr);
-
+    QQuickItem *findParentFlickable(QQuickItem *rootItem = nullptr);
+    QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
     QVariantList filterVisibleItems(const QVariantList &items);
+    QQuickItem *getApplicationWindow();
 
     QPointF getAbsPosition(QQuickItem *item);
     QString getText(QQuickItem *item);
@@ -26,13 +28,14 @@ public slots:
 
 protected:
     void clickItem(QQuickItem *item);
+    void pressAndHoldItem(QQuickItem *item, int delay = 800);
+
+    QQuickItem *getItem(const QString &elementId);
 
     QQuickItem *m_rootQuickItem = nullptr;
     QQuickWindow *m_rootQuickWindow = nullptr;
 
 private:
-    QQuickItem *getItem(const QString &elementId);
-
     void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QQuickItem *item = nullptr);
     void grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground = false);
     void setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId);
