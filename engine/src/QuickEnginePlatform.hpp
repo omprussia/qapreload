@@ -5,6 +5,7 @@
 class QQmlEngine;
 class QQuickItem;
 class QQuickWindow;
+class QXmlStreamWriter;
 class QuickEnginePlatform : public GenericEnginePlatform
 {
     Q_OBJECT
@@ -15,6 +16,7 @@ public:
     QVariantList findItemsByClassName(const QString &getClassName, QQuickItem *parentItem = nullptr);
     QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
     QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
+    QVariantList findItemsByXpath(const QString &xpath, QQuickItem *parentItem = nullptr);
     void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QQuickItem *parentItem = nullptr);
     QQuickItem *findParentFlickable(QQuickItem *rootItem = nullptr);
     QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
@@ -41,10 +43,14 @@ protected:
     QQuickItem *m_rootQuickItem = nullptr;
     QQuickWindow *m_rootQuickWindow = nullptr;
 
+    QHash<QString, QStringList> m_blacklistedProperties;
+
 private:
     void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QQuickItem *item = nullptr);
     void grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground = false);
     void setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId);
+    void recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth = 0);
+    QVariantMap dumpObject(QQuickItem *item, int depth = 0);
 
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
@@ -78,6 +84,14 @@ private slots:
 
     // GenericEnginePlatform interface
     virtual void onKeyEvent(QKeyEvent *event) override;
+
+    // findElement_%1 methods
+    void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_objectName(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_parent(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
+    void findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
 
     // execute_%1 methods
     void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);

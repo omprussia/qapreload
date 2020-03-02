@@ -15,6 +15,8 @@
 #include <QQuickWindow>
 #include <QScreen>
 #include <QTimer>
+#include <QXmlQuery>
+#include <QXmlStreamWriter>
 
 #include <private/qquickwindow_p.h>
 #include <private/qquickitem_p.h>
@@ -114,6 +116,53 @@ QVariantList QuickEnginePlatform::findItemsByText(const QString &text, bool part
         QVariantList recursiveItems = findItemsByText(text, partial, child);
         items.append(recursiveItems);
     }
+    return items;
+}
+
+QVariantList QuickEnginePlatform::findItemsByXpath(const QString &xpath, QQuickItem *parentItem)
+{
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = m_rootQuickItem;
+    }
+
+    QString out;
+    QXmlStreamWriter writer(&out);
+    writer.setAutoFormatting(true);
+    writer.writeStartDocument();
+    recursiveDumpXml(&writer, parentItem, 0);
+    writer.writeEndDocument();
+
+    QXmlQuery query;
+    query.setFocus(out);
+    query.setQuery(xpath);
+
+    if (!query.isValid()) {
+        return items;
+    }
+    QString tempString;
+    query.evaluateTo(&tempString);
+
+    if (tempString.trimmed().isEmpty()) {
+        return items;
+    }
+
+    const QString resultData = QLatin1String("<results>") + tempString + QLatin1String("</results>");
+    QXmlStreamReader reader(resultData);
+    reader.readNextStartElement();
+    while (!reader.atEnd()) {
+        reader.readNext();
+        if (reader.isStartElement()) {
+            const QString elementId = reader.attributes().value(QStringLiteral("id")).toString();
+            const QString address = elementId.section(QChar(u'x'), -1);
+            const uint integer = address.toUInt(NULL, 16);
+            QQuickItem *item = reinterpret_cast<QQuickItem*>(integer);
+            items.append(QVariant::fromValue(item));
+            reader.skipCurrentElement();
+        }
+    }
+
     return items;
 }
 
@@ -505,6 +554,94 @@ void QuickEnginePlatform::setProperty(QTcpSocket *socket, const QString &propert
     }
 }
 
+void QuickEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QQuickItem *rootItem, int depth)
+{
+    const QVariantMap object = dumpObject(rootItem, depth);
+    writer->writeStartElement(object.value(QStringLiteral("classname")).toString());
+    for (auto i = object.constBegin(), objEnd = object.constEnd(); i != objEnd; ++i) {
+        const QVariant& val = *i;
+        const QString &name = i.key();
+
+        writer->writeAttribute(name, val.toString());
+    }
+    if (object.contains(QStringLiteral("mainTextProperty"))) {
+        writer->writeCharacters(object.value(QStringLiteral("mainTextProperty")).toString());
+    }
+
+    QQuickItemPrivate *itemPrivate = QQuickItemPrivate::get(rootItem);
+
+    int z = 0;
+    for (QQuickItem *child : itemPrivate->paintOrderChildItems()) {
+        recursiveDumpXml(writer, child, ++z);
+    }
+
+    writer->writeEndElement();
+}
+
+QVariantMap QuickEnginePlatform::dumpObject(QQuickItem *item, int depth)
+{
+    QVariantMap object;
+
+    const QString className = QAEngine::className(item);
+    object.insert(QStringLiteral("classname"), className);
+
+    const QString id = QAEngine::uniqueId(item);
+    object.insert(QStringLiteral("id"), id);
+
+    auto mo = item->metaObject();
+    do {
+        const QString moClassName = QString::fromLatin1(mo->className());
+        std::vector<std::pair<QString, QVariant> > v;
+        v.reserve(mo->propertyCount() - mo->propertyOffset());
+        for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+            const QString propertyName = QString::fromLatin1(mo->property(i).name());
+            if (m_blacklistedProperties.contains(moClassName) &&
+                    m_blacklistedProperties.value(moClassName).contains(propertyName)) {
+                qDebug()
+                    << "Found blacklisted:"
+                    << moClassName << propertyName;
+                continue;
+            }
+            v.emplace_back(propertyName,
+                           mo->property(i).read(item));
+        }
+        std::sort(v.begin(), v.end());
+        for (auto &i : v) {
+            if (!object.contains(i.first)
+                    && i.second.canConvert<QString>()) {
+                object.insert(i.first, i.second);
+            }
+        }
+    } while ((mo = mo->superClass()));
+
+    QRectF rectF(item->x(), item->y(), item->width(), item->height());
+    QRect rect = rectF.toRect();
+    object.insert(QStringLiteral("width"), rect.width());
+    object.insert(QStringLiteral("height"), rect.height());
+    object.insert(QStringLiteral("x"), rect.x());
+    object.insert(QStringLiteral("y"), rect.y());
+    object.insert(QStringLiteral("depth"), depth);
+
+    QPointF position(item->x(), item->y());
+    QPoint abs;
+    if (item->parentItem()) {
+        abs = m_rootQuickItem->mapFromItem(item->parentItem(), position).toPoint();
+    } else {
+        abs = position.toPoint();
+    }
+
+    object.insert(QStringLiteral("abs_x"), abs.x());
+    object.insert(QStringLiteral("abs_y"), abs.y());
+
+    object.insert(QStringLiteral("objectName"), item->objectName());
+    object.insert(QStringLiteral("enabled"), item->isEnabled());
+    object.insert(QStringLiteral("visible"), item->isVisible());
+
+    object.insert(QStringLiteral("mainTextProperty"), getText(item));
+
+    return object;
+}
+
 void QuickEnginePlatform::clickItem(QQuickItem *item)
 {
     const QPointF itemAbs = getAbsPosition(item);
@@ -847,6 +984,60 @@ void QuickEnginePlatform::onKeyEvent(QKeyEvent *event)
 {
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootQuickWindow);
     wp->deliverKeyEvent(event);
+}
+
+void QuickEnginePlatform::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    QQuickItem *item = findItemByObjectName(selector, parentItem);
+    qDebug()
+        << Q_FUNC_INFO
+        << selector << multiple << item;
+    elementReply(socket, {QVariant::fromValue(item)}, multiple);
+}
+
+void QuickEnginePlatform::findStrategy_objectName(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    findStrategy_id(socket, selector, multiple, parentItem);
+}
+
+void QuickEnginePlatform::findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    QVariantList items = findItemsByClassName(selector, parentItem);
+    qDebug()
+        << Q_FUNC_INFO
+        << selector << multiple << items;
+    elementReply(socket, items, multiple);
+}
+
+void QuickEnginePlatform::findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    QVariantList items = findItemsByText(selector, false, parentItem);
+    qDebug()
+        << Q_FUNC_INFO
+        << selector << multiple << items;
+    elementReply(socket, items, multiple);
+}
+
+void QuickEnginePlatform::findStrategy_parent(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+    const int depth = selector.toInt();
+    QQuickItem *pItem = parentItem->parentItem();
+    for (int i = 0; i < depth; i++) {
+        if (!pItem) {
+            break;
+        }
+        pItem = pItem->parentItem();
+    }
+    const QVariantList items = {QVariant::fromValue(pItem)};
+    qDebug()
+        << Q_FUNC_INFO
+        << selector << multiple << items;
+    elementReply(socket, items, multiple);
+}
+
+void QuickEnginePlatform::findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
+{
+
 }
 
 void QuickEnginePlatform::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout)

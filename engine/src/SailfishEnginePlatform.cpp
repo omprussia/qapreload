@@ -487,6 +487,20 @@ void SailfishEnginePlatform::initialize()
 
     QuickEnginePlatform::initialize();
 
+    QFile blacklist(QStringLiteral("/etc/qapreload-blacklist"));
+    if (blacklist.exists() && blacklist.open(QFile::ReadOnly)) {
+        const QStringList list = QString::fromLatin1(blacklist.readAll().trimmed()).split(QChar(u'\n'));
+        for (const QString &item : list) {
+            const QStringList parts = item.split(QStringLiteral("::"));
+            QStringList blacklisted = m_blacklistedProperties.value(parts.first());
+            blacklisted.append(parts.last());
+            m_blacklistedProperties.insert(parts.first(), blacklisted);
+        }
+        qDebug()
+            << "Blacklist:"
+            << m_blacklistedProperties;
+    }
+
     if (!m_rootQuickItem) {
         qWarning()
             << Q_FUNC_INFO
