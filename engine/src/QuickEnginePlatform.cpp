@@ -25,6 +25,10 @@ QuickEnginePlatform::QuickEnginePlatform(QObject *parent)
 
 QQuickItem *QuickEnginePlatform::findItemByObjectName(const QString &objectName, QQuickItem *parentItem)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << objectName << parentItem;
+
     if (!parentItem) {
         parentItem = m_rootQuickItem;
     }
@@ -44,6 +48,10 @@ QQuickItem *QuickEnginePlatform::findItemByObjectName(const QString &objectName,
 
 QVariantList QuickEnginePlatform::findItemsByClassName(const QString &className, QQuickItem *parentItem)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << className << parentItem;
+
     QVariantList items;
 
     if (!parentItem) {
@@ -63,6 +71,10 @@ QVariantList QuickEnginePlatform::findItemsByClassName(const QString &className,
 
 QVariantList QuickEnginePlatform::findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << propertyName << propertyValue << parentItem;
+
     QVariantList items;
 
     if (!parentItem) {
@@ -82,6 +94,10 @@ QVariantList QuickEnginePlatform::findItemsByProperty(const QString &propertyNam
 
 QVariantList QuickEnginePlatform::findItemsByText(const QString &text, bool partial, QQuickItem *parentItem)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << text << partial << parentItem;
+
     QVariantList items;
 
     if (!parentItem) {
@@ -110,8 +126,54 @@ void QuickEnginePlatform::findByProperty(QTcpSocket *socket, const QString &prop
     elementReply(socket, items, multiple);
 }
 
+QQuickItem *QuickEnginePlatform::findParentFlickable(QQuickItem *rootItem)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << rootItem;
+
+    if (!rootItem) {
+        return nullptr;
+    }
+    while (rootItem->parentItem()) {
+        if (rootItem->parentItem()->metaObject()->indexOfProperty("flickableDirection") >= 0) {
+            return rootItem->parentItem();
+        }
+        rootItem = rootItem->parentItem();
+    }
+
+    return nullptr;
+}
+
+QVariantList QuickEnginePlatform::findNestedFlickable(QQuickItem *parentItem)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << parentItem;
+
+    QVariantList items;
+
+    if (!parentItem) {
+        parentItem = m_rootQuickItem;
+    }
+
+    QList<QQuickItem*> childItems = parentItem->childItems();
+    for (QQuickItem *child : childItems) {
+        if (child->metaObject()->indexOfProperty("flickableDirection") >= 0) {
+            items.append(QVariant::fromValue(child));
+        }
+        QVariantList recursiveItems = findNestedFlickable(child);
+        items.append(recursiveItems);
+    }
+    return items;
+}
+
 QVariantList QuickEnginePlatform::filterVisibleItems(const QVariantList &items)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << items;
+
     QVariantList result;
     for (const QVariant &itemVariant : items) {
         QQuickItem *item = itemVariant.value<QQuickItem*>();
@@ -123,8 +185,24 @@ QVariantList QuickEnginePlatform::filterVisibleItems(const QVariantList &items)
     return result;
 }
 
+QQuickItem *QuickEnginePlatform::getApplicationWindow()
+{
+    qWarning()
+        << Q_FUNC_INFO;
+
+    QQuickItem *applicationWindow = m_rootQuickItem;
+    if (!qmlEngine(applicationWindow)) {
+        applicationWindow = applicationWindow->childItems().first();
+    }
+    return applicationWindow;
+}
+
 QPointF QuickEnginePlatform::getAbsPosition(QQuickItem *item)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << item;
+
     QPointF position(item->x(), item->y());
     QPoint abs;
     if (item->parentItem()) {
@@ -137,6 +215,10 @@ QPointF QuickEnginePlatform::getAbsPosition(QQuickItem *item)
 
 QString QuickEnginePlatform::getText(QQuickItem *item)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << item;
+
     static const char *textProperties[] = {
         "label",
         "title",
@@ -158,7 +240,8 @@ QString QuickEnginePlatform::getText(QQuickItem *item)
 
 void QuickEnginePlatform::initialize()
 {
-    qDebug() << Q_FUNC_INFO;
+    qDebug()
+        << Q_FUNC_INFO;
 
 
     QWindow *window = qGuiApp->topLevelWindows().first();
@@ -364,6 +447,10 @@ void QuickEnginePlatform::findElement(QTcpSocket *socket, const QString &strateg
 
 void QuickEnginePlatform::grabScreenshot(QTcpSocket *socket, QQuickItem *item, bool fillBackground)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << item << fillBackground;
+
     if (!item->window()->isVisible()) {
         socketReply(socket, QString());
         return;
@@ -390,6 +477,10 @@ void QuickEnginePlatform::grabScreenshot(QTcpSocket *socket, QQuickItem *item, b
 
 void QuickEnginePlatform::setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << property << value << elementId;
+
     QQuickItem *item = getItem(elementId);
     if (item) {
         item->setProperty(property.toLatin1().constData(), value);
@@ -407,6 +498,19 @@ void QuickEnginePlatform::clickItem(QQuickItem *item)
         << item << itemAbs;
 
     clickPoint(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
+}
+
+void QuickEnginePlatform::pressAndHoldItem(QQuickItem *item, int delay)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << item << delay;
+
+    if (!item) {
+        return;
+    }
+    const QPointF itemAbs = getAbsPosition(item);
+    pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2, delay);
 }
 
 QQuickItem *QuickEnginePlatform::getItem(const QString &elementId)

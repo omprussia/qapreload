@@ -19,6 +19,8 @@ private slots:
     void executeCommand_app_pullDownTo(QTcpSocket *socket, double destination);
     void executeCommand_app_pushUpTo(QTcpSocket *socket, const QString &destination);
     void executeCommand_app_pushUpTo(QTcpSocket *socket, double destination);
+    void executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, const QString &destination);
+    void executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, double destination);
 
     // own methods
     void onChildrenChanged();
@@ -35,5 +37,9 @@ private:
     void pushUpTo(int index);
 
     void scrollToItem(QQuickItem *item);
+
+    QVariantList openContextMenu(QQuickItem *item);
+    void clickContextMenuItem(QQuickItem *item, const QString &text, bool partial = true);
+    void clickContextMenuItem(QQuickItem *item, int index);
 };
 
