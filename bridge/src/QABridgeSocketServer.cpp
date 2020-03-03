@@ -5,6 +5,7 @@
 #endif
 
 #include <QCoreApplication>
+#include <QJsonDocument>
 #include <QTcpServer>
 #include <QTcpSocket>
 
@@ -56,18 +57,39 @@ void QABridgeSocketServer::readSocket()
         << Q_FUNC_INFO
         << socket << socket->bytesAvailable();
 
-    QByteArray requestData = socket->readAll();
+    static QByteArray requestData;
+    requestData.append(socket->readAll());
     qDebug().noquote() << requestData;
 
     requestData.replace("}{", "}\n{"); // workaround packets join
 
     const QList<QByteArray> commands = requestData.split('\n');
+    qDebug()
+        << Q_FUNC_INFO
+        << "Commands count:" << commands.length();
+
+    requestData.clear();
     for (const QByteArray &cmd : commands) {
         if (cmd.isEmpty()) {
             continue;
         }
-
+        qDebug()
+            << Q_FUNC_INFO
+            << "Command:";
         qDebug().noquote() << cmd;
+
+        QJsonParseError error;
+        QJsonDocument::fromJson(cmd, &error);
+        if (error.error != QJsonParseError::NoError) {
+            qDebug()
+                << Q_FUNC_INFO
+                << "Partial data, waiting for more";
+            qDebug().noquote() << error.errorString();
+
+            requestData = cmd;
+            break;
+        }
+
         emit commandReceived(socket, cmd);
     }
 }
