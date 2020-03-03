@@ -678,6 +678,10 @@ void GenericBridgePlatform::forwardToApp(QTcpSocket *socket, const QString &acti
 
 QByteArray GenericBridgePlatform::sendToAppSocket(const QString &appName, const QByteArray &data)
 {
+    qDebug()
+        << Q_FUNC_INFO
+        << appName << data.length();
+
     QJsonObject reply = {
         {QStringLiteral("status"), 1},
         {QStringLiteral("value"), QString()}
@@ -687,22 +691,18 @@ QByteArray GenericBridgePlatform::sendToAppSocket(const QString &appName, const 
 
     QTcpSocket *socket = m_applicationSocket.value(appName, nullptr);
     if (!socket) {
-        qWarning()
+        qDebug()
             << Q_FUNC_INFO
             << "No app socket for" << appName;
     }
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
 
-    if (socket && !socket->isOpen()) {
+    if (!socket || !socket->isOpen()) {
         qWarning()
             << Q_FUNC_INFO
             << "Can't connect to app socket:" << socket;
-        return appReplyData;
-    }
-
-    socket->write(data);
-    socket->waitForBytesWritten();
-
-    if (socket->state() != QAbstractSocket::ConnectedState) {
         return appReplyData;
     }
 
@@ -710,10 +710,13 @@ QByteArray GenericBridgePlatform::sendToAppSocket(const QString &appName, const 
     QTimer timer;
     timer.setSingleShot(true);
     timer.setInterval(30000);
+    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
 
-    QMetaObject::Connection readyReadConnection = connect(this, &GenericBridgePlatform::applicationReply,
-                                                          [&appReplyData, &loop, &timer, &haveData]
-                                                          (QTcpSocket *appSocket, const QString &appName, const QByteArray &data) {
+    QMetaObject::Connection readyReadConnection = connect(
+        this, &GenericBridgePlatform::applicationReply,
+        [&appReplyData, &loop, &timer, &haveData]
+        (QTcpSocket *appSocket, const QString &appName, const QByteArray &data)
+    {
         if (!haveData) {
             haveData = true;
             appReplyData.clear();
@@ -739,9 +742,14 @@ QByteArray GenericBridgePlatform::sendToAppSocket(const QString &appName, const 
             timer.stop();
         }
     });
-    connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start();
-    loop.exec();
+
+    socket->write(data);
+    socket->waitForBytesWritten();
+
+    if (socket->state() == QAbstractSocket::ConnectedState) {
+        timer.start();
+        loop.exec();
+    }
 
     disconnect(readyReadConnection);
     disconnect(stateChangedConnection);
