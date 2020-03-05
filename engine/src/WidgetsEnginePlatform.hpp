@@ -71,6 +71,7 @@ protected:
     void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QWidget *item = nullptr);
     void clickItem(QWidget *item);
     void setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId);
+    void pressAndHoldItem(QObject *qitem, int delay = 800) override;
 
 private:
     QWidget *m_rootWidget = nullptr;

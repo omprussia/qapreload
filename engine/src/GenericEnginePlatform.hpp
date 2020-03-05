@@ -20,17 +20,26 @@ public:
 
     QObject *getItem(const QString &elementId);
 
+    template <typename T>
+    T getItem(const QString &elementId)
+    {
+        T item = nullptr;
+        if (m_items.contains(elementId)) {
+            item = qobject_cast<T>(m_items.value(elementId));
+        }
+        return item;
+    }
+
 public slots:
     virtual void initialize() = 0;
 
 protected:
     void clickPoint(int posx, int posy);
+    virtual void pressAndHoldItem(QObject *item, int delay = 800) = 0;
     void pressAndHold(int posx, int posy, int delay = 800);
     void mouseMove(int startx, int starty, int stopx, int stopy);
     void mouseDrag(int startx, int starty, int stopx, int stopy, int delay = 1200);
-
-    template <typename T>
-    T getItem(const QString &elementId);
+    void processTouchActionList(const QVariant &actionListArg);
 
     QWindow *m_rootWindow = nullptr;
     QObject *m_rootObject = nullptr;
@@ -100,6 +109,7 @@ private slots:
     virtual void pressKeyCodeCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg) override;
     virtual void executeCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
     virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
+    virtual void performTouchCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
 
     // execute_%1 methods
     void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);

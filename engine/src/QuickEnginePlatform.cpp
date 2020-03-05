@@ -563,15 +563,21 @@ void QuickEnginePlatform::clickItem(QQuickItem *item)
     clickPoint(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2);
 }
 
-void QuickEnginePlatform::pressAndHoldItem(QQuickItem *item, int delay)
+void QuickEnginePlatform::pressAndHoldItem(QObject *qitem, int delay)
 {
     qWarning()
         << Q_FUNC_INFO
-        << item << delay;
+        << qitem << delay;
 
+    if (!qitem) {
+        return;
+    }
+
+    QQuickItem *item = qobject_cast<QQuickItem*>(qitem);
     if (!item) {
         return;
     }
+
     const QPointF itemAbs = getAbsPosition(item);
     pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2, delay);
 }

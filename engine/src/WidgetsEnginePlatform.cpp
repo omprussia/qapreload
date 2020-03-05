@@ -575,7 +575,12 @@ QJsonObject WidgetsEnginePlatform::recursiveDumpTree(QWidget *rootItem, int dept
     QJsonArray childArray;
 
     int z = 0;
-    for (QWidget *child : rootItem->findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly)) {
+//    for (QWidget *child : rootItem->findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly)) {
+    for (QObject *obj : rootItem->children()) {
+        QWidget *child = qobject_cast<QWidget*>(obj);
+        if (!child) {
+            continue;
+        }
         QJsonObject childObject = recursiveDumpTree(child, ++z);
         childArray.append(QJsonValue(childObject));
     }
@@ -584,7 +589,7 @@ QJsonObject WidgetsEnginePlatform::recursiveDumpTree(QWidget *rootItem, int dept
     return object;
 }
 
-QJsonObject WidgetsEnginePlatform::dumpObject(QWidget *item, int depth)
+QJsonObject WidgetsEnginePlatform:: dumpObject(QWidget *item, int depth)
 {
     QJsonObject object;
 
@@ -594,24 +599,24 @@ QJsonObject WidgetsEnginePlatform::dumpObject(QWidget *item, int depth)
     const QString id = uniqueId(item);
     object.insert(QStringLiteral("id"), QJsonValue(id));
 
-    auto mo = item->metaObject();
-    do {
-      const QString moClassName = QString::fromLatin1(mo->className());
-      std::vector<std::pair<QString, QVariant> > v;
-      v.reserve(mo->propertyCount() - mo->propertyOffset());
-      for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
-          const QString propertyName = QString::fromLatin1(mo->property(i).name());
-          v.emplace_back(propertyName,
-                         mo->property(i).read(item));
-      }
-      std::sort(v.begin(), v.end());
-      for (auto &i : v) {
-          if (!object.contains(i.first)
-                  && i.second.canConvert<QString>()) {
-              object.insert(i.first, QJsonValue::fromVariant(i.second));
-          }
-      }
-    } while ((mo = mo->superClass()));
+//    auto mo = item->metaObject();
+//    do {
+//      const QString moClassName = QString::fromLatin1(mo->className());
+//      std::vector<std::pair<QString, QVariant> > v;
+//      v.reserve(mo->propertyCount() - mo->propertyOffset());
+//      for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+//          const QString propertyName = QString::fromLatin1(mo->property(i).name());
+//          v.emplace_back(propertyName,
+//                         mo->property(i).read(item));
+//      }
+//      std::sort(v.begin(), v.end());
+//      for (auto &i : v) {
+//          if (!object.contains(i.first)
+//                  && i.second.canConvert<QString>()) {
+//              object.insert(i.first, QJsonValue::fromVariant(i.second));
+//          }
+//      }
+//    } while ((mo = mo->superClass()));
 
     const QRect rect(item->x(), item->y(), item->width(), item->height());
     object.insert(QStringLiteral("width"), QJsonValue(rect.width()));
@@ -731,4 +736,23 @@ void WidgetsEnginePlatform::setProperty(QTcpSocket *socket, const QString &prope
     } else {
         socketReply(socket, QString(), 1);
     }
+}
+
+void WidgetsEnginePlatform::pressAndHoldItem(QObject *qitem, int delay)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << qitem << delay;
+
+    if (!qitem) {
+        return;
+    }
+
+    QWidget *item = qobject_cast<QWidget*>(qitem);
+    if (!item) {
+        return;
+    }
+
+    const QPointF itemAbs = getAbsPosition(item);
+    pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2, delay);
 }

@@ -60,6 +60,7 @@ private slots:
     virtual void pressKeyCodeCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg) = 0;
     virtual void executeCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) = 0;
     virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) = 0;
+    virtual void performTouchCommand(QTcpSocket *socket, const QVariant &paramsArg) = 0;
 
 signals:
     void ready();
