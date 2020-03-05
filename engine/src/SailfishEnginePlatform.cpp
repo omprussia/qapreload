@@ -691,7 +691,7 @@ void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket 
         << Q_FUNC_INFO
         << socket << elementId << destination;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         clickContextMenuItem(item, destination);
     }
@@ -704,7 +704,7 @@ void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket 
         << Q_FUNC_INFO
         << socket << elementId << destination;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         clickContextMenuItem(item, destination);
     }
@@ -797,7 +797,7 @@ void SailfishEnginePlatform::executeCommand_app_scrollToItem(QTcpSocket *socket,
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         scrollToItem(item);
     }
