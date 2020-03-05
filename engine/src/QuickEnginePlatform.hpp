@@ -15,7 +15,7 @@ public:
     explicit QuickEnginePlatform(QObject *parent);
 
     QQuickItem *findItemByObjectName(const QString &objectName, QQuickItem *parentItem = nullptr);
-    QVariantList findItemsByClassName(const QString &getClassName, QQuickItem *parentItem = nullptr);
+    QVariantList findItemsByClassName(const QString &className, QQuickItem *parentItem = nullptr);
     QVariantList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QQuickItem *parentItem = nullptr);
     QVariantList findItemsByText(const QString &text, bool partial = true, QQuickItem *parentItem = nullptr);
     QVariantList findItemsByXpath(const QString &xpath, QQuickItem *parentItem = nullptr);
@@ -46,7 +46,6 @@ protected:
     QJsonObject dumpObject(QQuickItem *item, int depth = 0);
 
     QQmlEngine *getEngine(QQuickItem *item = nullptr);
-    QQuickItem *getItem(const QString &elementId);
 
     QQuickItem *m_rootQuickItem = nullptr;
     QQuickWindow *m_rootQuickWindow = nullptr;
@@ -54,10 +53,7 @@ protected:
     QHash<QString, QStringList> m_blacklistedProperties;
 
 private slots:
-    virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void closeAppCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void queryAppStateCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void backgroundCommand(QTcpSocket *socket, double seconds) override;
+    // IEnginePlatform interface
 //    virtual void getClipboardCommand(QTcpSocket *socket) override;
 //    virtual void setClipboardCommand(QTcpSocket *socket, const QString &content) override;
     virtual void findElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector) override;
@@ -83,7 +79,7 @@ private slots:
     virtual void submitCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void getPageSourceCommand(QTcpSocket *socket) override;
 
-    // GenericEnginePlatform interface
+    // synthesized input events
     virtual void onKeyEvent(QKeyEvent *event) override;
 
     // findElement_%1 methods
@@ -95,7 +91,6 @@ private slots:
     void findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple = false, QQuickItem *parentItem = nullptr);
 
     // execute_%1 methods
-    void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
     void executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy);
     void executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
     void executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
@@ -103,9 +98,5 @@ private slots:
     void executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode);
     void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value);
     void executeCommand_app_dumpTree(QTcpSocket *socket);
-
-    // own stuff
-
-    void onPropertyChanged();
 };
 

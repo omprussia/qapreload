@@ -37,6 +37,7 @@ void GenericEnginePlatform::socketReply(QTcpSocket *socket, const QVariant &valu
 
     qDebug()
         << Q_FUNC_INFO
+        << socket
         << "Reply is:";
     qDebug().noquote()
         << data;
@@ -161,8 +162,26 @@ void GenericEnginePlatform::execute(QTcpSocket *socket, const QString &methodNam
         qWarning()
             << Q_FUNC_INFO
             << methodName << "not handled!";
+        socketReply(socket, QString());
     }
-    socketReply(socket, QString());
+}
+
+void GenericEnginePlatform::onPropertyChanged()
+{
+    QObject *item = sender();
+    QEventLoop *loop = item->property("WaitForPropertyChangeEventLoop").value<QEventLoop*>();
+    if (!loop) {
+        return;
+    }
+    const QString propertyName = item->property("WaitForPropertyChangePropertyName").toString();
+    const QVariant propertyValue = item->property("WaitForPropertyChangePropertyValue");
+    if (!propertyValue.isValid()) {
+        loop->quit();
+    }
+    const QVariant property = item->property(propertyName.toLatin1().constData());
+    if (property == propertyValue) {
+        loop->quit();
+    }
 }
 
 void GenericEnginePlatform::onTouchEvent(const QTouchEvent &event)
@@ -204,34 +223,103 @@ void GenericEnginePlatform::onKeyEvent(QKeyEvent *event)
 
 void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << appName;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    if (appName != QAEngine::processName()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << appName << "is not" << QAEngine::processName();
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    if (!m_rootWindow) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No window!";
+        return;
+    }
+
+    m_rootWindow->raise();
+    m_rootWindow->requestActivate();
+    m_rootWindow->setWindowState(Qt::WindowState::WindowActive);
+
+    socketReply(socket, QString());
 }
 
 void GenericEnginePlatform::closeAppCommand(QTcpSocket *socket, const QString &appName)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << appName;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    if (appName != QAEngine::processName()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << appName << "is not" << QAEngine::processName();
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    socketReply(socket, QString());
+    qApp->quit();
 }
 
 void GenericEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QString &appName)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << appName;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    if (appName != QAEngine::processName()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << appName << "is not" << QAEngine::processName();
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    if (!m_rootWindow) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No window!";
+        return;
+    }
+
+    const bool isAppActive = m_rootWindow->isActive();
+    socketReply(socket, isAppActive ? QStringLiteral("RUNNING_IN_FOREGROUND") : QStringLiteral("RUNNING_IN_BACKGROUND"));
 }
 
 void GenericEnginePlatform::backgroundCommand(QTcpSocket *socket, double seconds)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << seconds;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    if (!m_rootWindow) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No window!";
+        return;
+    }
+
+    m_rootWindow->showMinimized();
+    m_rootWindow->lower();
+    if (seconds > 0) {
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        timer.start(seconds * 1000);
+        loop.exec();
+        m_rootWindow->raise();
+        m_rootWindow->requestActivate();
+        m_rootWindow->setWindowState(Qt::WindowState::WindowActive);
+    }
+
+    socketReply(socket, QString());
 }
 
 void GenericEnginePlatform::getClipboardCommand(QTcpSocket *socket)
@@ -593,4 +681,18 @@ void GenericEnginePlatform::executeAsyncCommand(QTcpSocket *socket, const QStrin
     const QString fixCommand = QString(command).replace(QChar(':'), QChar('_'));
     const QString methodName = QStringLiteral("executeCommand_%1").arg(fixCommand); // executeCommandAsync_ ?
     execute(socket, methodName, params);
+}
+
+template<typename T>
+T GenericEnginePlatform::getItem(const QString &elementId)
+{
+    T item = nullptr;
+    if (m_items.contains(elementId)) {
+        item = qobject_cast<T>(m_items.value(elementId));
+    }
+    qWarning()
+        << Q_FUNC_INFO
+        << elementId << item;
+
+    return item;
 }

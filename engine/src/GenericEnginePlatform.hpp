@@ -29,8 +29,11 @@ protected:
     void mouseMove(int startx, int starty, int stopx, int stopy);
     void mouseDrag(int startx, int starty, int stopx, int stopy, int delay = 1200);
 
-    QWindow *m_rootWindow;
-    QObject *m_rootObject;
+    template <typename T>
+    T getItem(const QString &elementId);
+
+    QWindow *m_rootWindow = nullptr;
+    QObject *m_rootObject = nullptr;
 
     QHash<QString, QObject*> m_items;
     QAMouseEngine *m_mouseEngine;
@@ -40,10 +43,15 @@ private:
     void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params);
 
 private slots:
+    // own stuff
+    void onPropertyChanged();
+
+    // synthesized input events
     virtual void onTouchEvent(const QTouchEvent &event);
     virtual void onMouseEvent(const QMouseEvent &event);
     virtual void onKeyEvent(QKeyEvent *event);
 
+    // IEnginePlatform interface
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
     virtual void closeAppCommand(QTcpSocket *socket, const QString &appName) override;
     virtual void queryAppStateCommand(QTcpSocket *socket, const QString &appName) override;
@@ -92,5 +100,8 @@ private slots:
     virtual void pressKeyCodeCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg) override;
     virtual void executeCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
     virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
+
+    // execute_%1 methods
+    void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
 };
 

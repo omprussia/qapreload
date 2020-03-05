@@ -353,112 +353,6 @@ void QuickEnginePlatform::initialize()
     emit ready();
 }
 
-void QuickEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)
-{
-    qWarning()
-        << Q_FUNC_INFO
-        << socket << appName;
-
-    if (appName != QAEngine::processName()) {
-        qWarning()
-            << Q_FUNC_INFO
-            << appName << "is not" << QAEngine::processName();
-        socketReply(socket, QString(), 1);
-        return;
-    }
-
-    if (!m_rootQuickWindow) {
-        qWarning()
-            << Q_FUNC_INFO
-            << "No window!";
-        return;
-    }
-
-    m_rootQuickWindow->show();
-    m_rootQuickWindow->raise();
-
-    socketReply(socket, QString());
-}
-
-void QuickEnginePlatform::closeAppCommand(QTcpSocket *socket, const QString &appName)
-{
-    qWarning()
-        << Q_FUNC_INFO
-        << socket << appName;
-
-    if (appName != QAEngine::processName()) {
-        qWarning()
-            << Q_FUNC_INFO
-            << appName << "is not" << QAEngine::processName();
-        socketReply(socket, QString(), 1);
-        return;
-    }
-
-    if (!m_rootQuickWindow) {
-        qWarning()
-            << Q_FUNC_INFO
-            << "No window!";
-        return;
-    }
-
-    socketReply(socket, QString());
-    qApp->quit();
-}
-
-void QuickEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QString &appName)
-{
-    qWarning()
-        << Q_FUNC_INFO
-        << socket << appName;
-
-    if (appName != QAEngine::processName()) {
-        qWarning()
-            << Q_FUNC_INFO
-            << appName << "is not" << QAEngine::processName();
-        socketReply(socket, QString(), 1);
-        return;
-    }
-
-    if (!m_rootQuickWindow) {
-        qWarning()
-            << Q_FUNC_INFO
-            << "No window!";
-        return;
-    }
-
-    const bool isAppActive = m_rootQuickWindow->isActive();
-    socketReply(socket, isAppActive ? QStringLiteral("RUNNING_IN_FOREGROUND") : QStringLiteral("RUNNING_IN_BACKGROUND"));
-}
-
-void QuickEnginePlatform::backgroundCommand(QTcpSocket *socket, double seconds)
-{
-    qWarning()
-        << Q_FUNC_INFO
-        << socket << seconds;
-
-    if (!m_rootQuickWindow) {
-        qWarning()
-            << Q_FUNC_INFO
-            << "No window!";
-        return;
-    }
-
-    const int msecs = seconds * 1000;
-
-    m_rootQuickWindow->lower();
-    if (msecs > 0) {
-        QEventLoop loop;
-        QTimer timer;
-        timer.setSingleShot(true);
-        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        timer.start(msecs);
-        loop.exec();
-        m_rootQuickWindow->raise();
-    }
-
-    socketReply(socket, QString());
-}
-
 void QuickEnginePlatform::findElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector)
 {
     qWarning()
@@ -483,7 +377,7 @@ void QuickEnginePlatform::findElementFromElementCommand(QTcpSocket *socket, cons
         << Q_FUNC_INFO
         << socket << strategy << selector << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     findElement(socket, strategy, selector, false, item);
 }
 
@@ -493,7 +387,7 @@ void QuickEnginePlatform::findElementsFromElementCommand(QTcpSocket *socket, con
         << Q_FUNC_INFO
         << socket << strategy << selector << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     findElement(socket, strategy, selector, true, item);
 }
 
@@ -547,7 +441,7 @@ void QuickEnginePlatform::setProperty(QTcpSocket *socket, const QString &propert
         << Q_FUNC_INFO
         << socket << property << value << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         item->setProperty(property.toLatin1().constData(), value);
         socketReply(socket, QString());
@@ -753,26 +647,13 @@ QQmlEngine *QuickEnginePlatform::getEngine(QQuickItem *item)
     return engine;
 }
 
-QQuickItem *QuickEnginePlatform::getItem(const QString &elementId)
-{
-    QQuickItem *item = nullptr;
-    if (m_items.contains(elementId)) {
-        item = qobject_cast<QQuickItem*>(m_items.value(elementId));
-    }
-    qWarning()
-        << Q_FUNC_INFO
-        << elementId << item;
-
-    return item;
-}
-
 void QuickEnginePlatform::getLocationCommand(QTcpSocket *socket, const QString &elementId)
 {
     qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         QJsonObject reply;
         const QPointF absPoint = getAbsPosition(item);
@@ -794,7 +675,7 @@ void QuickEnginePlatform::getLocationInViewCommand(QTcpSocket *socket, const QSt
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         QJsonObject reply;
         reply.insert(QStringLiteral("centerx"), item->x() + item->width() / 2);
@@ -815,7 +696,7 @@ void QuickEnginePlatform::getAttributeCommand(QTcpSocket *socket, const QString 
         << Q_FUNC_INFO
         << socket << attribute << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         const QVariant reply = item->property(attribute.toLatin1().constData());
         socketReply(socket, reply);
@@ -830,7 +711,7 @@ void QuickEnginePlatform::getPropertyCommand(QTcpSocket *socket, const QString &
         << Q_FUNC_INFO
         << socket << attribute << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         const QVariant reply = item->property(attribute.toLatin1().constData());
         socketReply(socket, reply);
@@ -845,7 +726,7 @@ void QuickEnginePlatform::getTextCommand(QTcpSocket *socket, const QString &elem
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         socketReply(socket, getText(item));
     } else {
@@ -859,7 +740,7 @@ void QuickEnginePlatform::getElementScreenshotCommand(QTcpSocket *socket, const 
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         grabScreenshot(socket, item, true);
     } else {
@@ -909,7 +790,7 @@ void QuickEnginePlatform::getSizeCommand(QTcpSocket *socket, const QString &elem
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         QJsonObject reply;
         reply.insert(QStringLiteral("width"), item->width());
@@ -958,7 +839,7 @@ void QuickEnginePlatform::clickCommand(QTcpSocket *socket, const QString &elemen
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (item) {
         clickItem(item);
         socketReply(socket, QString());
@@ -1054,20 +935,9 @@ void QuickEnginePlatform::findStrategy_parent(QTcpSocket *socket, const QString 
 
 void QuickEnginePlatform::findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple, QQuickItem *parentItem)
 {
-
-}
-
-void QuickEnginePlatform::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout)
-{
-    qWarning()
-        << Q_FUNC_INFO
-        << socket << elementId << propertyName << value << timeout;
-
-    QQuickItem *item = getItem(elementId);
-    if (item) {
-        waitForPropertyChange(item, propertyName, value, timeout);
-    }
-    socketReply(socket, QString());
+    QVariantList items = findItemsByXpath(selector, parentItem);
+    qDebug() << Q_FUNC_INFO << selector << multiple << items;
+    elementReply(socket, items, multiple);
 }
 
 void QuickEnginePlatform::executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy)
@@ -1106,7 +976,7 @@ void QuickEnginePlatform::executeCommand_app_method(QTcpSocket *socket, const QS
         << Q_FUNC_INFO
         << socket << elementId << method << params;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (!item) {
         socketReply(socket, QString());
         return;
@@ -1142,7 +1012,7 @@ void QuickEnginePlatform::executeCommand_app_js(QTcpSocket *socket, const QStrin
         << Q_FUNC_INFO
         << socket << elementId << jsCode;
 
-    QQuickItem *item = getItem(elementId);
+    QQuickItem *item = getItem<QQuickItem*>(elementId);
     if (!item) {
         socketReply(socket, QString());
         return;
@@ -1172,22 +1042,4 @@ void QuickEnginePlatform::executeCommand_app_dumpTree(QTcpSocket *socket)
 
     QJsonObject reply = recursiveDumpTree(m_rootQuickItem);
     socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
-}
-
-void QuickEnginePlatform::onPropertyChanged()
-{
-    QObject *item = sender();
-    QEventLoop *loop = item->property("WaitForPropertyChangeEventLoop").value<QEventLoop*>();
-    if (!loop) {
-        return;
-    }
-    const QString propertyName = item->property("WaitForPropertyChangePropertyName").toString();
-    const QVariant propertyValue = item->property("WaitForPropertyChangePropertyValue");
-    if (!propertyValue.isValid()) {
-        loop->quit();
-    }
-    const QVariant property = item->property(propertyName.toLatin1().constData());
-    if (property == propertyValue) {
-        loop->quit();
-    }
 }

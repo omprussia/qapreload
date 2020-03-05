@@ -4,9 +4,19 @@ CONFIG += plugin
 CONFIG += c++11
 CONFIG += link_pkgconfig
 
-! contains(DEFINES, Q_OS_SAILFISH) {
+contains(DEFINES, Q_OS_SAILFISH) {
+    message("Building for sailfish os")
+
+    SOURCES += \
+        src/SailfishEnginePlatform.cpp
+
+    HEADERS += \
+        src/SailfishEnginePlatform.hpp
+
+} else {
     message("Building engine with widgets support")
-    QT += widgets
+    QT += widgets widgets-private
+
 }
 
 contains(DEFINES, USE_MLITE5) {
@@ -30,7 +40,6 @@ SOURCES += \
     src/QAEngineSocketClient.cpp \
     src/GenericEnginePlatform.cpp \
     src/QuickEnginePlatform.cpp \
-    src/SailfishEnginePlatform.cpp \
     src/WidgetsEnginePlatform.cpp \
     src/QAMouseEngine.cpp \
     src/QAKeyEngine.cpp \
@@ -42,7 +51,6 @@ HEADERS += \
     src/IEnginePlatform.hpp \
     src/GenericEnginePlatform.hpp \
     src/QuickEnginePlatform.hpp \
-    src/SailfishEnginePlatform.hpp \
     src/WidgetsEnginePlatform.hpp \
     src/QAMouseEngine.hpp \
     src/QAKeyEngine.hpp \
