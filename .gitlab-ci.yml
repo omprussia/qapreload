@@ -1,0 +1,20 @@
+stages:
+  - build
+
+.build:
+  stage: build
+  image: registry.omprussia.ru/omp-sdk/sailfishos-sdk-ci:$SFOS_VERSION
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/RPMS/
+  script: python -u /usr/bin/sdk-build-ci
+  only:
+    - tags
+    - branches
+  tags:
+    - docker
+
+build-3.0.2:
+  extends: .build
+  variables:
+    SFOS_VERSION: "3.0.2"
