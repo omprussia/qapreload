@@ -12,6 +12,7 @@ class QABridge : public QObject
     Q_OBJECT
 public:
     explicit QABridge(QObject *parent = nullptr);
+    static bool metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
 
 public slots:
     void start();

@@ -7,7 +7,8 @@
 LinuxBridgePlatform::LinuxBridgePlatform(QObject *parent)
     : GenericBridgePlatform(parent)
 {
-
+    qDebug()
+        << Q_FUNC_INFO;
 }
 
 bool LinuxBridgePlatform::lauchAppPlatform(QTcpSocket *socket)

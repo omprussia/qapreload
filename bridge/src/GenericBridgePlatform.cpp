@@ -1,4 +1,5 @@
 #include "GenericBridgePlatform.hpp"
+#include "QABridge.hpp"
 
 #include <QDateTime>
 #include <QEventLoop>
@@ -18,7 +19,8 @@ GenericBridgePlatform::GenericBridgePlatform(QObject *parent)
     : IBridgePlatform(parent)
     , m_connectLoop(new QEventLoop(this))
 {
-
+    qDebug()
+        << Q_FUNC_INFO;
 }
 
 void GenericBridgePlatform::appConnect(QTcpSocket *socket, const QString &appName)
@@ -71,6 +73,19 @@ void GenericBridgePlatform::removeClient(QTcpSocket *socket)
         qDebug()
             << Q_FUNC_INFO
             << "removing application socket:" << appName << m_applicationSocket.take(appName);
+    }
+}
+
+void GenericBridgePlatform::execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params)
+{
+    bool handled = false;
+    bool success = QABridge::metaInvoke(socket, this, methodName, params, &handled);
+
+    if (!handled || !success) {
+        qWarning()
+            << Q_FUNC_INFO
+            << methodName << "not handled!";
+        socketReply(socket, QString());
     }
 }
 
@@ -554,46 +569,30 @@ void GenericBridgePlatform::executeCommand(QTcpSocket *socket, const QString &co
         return;
     }
 
-    const QVariantList params = paramsArg.toList();
-    QGenericArgument arguments[9] = { QGenericArgument() };
-    for (int i = 0; i < params.length(); i++) {
-        arguments[i] = Q_ARG(QVariant, params[i]);
-    }
-
-    bool handled = QMetaObject::invokeMethod(
-        this,
-        QStringLiteral("executeCommand_%1").arg(commandPair.last()).toLatin1().constData(),
-        Qt::DirectConnection,
-        Q_ARG(QTcpSocket*, socket),
-        arguments[0],
-        arguments[1],
-        arguments[2],
-        arguments[3],
-        arguments[4],
-        arguments[5],
-        arguments[6],
-        arguments[7],
-        arguments[8]);
-
-    if (!handled) {
-        qWarning() << Q_FUNC_INFO << command << "not handled!";
-        socketReply(socket, QString());
-    }
+    const QString fixCommand = QString(command).replace(QChar(':'), QChar('_'));
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(fixCommand);
+    execute(socket, methodName, paramsArg.toList());
 }
 
 void GenericBridgePlatform::executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariant &paramsArg)
 {
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << command << paramsArg;
+
     const QStringList commandPair = command.split(QChar(':'));
     if (commandPair.length() != 2) {
         socketReply(socket, QString());
         return;
     }
     if (commandPair.first() != QStringLiteral("system")) {
-        forwardToApp(socket, QStringLiteral("executeAsync"), QVariantList({command, paramsArg}));
+        forwardToApp(socket, QStringLiteral("execute"), QVariantList({command, paramsArg}));
         return;
     }
 
-    socketReply(socket, QString());
+    const QString fixCommand = QString(command).replace(QChar(':'), QChar('_'));
+    const QString methodName = QStringLiteral("executeCommand_%1").arg(fixCommand);
+    execute(socket, methodName, paramsArg.toList());
 }
 
 void GenericBridgePlatform::executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
