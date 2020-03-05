@@ -1,0 +1,6 @@
+{
+    "sign": true,
+    "default_repositories": true,
+    "version_template": "{version}+{branch}.{timestamp}",
+    "git_timestamp_format": "%Y%m%d.%H%M%S"
+}
