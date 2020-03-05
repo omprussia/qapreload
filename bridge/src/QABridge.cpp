@@ -60,6 +60,54 @@ QABridge::QABridge(QObject *parent)
             this, &QABridge::removeClient);
 }
 
+bool QABridge::metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented)
+{
+    auto mo = object->metaObject();
+    do {
+        for (int i = mo->methodOffset(); i < mo->methodOffset() + mo->methodCount(); i++) {
+            if (mo->method(i).name() == methodName.toLatin1()) {
+                const QMetaMethod method = mo->method(i);
+                QGenericArgument arguments[9] = { QGenericArgument() };
+                for (int i = 0; i < (method.parameterCount() - 1) && params.count() > i; i++) {
+                    if (method.parameterType(i + 1) == QMetaType::QVariant) {
+                        arguments[i] = Q_ARG(QVariant, params[i]);
+                    } else {
+                        arguments[i] = qVariantToArgument(params[i]);
+                    }
+                }
+                qDebug()
+                    << Q_FUNC_INFO
+                    << "found" << methodName
+                    << "in" << mo->className();
+
+                if (implemented) {
+                    *implemented = true;
+                }
+
+                return QMetaObject::invokeMethod(
+                    object,
+                    methodName.toLatin1().constData(),
+                    Qt::DirectConnection,
+                    Q_ARG(QTcpSocket*, socket),
+                    arguments[0],
+                    arguments[1],
+                    arguments[2],
+                    arguments[3],
+                    arguments[4],
+                    arguments[5],
+                    arguments[6],
+                    arguments[7],
+                    arguments[8]);
+            }
+        }
+    } while ((mo = mo->superClass()));
+
+    if (implemented) {
+        *implemented = false;
+    }
+    return false;
+}
+
 void QABridge::start()
 {
     qDebug() << Q_FUNC_INFO;

@@ -49,7 +49,8 @@ QDBusConnection getSessionBus()
 SailfishBridgePlatform::SailfishBridgePlatform(QObject *parent)
     : LinuxBridgePlatform(parent)
 {
-
+    qDebug()
+        << Q_FUNC_INFO;
 }
 
 void SailfishBridgePlatform::installAppCommand(QTcpSocket *socket, const QString &appPath)
@@ -346,7 +347,7 @@ void SailfishBridgePlatform::stopRecordingScreenCommand(QTcpSocket *socket, cons
     socketReply(socket, m_screenrecorder->lastFilename());
 }
 
-void SailfishBridgePlatform::executeCommand_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
+void SailfishBridgePlatform::executeCommand_system_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
 {
     qDebug()
         << Q_FUNC_INFO

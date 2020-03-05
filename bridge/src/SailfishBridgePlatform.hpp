@@ -4,6 +4,7 @@
 class QAScreenRecorder;
 class SailfishBridgePlatform : public LinuxBridgePlatform
 {
+    Q_OBJECT
 public:
     explicit SailfishBridgePlatform(QObject *parent);
 
@@ -20,7 +21,7 @@ private slots:
     void stopRecordingScreenCommand(QTcpSocket *socket, const QVariant &arguments) override;
 
 // SailfishBridgePlatform slots
-    void executeCommand_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
+    void executeCommand_system_unlock(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
 
 private:
     QAScreenRecorder *m_screenrecorder = nullptr;

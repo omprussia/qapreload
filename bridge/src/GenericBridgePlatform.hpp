@@ -15,6 +15,9 @@ public:
 
     void removeClient(QTcpSocket *socket) override;
 
+private:
+    void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &paramsArg);
+
 private slots:
     virtual void initializeCommand(QTcpSocket *socket, const QString &appName) override;
     virtual void appConnectCommand(QTcpSocket *socket) override;
