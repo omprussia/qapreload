@@ -34,7 +34,7 @@ public slots:
 
 protected:
     void clickItem(QQuickItem *item);
-    void pressAndHoldItem(QQuickItem *item, int delay = 800);
+    void pressAndHoldItem(QObject *qitem, int delay = 800) override;
     void waitForPropertyChange(QQuickItem *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
     void clearFocus();
     void clearComponentCache();

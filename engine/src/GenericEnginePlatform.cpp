@@ -153,6 +153,45 @@ void GenericEnginePlatform::mouseDrag(int startx, int starty, int stopx, int sto
     loop.exec();
 }
 
+void GenericEnginePlatform::processTouchActionList(const QVariant &actionListArg)
+{
+    int startX = 0;
+    int startY = 0;
+    int endX = 0;
+    int endY = 0;
+    int delay = 800;
+
+    const QVariantList actions = actionListArg.toList();
+    for (const QVariant &actionArg : actions) {
+        const QVariantMap action = actionArg.toMap();
+        const QString actionName = action.value(QStringLiteral("action")).toString();
+        const QVariantMap options = action.value(QStringLiteral("options")).toMap();
+
+        if (actionName == QLatin1String("wait")) {
+            delay = options.value(QStringLiteral("ms")).toInt();
+        } else if (actionName == QLatin1String("tap")) {
+            const int tapX = options.value(QStringLiteral("x")).toInt();
+            const int tapY = options.value(QStringLiteral("y")).toInt();
+            clickPoint(tapX, tapY);
+        } else if (actionName == QLatin1String("press")) {
+            startX = options.value(QStringLiteral("x")).toInt();
+            startY = options.value(QStringLiteral("y")).toInt();
+        } else if (actionName == QLatin1String("moveTo")) {
+            endX = options.value(QStringLiteral("x")).toInt();
+            endY = options.value(QStringLiteral("y")).toInt();
+        } else if (actionName == QLatin1String("release")) {
+            mouseDrag(startX, startY, endX, endY, delay);
+        } else if (actionName == QLatin1String("longPress")) {
+            const QString elementId = options.value(QStringLiteral("element")).toString();
+            if (!m_items.contains(elementId)) {
+                continue;
+            }
+            pressAndHoldItem(m_items.value(elementId), delay);
+        }
+    }
+
+}
+
 void GenericEnginePlatform::execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params)
 {
     bool handled = false;
@@ -683,16 +722,13 @@ void GenericEnginePlatform::executeAsyncCommand(QTcpSocket *socket, const QStrin
     execute(socket, methodName, params);
 }
 
-template<typename T>
-T GenericEnginePlatform::getItem(const QString &elementId)
+void GenericEnginePlatform::performTouchCommand(QTcpSocket *socket, const QVariant &paramsArg)
 {
-    T item = nullptr;
-    if (m_items.contains(elementId)) {
-        item = qobject_cast<T>(m_items.value(elementId));
-    }
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
-        << elementId << item;
+        << socket << paramsArg;
 
-    return item;
+    processTouchActionList(paramsArg);
+    socketReply(socket, QString());
+
 }
