@@ -17,6 +17,12 @@ contains(DEFINES, Q_OS_SAILFISH) {
     message("Building engine with widgets support")
     QT += widgets widgets-private
 
+    SOURCES += \
+        src/WidgetsEnginePlatform.cpp
+
+    HEADERS += \
+        src/WidgetsEnginePlatform.hpp
+
 }
 
 contains(DEFINES, USE_MLITE5) {
@@ -40,7 +46,6 @@ SOURCES += \
     src/QAEngineSocketClient.cpp \
     src/GenericEnginePlatform.cpp \
     src/QuickEnginePlatform.cpp \
-    src/WidgetsEnginePlatform.cpp \
     src/QAMouseEngine.cpp \
     src/QAKeyEngine.cpp \
     src/QAPendingEvent.cpp
@@ -51,7 +56,6 @@ HEADERS += \
     src/IEnginePlatform.hpp \
     src/GenericEnginePlatform.hpp \
     src/QuickEnginePlatform.hpp \
-    src/WidgetsEnginePlatform.hpp \
     src/QAMouseEngine.hpp \
     src/QAKeyEngine.hpp \
     src/QAPendingEvent.hpp
