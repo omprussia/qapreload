@@ -9,7 +9,7 @@ class IEnginePlatform : public QObject
 public:
     explicit IEnginePlatform(QObject* parent) : QObject(parent) {}
     virtual void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) = 0;
-    virtual void elementReply(QTcpSocket *socket, const QVariantList &elements, bool multiple = false) = 0;
+    virtual void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) = 0;
 
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) = 0;
