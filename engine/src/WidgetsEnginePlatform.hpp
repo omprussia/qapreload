@@ -36,23 +36,6 @@ private slots:
     void onFocusWindowChanged(QWindow *window);
 
     // IEnginePlatform interface
-    virtual void getLocationCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getLocationInViewCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getAttributeCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId) override;
-    virtual void getPropertyCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId) override;
-    virtual void getTextCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getElementScreenshotCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getScreenshotCommand(QTcpSocket *socket) override;
-    virtual void elementEnabledCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void elementDisplayedCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void elementSelectedCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getSizeCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void setValueImmediateCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
-    virtual void replaceValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
-    virtual void setValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
-    virtual void clickCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void clearCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void submitCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void getPageSourceCommand(QTcpSocket *socket) override;
 };
 

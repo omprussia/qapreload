@@ -45,6 +45,7 @@ protected:
     virtual QPoint getPosition(QObject *item) = 0;
     virtual QSize getSize(QObject *item) = 0;
     QRect getGeometry(QObject *item);
+    QRect getAbsGeometry(QObject *item);
     virtual bool isItemEnabled(QObject *item) = 0;
     virtual bool isItemVisible(QObject *item) = 0;
 
@@ -67,8 +68,8 @@ protected:
     QObject *m_rootObject = nullptr;
 
     QHash<QString, QObject*> m_items;
-    QAMouseEngine *m_mouseEngine;
-    QAKeyEngine *m_keyEngine;
+    QAMouseEngine *m_mouseEngine = nullptr;
+    QAKeyEngine *m_keyEngine = nullptr;
 
 private:
     void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params);
