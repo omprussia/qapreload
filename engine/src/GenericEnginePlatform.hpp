@@ -8,38 +8,60 @@ class QTouchEvent;
 class QMouseEvent;
 class QKeyEvent;
 class QWindow;
+class QXmlStreamWriter;
+
 class GenericEnginePlatform : public IEnginePlatform
 {
+    Q_OBJECT
 public:
     explicit GenericEnginePlatform(QObject *parent);
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) override;
-    void elementReply(QTcpSocket *socket, const QVariantList &elements, bool multiple = false) override;
+    void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) override;
 
     static QString getClassName(QObject *item);
     static QString uniqueId(QObject *item);
-
-    QObject *getItem(const QString &elementId);
-
-    template <typename T>
-    T getItem(const QString &elementId)
-    {
-        T item = nullptr;
-        if (m_items.contains(elementId)) {
-            item = qobject_cast<T>(m_items.value(elementId));
-        }
-        return item;
-    }
 
 public slots:
     virtual void initialize() = 0;
 
 protected:
+    void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QObject *item = nullptr);
+    void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QObject *parentItem = nullptr);
+    void setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId);
+
+    virtual QList<QObject*> childrenList(QObject* parentItem) = 0;
+    QObject *findItemByObjectName(const QString &objectName, QObject *parentItem = nullptr);
+    QObjectList findItemsByClassName(const QString &className, QObject *parentItem = nullptr);
+    QObjectList findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QObject *parentItem = nullptr);
+    QObjectList findItemsByText(const QString &text, bool partial = true, QObject *parentItem = nullptr);
+    QObjectList findItemsByXpath(const QString &xpath, QObject *parentItem = nullptr);
+    QObjectList filterVisibleItems(QObjectList items);
+
+    bool containsObject(const QString &elementId);
+    QObject *getObject(const QString &elementId);
+    virtual QObject *getParent(QObject *item) = 0;
+    QString getText(QObject *item);
+    virtual QPoint getAbsPosition(QObject *item) = 0;
+    virtual QPoint getPosition(QObject *item) = 0;
+    virtual QSize getSize(QObject *item) = 0;
+    QRect getGeometry(QObject *item);
+    virtual bool isItemEnabled(QObject *item) = 0;
+    virtual bool isItemVisible(QObject *item) = 0;
+
+    QJsonObject dumpObject(QObject *item, int depth = 0);
+    QJsonObject recursiveDumpTree(QObject *rootItem, int depth = 0);
+    void recursiveDumpXml(QXmlStreamWriter *writer, QObject *rootItem, int depth = 0);
+
+    virtual void grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground = false) = 0;
+    void clickItem(QObject *item);
+
     void clickPoint(int posx, int posy);
     virtual void pressAndHoldItem(QObject *item, int delay = 800) = 0;
     void pressAndHold(int posx, int posy, int delay = 800);
     void mouseMove(int startx, int starty, int stopx, int stopy);
     void mouseDrag(int startx, int starty, int stopx, int stopy, int delay = 1200);
     void processTouchActionList(const QVariant &actionListArg);
+    void waitForPropertyChange(QObject *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
 
     QWindow *m_rootWindow = nullptr;
     QObject *m_rootObject = nullptr;
@@ -111,7 +133,17 @@ private slots:
     virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
     virtual void performTouchCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
 
+    // findElement_%1 methods
+    void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_objectName(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_parent(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+
     // execute_%1 methods
+    void executeCommand_app_dumpTree(QTcpSocket *socket);
+    void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value);
     void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
 };
 

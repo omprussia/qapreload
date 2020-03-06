@@ -72,7 +72,7 @@ private:
     void pushUpTo(const QString &text);
     void pushUpTo(int index);
     void scrollToItem(QQuickItem *item);
-    QVariantList openContextMenu(QQuickItem *item);
+    QObjectList openContextMenu(QQuickItem *item);
     void clickContextMenuItem(QQuickItem *item, const QString &text, bool partial = true);
     void clickContextMenuItem(QQuickItem *item, int index);
     void waitForPageChange(int timeout = 1000);

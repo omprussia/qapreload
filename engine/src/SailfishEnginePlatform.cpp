@@ -107,11 +107,11 @@ void SailfishEnginePlatform::pullDownTo(const QString &text)
 
     QQuickItem *page = getCurrentPage();
 
-    QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
+    QObjectList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = qobject_cast<QQuickItem*>(flickables.first());
     bool atYBeginning = flickable->property("atYBeginning").toBool();
     if (!atYBeginning) {
         QMetaObject::invokeMethod(flickable, "scrollToTop", Qt::DirectConnection);
@@ -127,22 +127,22 @@ void SailfishEnginePlatform::pullDownTo(const QString &text)
         }
     }
 
-    QVariantList pullDownMenus = findItemsByClassName(QStringLiteral("PullDownMenu"), page);
+    QObjectList pullDownMenus = findItemsByClassName(QStringLiteral("PullDownMenu"), page);
     pullDownMenus = filterVisibleItems(pullDownMenus);
     if (pullDownMenus.isEmpty()) {
         return;
     }
-    QQuickItem *pullDownMenu = pullDownMenus.first().value<QQuickItem*>();
-    QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pullDownMenu);
+    QQuickItem *pullDownMenu = qobject_cast<QQuickItem*>(pullDownMenus.first());
+    QObjectList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pullDownMenu);
     if (columns.isEmpty()) {
         return;
     }
-    QQuickItem *column = columns.first().value<QQuickItem*>();
-    QVariantList items = findItemsByText(text, false, column);
+    QQuickItem *column = qobject_cast<QQuickItem*>(columns.first());
+    QObjectList items = findItemsByText(text, false, column);
     if (items.isEmpty() || items.count() > 1) {
         return;
     }
-    QQuickItem *item = items.first().value<QQuickItem*>();
+    QQuickItem *item = qobject_cast<QQuickItem*>(items.first());
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -160,11 +160,11 @@ void SailfishEnginePlatform::pullDownTo(int index)
 
     QQuickItem *page = getCurrentPage();
 
-    QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
+    QObjectList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = qobject_cast<QQuickItem*>(flickables.first());
     bool atYBeginning = flickable->property("atYBeginning").toBool();
     if (!atYBeginning) {
         QMetaObject::invokeMethod(flickable, "scrollToTop", Qt::DirectConnection);
@@ -180,22 +180,22 @@ void SailfishEnginePlatform::pullDownTo(int index)
         }
     }
 
-    QVariantList pullDownMenus = findItemsByClassName(QStringLiteral("PullDownMenu"), page);
+    QObjectList pullDownMenus = findItemsByClassName(QStringLiteral("PullDownMenu"), page);
     pullDownMenus = filterVisibleItems(pullDownMenus);
     if (pullDownMenus.isEmpty()) {
         return;
     }
-    QQuickItem *pullDownMenu = pullDownMenus.first().value<QQuickItem*>();
-    QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pullDownMenu);
+    QQuickItem *pullDownMenu = qobject_cast<QQuickItem*>(pullDownMenus.first());
+    QObjectList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pullDownMenu);
     if (columns.isEmpty()) {
         return;
     }
-    QQuickItem *column = columns.first().value<QQuickItem*>();
-    QVariantList items = findItemsByClassName(QStringLiteral("MenuItem"), column);
+    QQuickItem *column = qobject_cast<QQuickItem*>(columns.first());
+    QObjectList items = findItemsByClassName(QStringLiteral("MenuItem"), column);
     if (items.isEmpty() || items.count() < (index + 1)) {
         return;
     }
-    QQuickItem *item = items.at(index).value<QQuickItem*>();
+    QQuickItem *item = qobject_cast<QQuickItem*>(items.at(index));
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -213,11 +213,11 @@ void SailfishEnginePlatform::pushUpTo(const QString &text)
 
     QQuickItem *page = getCurrentPage();
 
-    QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
+    QObjectList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = qobject_cast<QQuickItem*>(flickables.first());
     bool atYEnd = flickable->property("atYEnd").toBool();
     if (!atYEnd) {
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
@@ -233,22 +233,22 @@ void SailfishEnginePlatform::pushUpTo(const QString &text)
         }
     }
 
-    QVariantList pushUpMenus = findItemsByClassName(QStringLiteral("PushUpMenu"), page);
+    QObjectList pushUpMenus = findItemsByClassName(QStringLiteral("PushUpMenu"), page);
     pushUpMenus = filterVisibleItems(pushUpMenus);
     if (pushUpMenus.isEmpty()) {
         return;
     }
-    QQuickItem *pushUpMenu = pushUpMenus.first().value<QQuickItem*>();
-    QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pushUpMenu);
+    QQuickItem *pushUpMenu = qobject_cast<QQuickItem*>(pushUpMenus.first());
+    QObjectList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pushUpMenu);
     if (columns.isEmpty()) {
         return;
     }
-    QQuickItem *column = columns.first().value<QQuickItem*>();
-    QVariantList items = findItemsByText(text, false, column);
+    QQuickItem *column = qobject_cast<QQuickItem*>(columns.first());
+    QObjectList items = findItemsByText(text, false, column);
     if (items.isEmpty() || items.count() > 1) {
         return;
     }
-    QQuickItem *item = items.first().value<QQuickItem*>();
+    QQuickItem *item = qobject_cast<QQuickItem*>(items.first());
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -266,11 +266,11 @@ void SailfishEnginePlatform::pushUpTo(int index)
 
     QQuickItem *page = getCurrentPage();
 
-    QVariantList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
+    QObjectList flickables = findItemsByProperty(QStringLiteral("flickableDirection"), 2, page);
     if (flickables.isEmpty()) {
         return;
     }
-    QQuickItem *flickable = flickables.first().value<QQuickItem*>();
+    QQuickItem *flickable = qobject_cast<QQuickItem*>(flickables.first());
     bool atYEnd = flickable->property("atYEnd").toBool();
     if (!atYEnd) {
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
@@ -286,22 +286,22 @@ void SailfishEnginePlatform::pushUpTo(int index)
         }
     }
 
-    QVariantList pushUpMenus = findItemsByClassName(QStringLiteral("PushUpMenu"), page);
+    QObjectList pushUpMenus = findItemsByClassName(QStringLiteral("PushUpMenu"), page);
     pushUpMenus = filterVisibleItems(pushUpMenus);
     if (pushUpMenus.isEmpty()) {
         return;
     }
-    QQuickItem *pushUpMenu = pushUpMenus.first().value<QQuickItem*>();
-    QVariantList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pushUpMenu);
+    QQuickItem *pushUpMenu = qobject_cast<QQuickItem*>(pushUpMenus.first());
+    QObjectList columns = findItemsByClassName(QStringLiteral("QQuickColumn"), pushUpMenu);
     if (columns.isEmpty()) {
         return;
     }
-    QQuickItem *column = columns.first().value<QQuickItem*>();
-    QVariantList items = findItemsByClassName(QStringLiteral("MenuItem"), column);
+    QQuickItem *column = qobject_cast<QQuickItem*>(columns.first());
+    QObjectList items = findItemsByClassName(QStringLiteral("MenuItem"), column);
     if (items.isEmpty() || items.count() < (index + 1)) {
         return;
     }
-    QQuickItem *item = items.at(index).value<QQuickItem*>();
+    QQuickItem *item = qobject_cast<QQuickItem*>(items.at(index));
     const QPointF itemAbs = getAbsPosition(item);
 
     const int dragX = page->width() / 2;
@@ -337,14 +337,14 @@ void SailfishEnginePlatform::scrollToItem(QQuickItem *item)
     }
 }
 
-QVariantList SailfishEnginePlatform::openContextMenu(QQuickItem *item)
+QObjectList SailfishEnginePlatform::openContextMenu(QQuickItem *item)
 {
     qDebug()
         << Q_FUNC_INFO
         << item;
 
     if (!item) {
-        return QVariantList();
+        return QObjectList();
     }
     pressAndHoldItem(item, 1200);
     return findItemsByClassName(QStringLiteral("MenuItem"), item);
@@ -356,9 +356,9 @@ void SailfishEnginePlatform::clickContextMenuItem(QQuickItem *item, const QStrin
         << Q_FUNC_INFO
         << item << text << partial;
 
-    const QVariantList contextMenuItems = openContextMenu(item);
-    for (const QVariant &cmItem : contextMenuItems) {
-        QQuickItem *item = cmItem.value<QQuickItem*>();
+    QObjectList contextMenuItems = openContextMenu(item);
+    for (QObject *o : contextMenuItems) {
+        QQuickItem *item = qobject_cast<QQuickItem*>(o);
         if ((partial && getText(item).contains(text)) || (!partial && getText(item) == text)) {
             clickItem(item);
             return;
@@ -372,12 +372,12 @@ void SailfishEnginePlatform::clickContextMenuItem(QQuickItem *item, int index)
         << Q_FUNC_INFO
         << item << index;
 
-    const QVariantList contextMenuItems = openContextMenu(item);
+    QObjectList contextMenuItems = openContextMenu(item);
     if (index < 0 || index >= contextMenuItems.count()) {
         return;
     }
 
-    clickItem(contextMenuItems.at(index).value<QQuickItem*>());
+    clickItem(qobject_cast<QQuickItem*>(contextMenuItems.at(index)));
 }
 
 void SailfishEnginePlatform::waitForPageChange(int timeout)
@@ -443,9 +443,9 @@ void SailfishEnginePlatform::peek(SailfishEnginePlatform::PeekDirection directio
 void SailfishEnginePlatform::enterCode(const QString &code)
 {
     QQuickItem *keypadItem = nullptr;
-    QVariantList keypads = findItemsByClassName(QStringLiteral("Keypad"));
-    for (const QVariant &keypad : keypads) {
-        QQuickItem *possibleKeypadItem = keypad.value<QQuickItem*>();
+    QObjectList keypads = findItemsByClassName(QStringLiteral("Keypad"));
+    for (QObject *ko : keypads) {
+        QQuickItem *possibleKeypadItem = qobject_cast<QQuickItem*>(ko);
         if (possibleKeypadItem->isVisible()) {
             keypadItem = possibleKeypadItem;
             break;
@@ -454,10 +454,10 @@ void SailfishEnginePlatform::enterCode(const QString &code)
     if (!keypadItem) {
         return;
     }
-    QVariantList keypadButtons = findItemsByClassName(QStringLiteral("KeypadButton"), keypadItem);
+    QObjectList keypadButtons = findItemsByClassName(QStringLiteral("KeypadButton"), keypadItem);
     for (const QString &number : code) {
-        for (const QVariant &keypadButton : keypadButtons) {
-            QQuickItem *keypadItem = keypadButton.value<QQuickItem*>();
+        for (QObject *kb : keypadButtons) {
+            QQuickItem *keypadItem = qobject_cast<QQuickItem*>(kb);
             if (keypadItem->property("text").toString() == number) {
                 clickItem(keypadItem);
             }
@@ -691,7 +691,7 @@ void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket 
         << Q_FUNC_INFO
         << socket << elementId << destination;
 
-    QQuickItem *item = getItem<QQuickItem*>(elementId);
+    QQuickItem *item = getItem(elementId);
     if (item) {
         clickContextMenuItem(item, destination);
     }
@@ -704,7 +704,7 @@ void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket 
         << Q_FUNC_INFO
         << socket << elementId << destination;
 
-    QQuickItem *item = getItem<QQuickItem*>(elementId);
+    QQuickItem *item = getItem(elementId);
     if (item) {
         clickContextMenuItem(item, destination);
     }
@@ -797,7 +797,7 @@ void SailfishEnginePlatform::executeCommand_app_scrollToItem(QTcpSocket *socket,
         << Q_FUNC_INFO
         << socket << elementId;
 
-    QQuickItem *item = getItem<QQuickItem*>(elementId);
+    QQuickItem *item = getItem(elementId);
     if (item) {
         scrollToItem(item);
     }
