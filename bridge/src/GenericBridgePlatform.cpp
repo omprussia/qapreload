@@ -628,6 +628,7 @@ void GenericBridgePlatform::socketReply(QTcpSocket *socket, const QVariant &valu
 
     qDebug()
         << Q_FUNC_INFO
+        << reply.size()
         << "Reply is:" << reply;
 
     socket->write(QJsonDocument(reply).toJson(QJsonDocument::Compact));

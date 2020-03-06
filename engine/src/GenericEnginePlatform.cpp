@@ -50,6 +50,7 @@ void GenericEnginePlatform::socketReply(QTcpSocket *socket, const QVariant &valu
     qDebug()
         << Q_FUNC_INFO
         << socket
+        << data.size()
         << "Reply is:";
     qDebug().noquote()
         << data;
@@ -297,6 +298,15 @@ QRect GenericEnginePlatform::getGeometry(QObject *item)
         << item;
 
     return QRect(getPosition(item), getSize(item));
+}
+
+QRect GenericEnginePlatform::getAbsGeometry(QObject *item)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << item;
+
+    return QRect(getAbsPosition(item), getSize(item));
 }
 
 QJsonObject GenericEnginePlatform::dumpObject(QObject *item, int depth)
@@ -791,138 +801,224 @@ void GenericEnginePlatform::findElementsFromElementCommand(QTcpSocket *socket, c
 
 void GenericEnginePlatform::getLocationCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        QJsonObject reply;
+        const QRect geometry = getAbsGeometry(item);
+        reply.insert(QStringLiteral("centerx"), geometry.center().x());
+        reply.insert(QStringLiteral("centery"), geometry.center().y());
+        reply.insert(QStringLiteral("x"), geometry.x());
+        reply.insert(QStringLiteral("y"), geometry.y());
+        reply.insert(QStringLiteral("width"), geometry.width());
+        reply.insert(QStringLiteral("height"), geometry.height());
+        socketReply(socket, reply);
+    } else {
+        socketReply(socket, QString());
+    }
 }
 
 void GenericEnginePlatform::getLocationInViewCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        QJsonObject reply;
+        const QRect geometry = getGeometry(item);
+        reply.insert(QStringLiteral("centerx"), geometry.center().x());
+        reply.insert(QStringLiteral("centery"), geometry.center().y());
+        reply.insert(QStringLiteral("x"), geometry.x());
+        reply.insert(QStringLiteral("y"), geometry.y());
+        reply.insert(QStringLiteral("width"), geometry.width());
+        reply.insert(QStringLiteral("height"), geometry.height());
+        socketReply(socket, reply);
+    } else {
+        socketReply(socket, QString());
+    }
 }
 
 void GenericEnginePlatform::getAttributeCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << attribute << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        const QVariant reply = item->property(attribute.toLatin1().constData());
+        socketReply(socket, reply);
+    } else {
+        socketReply(socket, QString());
+    }
 }
 
 void GenericEnginePlatform::getPropertyCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << attribute << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        const QVariant reply = item->property(attribute.toLatin1().constData());
+        socketReply(socket, reply);
+    } else {
+        socketReply(socket, QString());
+    }
 }
 
 void GenericEnginePlatform::getTextCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        socketReply(socket, getText(item));
+    } else {
+        socketReply(socket, QString());
+    }
 }
 
 void GenericEnginePlatform::getElementScreenshotCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        grabScreenshot(socket, item, true);
+    } else {
+        socketReply(socket, QString(), 1);
+    }
 }
 
 void GenericEnginePlatform::getScreenshotCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    grabScreenshot(socket, m_rootObject, true);
 }
 
 void GenericEnginePlatform::elementEnabledCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    getAttributeCommand(socket, QStringLiteral("enabled"), elementId);
 }
 
 void GenericEnginePlatform::elementDisplayedCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    getAttributeCommand(socket, QStringLiteral("visible"), elementId);
 }
 
 void GenericEnginePlatform::elementSelectedCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    getAttributeCommand(socket, QStringLiteral("checked"), elementId);
 }
 
 void GenericEnginePlatform::getSizeCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        QJsonObject reply;
+        const QSize size = getSize(item);
+        reply.insert(QStringLiteral("width"), size.width());
+        reply.insert(QStringLiteral("height"), size.height());
+        socketReply(socket, reply);
+    } else {
+        socketReply(socket, QString(), 1);
+    }
 }
 
 void GenericEnginePlatform::setValueImmediateCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << value << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QStringList text;
+    for (const QVariant &val : value) {
+        text.append(val.toString());
+    }
+
+    setProperty(socket, QStringLiteral("text"), text.join(QString()), elementId);
 }
 
 void GenericEnginePlatform::replaceValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << value << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    setValueImmediateCommand(socket, value, elementId);
 }
 
 void GenericEnginePlatform::setValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << value << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    setValueImmediateCommand(socket, value, elementId);
 }
 
 void GenericEnginePlatform::clickCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        clickItem(item);
+        socketReply(socket, QString());
+    } else {
+        socketReply(socket, QString(), 1);
+    }
 }
 
 void GenericEnginePlatform::clearCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    setProperty(socket, QStringLiteral("text"), QString(), elementId);
 }
 
 void GenericEnginePlatform::submitCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qWarning()
         << Q_FUNC_INFO
         << socket << elementId;
-    socketReply(socket, QStringLiteral("not_implemented"), 405);
+
+    m_keyEngine->pressEnter(1);
+    socketReply(socket, QString());
 }
 
 void GenericEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
@@ -1173,7 +1269,7 @@ void GenericEnginePlatform::executeCommand_app_dumpTree(QTcpSocket *socket)
         << socket;
 
     QJsonObject reply = recursiveDumpTree(m_rootObject);
-    socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
+    socketReply(socket, qCompress(QJsonDocument(reply).toJson(QJsonDocument::Compact), 9).toBase64());
 }
 
 void GenericEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value)
