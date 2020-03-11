@@ -71,6 +71,8 @@ protected:
     QAMouseEngine *m_mouseEngine = nullptr;
     QAKeyEngine *m_keyEngine = nullptr;
 
+    QHash<QString, QStringList> m_blacklistedProperties;
+
 private:
     void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params);
 

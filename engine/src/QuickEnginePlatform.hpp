@@ -45,8 +45,6 @@ protected:
     QQuickItem *m_rootQuickItem = nullptr;
     QQuickWindow *m_rootQuickWindow = nullptr;
 
-    QHash<QString, QStringList> m_blacklistedProperties;
-
 private slots:
     // IEnginePlatform interface
     virtual void getPageSourceCommand(QTcpSocket *socket) override;

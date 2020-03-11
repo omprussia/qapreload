@@ -321,21 +321,28 @@ QJsonObject GenericEnginePlatform::dumpObject(QObject *item, int depth)
 
     auto mo = item->metaObject();
     do {
-      const QString moClassName = QString::fromLatin1(mo->className());
-      std::vector<std::pair<QString, QVariant> > v;
-      v.reserve(mo->propertyCount() - mo->propertyOffset());
-      for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
-          const QString propertyName = QString::fromLatin1(mo->property(i).name());
-          v.emplace_back(propertyName,
-                         mo->property(i).read(item));
-      }
-      std::sort(v.begin(), v.end());
-      for (auto &i : v) {
-          if (!object.contains(i.first)
-                  && i.second.canConvert<QString>()) {
-              object.insert(i.first, QJsonValue::fromVariant(i.second));
-          }
-      }
+        const QString moClassName = QString::fromLatin1(mo->className());
+        std::vector<std::pair<QString, QVariant> > v;
+        v.reserve(mo->propertyCount() - mo->propertyOffset());
+        for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+            const QString propertyName = QString::fromLatin1(mo->property(i).name());
+            if (m_blacklistedProperties.contains(moClassName)
+                    && m_blacklistedProperties.value(moClassName).contains(propertyName)) {
+                qDebug()
+                    << "Found blacklisted:"
+                    << moClassName << propertyName;
+                continue;
+            }
+
+            v.emplace_back(propertyName, mo->property(i).read(item));
+        }
+        std::sort(v.begin(), v.end());
+        for (auto &i : v) {
+            if (!object.contains(i.first)
+                    && i.second.canConvert<QString>()) {
+                object.insert(i.first, QJsonValue::fromVariant(i.second));
+            }
+        }
     } while ((mo = mo->superClass()));
 
     const QRect rect = getGeometry(item);
