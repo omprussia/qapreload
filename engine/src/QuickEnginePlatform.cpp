@@ -28,18 +28,19 @@ QList<QObject *> QuickEnginePlatform::childrenList(QObject *parentItem)
     QList<QObject*> result;
 
     QQuickItem *quick = qobject_cast<QQuickItem*>(parentItem);
-    if (quick) {
+    if (!quick) {
         return result;
     }
 
     QQuickItemPrivate *p = QQuickItemPrivate::get(quick);
-    if (p) {
+    if (!p) {
         return result;
     }
 
     for (QQuickItem *w : p->paintOrderChildItems()) {
         result.append(w);
     }
+
     return result;
 }
 
