@@ -115,7 +115,7 @@ QPoint WidgetsEnginePlatform::getAbsPosition(QObject *item)
             << "frameSize" << frameSize
             << "rootPos:" << m_rootWidget->pos()
             << "itemPos:" << w->pos();
-        return w->mapToGlobal(-m_rootWidget->pos()) - QPoint(frameSize.width(), frameSize.height());
+        return w->mapTo(m_rootWidget, QPoint(0, 0));
     }
 }
 
