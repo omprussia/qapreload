@@ -280,11 +280,15 @@ QString GenericEnginePlatform::getText(QObject *item)
         "text",
         "value",
         "name",
+        "toolTip",
     };
 
     for (const char *textProperty : textProperties) {
         if (item->metaObject()->indexOfProperty(textProperty) > 0) {
-            return item->property(textProperty).toString();
+            const QString text = item->property(textProperty).toString();
+            if (!text.isEmpty()) {
+                return text;
+            }
         }
     }
 
