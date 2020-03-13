@@ -3,11 +3,15 @@
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
 
+#include <QAbstractItemView>
+#include <QAction>
 #include <QApplication>
 #include <QBuffer>
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QMenu>
+#include <QMenuBar>
 #include <QMetaMethod>
 #include <QMetaObject>
 #include <QTimer>
@@ -17,6 +21,7 @@
 #include <QXmlStreamWriter>
 
 #include <private/qwindow_p.h>
+#include <private/qapplication_p.h>
 #include <private/qwidget_p.h>
 
 QList<QObject *> WidgetsEnginePlatform::childrenList(QObject *parentItem)
@@ -53,26 +58,34 @@ WidgetsEnginePlatform::WidgetsEnginePlatform(QObject *parent)
 
 void WidgetsEnginePlatform::initialize()
 {
-    m_rootWindow = QApplication::focusWindow();
     connect(qApp, &QApplication::focusWindowChanged, this, &WidgetsEnginePlatform::onFocusWindowChanged);
-    onFocusWindowChanged(m_rootWindow);
+    onFocusWindowChanged(qApp->activeWindow()->windowHandle());
 }
 
 void WidgetsEnginePlatform::onFocusWindowChanged(QWindow *window)
 {
-    qDebug()
-        << Q_FUNC_INFO
-        << window << qApp->activeWindow();
-
     bool wasEmpty = !m_rootWindow;
 
-    if (!window || window == m_rootWindow) {
+    if (!window) {
         return;
     }
 
     m_rootWindow = window;
     m_rootWidget = qApp->activeWindow();
     m_rootObject = m_rootWidget;
+
+    m_rootWidgets.insert(window, qApp->activeWindow());
+
+    connect(m_rootWindow, &QObject::destroyed, [this](QObject *o) {
+        m_rootWidgets.remove(o);
+        if (m_rootWindow != o) {
+            return;
+        }
+
+        m_rootWindow = qGuiApp->topLevelWindows().last();
+        m_rootWidget = m_rootWidgets.value(m_rootWindow);
+        m_rootObject = m_rootWidget;
+    });
 
     if (wasEmpty) {
         emit ready();
@@ -81,7 +94,7 @@ void WidgetsEnginePlatform::onFocusWindowChanged(QWindow *window)
 
 void WidgetsEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << socket;
 
@@ -90,9 +103,211 @@ void WidgetsEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
+void WidgetsEnginePlatform::executeCommand_app_dumpInView(QTcpSocket *socket, const QString &elementId)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemView *view = qobject_cast<QAbstractItemView*>(item);
+    if (!view) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemModel *model = view->model();
+    if (!model) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << view << model;
+
+    socketReply(socket, recursiveDumpModel(model, QModelIndex()));
+}
+
+void WidgetsEnginePlatform::executeCommand_app_posInView(QTcpSocket *socket, const QString &elementId, const QString &display)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << display;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemView *view = qobject_cast<QAbstractItemView*>(item);
+    if (!view) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemModel *model = view->model();
+    if (!model) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QModelIndex index = recursiveFindModel(model, QModelIndex(), display, true);
+    QRect rect = view->visualRect(index);
+
+    const QPoint itemPos = getAbsPosition(item);
+    const QPoint indexCenter(rect.center().x() + itemPos.x(), rect.center().y() + itemPos.y());
+
+    socketReply(socket, QStringList({QString::number(indexCenter.x()), QString::number(indexCenter.y())}));
+}
+
+void WidgetsEnginePlatform::executeCommand_app_clickInView(QTcpSocket *socket, const QString &elementId, const QString &display)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << display;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemView *view = qobject_cast<QAbstractItemView*>(item);
+    if (!view) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemModel *model = view->model();
+    if (!model) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QModelIndex index = recursiveFindModel(model, QModelIndex(), display, true);
+    QRect rect = view->visualRect(index);
+
+    const QPoint itemPos = getAbsPosition(item);
+    const QPoint indexCenter(rect.center().x() + itemPos.x(), rect.center().y() + itemPos.y());
+    clickPoint(indexCenter);
+
+    socketReply(socket, QStringList({QString::number(indexCenter.x()), QString::number(indexCenter.y())}));
+}
+
+void WidgetsEnginePlatform::executeCommand_app_scrollInView(QTcpSocket *socket, const QString &elementId, const QString &display)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << display;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemView *view = qobject_cast<QAbstractItemView*>(item);
+    if (!view) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemModel *model = view->model();
+    if (!model) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QModelIndex index = recursiveFindModel(model, QModelIndex(), display, true);
+
+    QItemSelectionModel *selectionModel = view->selectionModel();
+    if (selectionModel) {
+        selectionModel->select(index, QItemSelectionModel::ClearAndSelect);
+    }
+
+    view->scrollTo(index);
+    view->setCurrentIndex(index);
+
+    socketReply(socket, QString());
+}
+
+void WidgetsEnginePlatform::executeCommand_app_triggerInMenu(QTcpSocket *socket, const QString &text)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << text;
+
+    for (QAction *a : m_rootWidget->findChildren<QAction*>()) {
+        if (a->text().contains(text)) {
+            QTimer::singleShot(0, a, &QAction::trigger);
+            socketReply(socket, a->text());
+            return;
+        }
+    }
+
+    socketReply(socket, QString());
+}
+
+void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(QTcpSocket *socket)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket;
+
+    QStringList actions;
+
+    for (QAction *a : m_rootWidget->findChildren<QAction*>()) {
+        actions.append(a->text());
+    }
+
+    socketReply(socket, actions);
+}
+
+QModelIndex WidgetsEnginePlatform::recursiveFindModel(QAbstractItemModel *model, QModelIndex index, const QString &display, bool partial)
+{
+    for (int r = 0; r < model->rowCount(index); r++) {
+        for (int c = 0; c < model->columnCount(index); c++) {
+            if (model->hasIndex(r, c, index)) {
+                QModelIndex newIndex = model->index(r, c, index);
+                const QString text = model->data(newIndex).toString();
+                if ((partial && text.contains(display)) || text == display) {
+                    return newIndex;
+                }
+                QModelIndex findIndex = recursiveFindModel(model, newIndex, display, partial);
+                if (findIndex.isValid()) {
+                    return findIndex;
+                }
+            }
+        }
+    }
+    return QModelIndex();
+}
+
+QStringList WidgetsEnginePlatform::recursiveDumpModel(QAbstractItemModel *model, QModelIndex index)
+{
+    QStringList results;
+    for (int r = 0; r < model->rowCount(index); r++) {
+        for (int c = 0; c < model->columnCount(index); c++) {
+            if (model->hasIndex(r, c, index)) {
+                QModelIndex newIndex = model->index(r, c, index);
+                results.append(model->data(newIndex).toString());
+                results.append(recursiveDumpModel(model, newIndex));
+            }
+        }
+    }
+    return results;
+}
+
 QPoint WidgetsEnginePlatform::getAbsPosition(QObject *item)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << item << m_rootWidget;
 
@@ -100,28 +315,20 @@ QPoint WidgetsEnginePlatform::getAbsPosition(QObject *item)
     if (!w) {
         return QPoint();
     }
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << item << w;
 
     if (w == m_rootWidget) {
         return QPoint();
     } else {
-        QSize frameSize = w->window()->frameSize() - w->window()->size();
-        qWarning()
-            << Q_FUNC_INFO
-            << "windowFrameSize:" << w->window()->frameSize()
-            << "windowSize" << w->window()->size()
-            << "frameSize" << frameSize
-            << "rootPos:" << m_rootWidget->pos()
-            << "itemPos:" << w->pos();
         return w->mapTo(m_rootWidget, QPoint(0, 0));
     }
 }
 
 QPoint WidgetsEnginePlatform::getPosition(QObject *item)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << item;
 
@@ -134,7 +341,7 @@ QPoint WidgetsEnginePlatform::getPosition(QObject *item)
 
 QSize WidgetsEnginePlatform::getSize(QObject *item)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << item;
 
@@ -147,7 +354,7 @@ QSize WidgetsEnginePlatform::getSize(QObject *item)
 
 bool WidgetsEnginePlatform::isItemEnabled(QObject *item)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << item;
 
@@ -160,7 +367,7 @@ bool WidgetsEnginePlatform::isItemEnabled(QObject *item)
 
 bool WidgetsEnginePlatform::isItemVisible(QObject *item)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << item;
 
@@ -173,7 +380,7 @@ bool WidgetsEnginePlatform::isItemVisible(QObject *item)
 
 void WidgetsEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << socket << item << fillBackground;
 
@@ -200,7 +407,7 @@ void WidgetsEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bo
 
 void WidgetsEnginePlatform::pressAndHoldItem(QObject *qitem, int delay)
 {
-    qWarning()
+    qDebug()
         << Q_FUNC_INFO
         << qitem << delay;
 
