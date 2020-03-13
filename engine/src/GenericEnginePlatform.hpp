@@ -57,6 +57,7 @@ protected:
     void clickItem(QObject *item);
 
     void clickPoint(int posx, int posy);
+    void clickPoint(const QPoint &pos);
     virtual void pressAndHoldItem(QObject *item, int delay = 800) = 0;
     void pressAndHold(int posx, int posy, int delay = 800);
     void mouseMove(int startx, int starty, int stopx, int stopy);

@@ -456,6 +456,11 @@ void GenericEnginePlatform::clickPoint(int posx, int posy)
     loop.exec();
 }
 
+void GenericEnginePlatform::clickPoint(const QPoint &pos)
+{
+    clickPoint(pos.x(), pos.y());
+}
+
 void GenericEnginePlatform::pressAndHold(int posx, int posy, int delay)
 {
     qWarning()
