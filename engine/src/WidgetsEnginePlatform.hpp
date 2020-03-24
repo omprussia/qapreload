@@ -49,6 +49,7 @@ private slots:
     void executeCommand_app_scrollInView(QTcpSocket *socket, const QString &elementId, const QString &display);
     void executeCommand_app_triggerInMenu(QTcpSocket *socket, const QString &text);
     void executeCommand_app_dumpInMenu(QTcpSocket *socket);
+    void executeCommand_app_dumpInComboBox(QTcpSocket *socket, const QString &elementId);
 
 private:
     QModelIndex recursiveFindModel(QAbstractItemModel *model, QModelIndex index, const QString &display, bool partial = false);

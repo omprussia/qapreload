@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QBuffer>
+#include <QComboBox>
 #include <QDebug>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -268,6 +269,37 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(QTcpSocket *socket)
     }
 
     socketReply(socket, actions);
+}
+
+void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket, const QString &elementId)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QComboBox *comboBox = qobject_cast<QComboBox*>(item);
+    if (!comboBox) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QAbstractItemModel *model = comboBox->model();
+    if (!model) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << comboBox << model;
+
+    socketReply(socket, recursiveDumpModel(model, QModelIndex()));
 }
 
 QModelIndex WidgetsEnginePlatform::recursiveFindModel(QAbstractItemModel *model, QModelIndex index, const QString &display, bool partial)
