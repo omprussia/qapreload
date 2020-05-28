@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #pragma once
 
 #include "GenericEnginePlatform.hpp"

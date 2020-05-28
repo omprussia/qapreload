@@ -1,3 +1,4 @@
+# Copyright (c) 2020 Open Mobile Platform LLС.
 QT = core dbus
 CONFIG += link_pkgconfig
 PKGCONFIG += \

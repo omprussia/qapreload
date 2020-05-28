@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #include "QAEngine.hpp"
 #include "QuickEnginePlatform.hpp"
 #include "QAMouseEngine.hpp"

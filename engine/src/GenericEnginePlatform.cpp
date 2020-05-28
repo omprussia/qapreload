@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #include "GenericEnginePlatform.hpp"
 #include "QAEngine.hpp"
 #include "QAKeyEngine.hpp"

@@ -1,3 +1,4 @@
+# Copyright (c) 2020 Open Mobile Platform LLС.
 TEMPLATE = lib
 QT = core network quick quick-private core-private xmlpatterns
 CONFIG += plugin

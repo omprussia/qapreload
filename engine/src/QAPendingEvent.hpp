@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #ifndef QAPENDINGEVENT_HPP
 #define QAPENDINGEVENT_HPP
 

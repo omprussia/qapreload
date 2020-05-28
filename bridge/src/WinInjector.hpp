@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #ifndef WININJECTOR_HPP
 #define WININJECTOR_HPP
 

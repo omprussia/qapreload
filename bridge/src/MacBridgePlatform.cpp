@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #include "MacBridgePlatform.hpp"
 #include <QDebug>
 #include <QProcess>

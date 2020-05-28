@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #ifndef QAMOUSEENGINE_HPP
 #define QAMOUSEENGINE_HPP
 
