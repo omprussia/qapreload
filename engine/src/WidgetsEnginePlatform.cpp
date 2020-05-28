@@ -60,7 +60,9 @@ WidgetsEnginePlatform::WidgetsEnginePlatform(QObject *parent)
 void WidgetsEnginePlatform::initialize()
 {
     connect(qApp, &QApplication::focusWindowChanged, this, &WidgetsEnginePlatform::onFocusWindowChanged);
-    onFocusWindowChanged(qApp->activeWindow()->windowHandle());
+    if (qApp->activeWindow()) {
+        onFocusWindowChanged(qApp->activeWindow()->windowHandle());
+    }
 }
 
 void WidgetsEnginePlatform::onFocusWindowChanged(QWindow *window)
