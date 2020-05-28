@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #include "QABridge.hpp"
 #if defined Q_OS_SAILFISH
 #include "SailfishBridgePlatform.hpp"

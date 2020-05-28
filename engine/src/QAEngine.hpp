@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Open Mobile Platform LLС.
 #ifndef QAENGINE_HPP
 #define QAENGINE_HPP
 
