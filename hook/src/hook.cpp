@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Open Mobile Platform LLС.
+// Copyright (c) 2019-2020 Open Mobile Platform LLC.
 #if defined(WIN32) || defined(WIN64)
 #include <windows.h>
 #else
