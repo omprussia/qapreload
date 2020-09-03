@@ -118,7 +118,7 @@ void SailfishEnginePlatform::pullDownTo(const QString &text)
         QMetaObject::invokeMethod(flickable, "scrollToTop", Qt::DirectConnection);
         while (!atYBeginning) {
             QEventLoop loop;
-#if QT_VERSION >= 0x051200
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
             connect(flickable, SIGNAL(atYBeginningChanged()), &loop, SLOT(quit()));
 #else
             connect(flickable, SIGNAL(isAtBoundaryChanged()), &loop, SLOT(quit()));
@@ -171,7 +171,7 @@ void SailfishEnginePlatform::pullDownTo(int index)
         QMetaObject::invokeMethod(flickable, "scrollToTop", Qt::DirectConnection);
         while (!atYBeginning) {
             QEventLoop loop;
-#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
             connect(flickable, SIGNAL(atYBeginningChanged()), &loop, SLOT(quit()));
 #else
             connect(flickable, SIGNAL(isAtBoundaryChanged()), &loop, SLOT(quit()));
@@ -224,7 +224,7 @@ void SailfishEnginePlatform::pushUpTo(const QString &text)
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
         while (!atYEnd) {
             QEventLoop loop;
-#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
             connect(flickable, SIGNAL(atYEndChanged()), &loop, SLOT(quit()));
 #else
             connect(flickable, SIGNAL(isAtBoundaryChanged()), &loop, SLOT(quit()));
@@ -277,7 +277,7 @@ void SailfishEnginePlatform::pushUpTo(int index)
         QMetaObject::invokeMethod(flickable, "scrollToBottom", Qt::DirectConnection);
         while (!atYEnd) {
             QEventLoop loop;
-#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
             connect(flickable, SIGNAL(atYEndChanged()), &loop, SLOT(quit()));
 #else
             connect(flickable, SIGNAL(isAtBoundaryChanged()), &loop, SLOT(quit()));
