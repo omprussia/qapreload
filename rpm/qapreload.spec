@@ -103,5 +103,6 @@ fi
 /lib/systemd/system/qabridge.service
 /lib/systemd/system/qabridge.socket
 %{_libdir}/systemd/user/qaservice.service
+%{_datadir}/dbus-1/services/ru.omprussia.qaservice.service
 
 %files ld
