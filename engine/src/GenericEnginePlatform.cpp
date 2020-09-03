@@ -1297,3 +1297,18 @@ void GenericEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, 
 
     setProperty(socket, attribute, value, elementId);
 }
+
+void GenericEnginePlatform::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << elementId << propertyName << value << timeout;
+
+    QObject *item = getObject(elementId);
+    if (item) {
+        waitForPropertyChange(item, propertyName, value, timeout);
+        socketReply(socket, QString());
+    } else {
+        socketReply(socket, QString(), 1);
+    }
+}
