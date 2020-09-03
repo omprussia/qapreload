@@ -430,7 +430,7 @@ QString GenericEnginePlatform::uniqueId(QObject *item)
                  QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
 }
 
-void GenericEnginePlatform::setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId)
+void GenericEnginePlatform::setProperty(QTcpSocket *socket, const QString &property, const QVariant &value, const QString &elementId)
 {
     qWarning()
         << Q_FUNC_INFO
@@ -1289,7 +1289,7 @@ void GenericEnginePlatform::executeCommand_app_dumpTree(QTcpSocket *socket)
     socketReply(socket, qCompress(QJsonDocument(reply).toJson(QJsonDocument::Compact), 9).toBase64());
 }
 
-void GenericEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value)
+void GenericEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QVariant &value)
 {
     qWarning()
         << Q_FUNC_INFO
