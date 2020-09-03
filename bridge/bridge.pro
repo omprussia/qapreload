@@ -86,7 +86,6 @@ macx {
 contains(DEFINES, Q_OS_SAILFISH) {
     PKGCONFIG += libshadowutils
 
-    INCLUDEPATH += /usr/include
     INCLUDEPATH += /usr/include/libshadowutils
     INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
 
