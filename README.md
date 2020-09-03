@@ -1,6 +1,10 @@
-# qapreload
+# qapreload - Library for automated testing Aurora OS, Sailfish OS, Qt widgets and Qt QML application using Appium framework
 
-## execute_script custom methods list
+Library implements common subset of commands to perform UI operations
+
+Library must be injected into application. bridge is responsible for injecting while launching applications via Appium framework. For Aurora OS and Sailfish OS bridge is installed via rpm package and automatically listening for incoming communications from Appium driver on 8888 port. On other platforms you should build project and run bridge target manually.
+
+## Aurora OS and Sailfish OS specific execute_script methods list
 
 ### app:pullDownTo
 
