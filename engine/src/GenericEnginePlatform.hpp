@@ -28,7 +28,7 @@ public slots:
 protected:
     void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QObject *item = nullptr);
     void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QObject *parentItem = nullptr);
-    void setProperty(QTcpSocket *socket, const QString &property, const QString &value, const QString &elementId);
+    void setProperty(QTcpSocket *socket, const QString &property, const QVariant &value, const QString &elementId);
 
     virtual QList<QObject*> childrenList(QObject* parentItem) = 0;
     QObject *findItemByObjectName(const QString &objectName, QObject *parentItem = nullptr);
@@ -148,7 +148,8 @@ private slots:
 
     // execute_%1 methods
     void executeCommand_app_dumpTree(QTcpSocket *socket);
-    void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QString &value);
+    void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QVariant &value);
     void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
+
 };
 
