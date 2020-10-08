@@ -51,6 +51,7 @@ Requires:   %{name}
 %build
 
 %qtc_qmake5 \
+    SPEC_UNITDIR=%{_unitdir} \
     DEFINES+=Q_OS_SAILFISH \
     DEFINES+=USE_DBUS \
     DEFINES+=USE_SYSTEMD \
@@ -69,7 +70,7 @@ rm -rf %{buildroot}
 if grep libqapreloadhook /etc/ld.so.preload > /dev/null; then
     echo "Preload already exists"
 else
-    echo /usr/lib/libqapreloadhook.so >> /etc/ld.so.preload
+    echo %{_libdir}/libqapreloadhook.so >> /etc/ld.so.preload
 fi
 /sbin/ldconfig
 
@@ -100,8 +101,8 @@ fi
 # bridge files
 %{_bindir}/qabridge
 %{_bindir}/qabridge-user
-/lib/systemd/system/qabridge.service
-/lib/systemd/system/qabridge.socket
+%{_unitdir}/qabridge.service
+%{_unitdir}/qabridge.socket
 %{_libdir}/systemd/user/qaservice.service
 %{_datadir}/dbus-1/services/ru.omprussia.qaservice.service
 

@@ -2,6 +2,9 @@
 QT = core network
 CONFIG += link_pkgconfig
 
+message("INSTALLS_LIBDIR: $$[QT_INSTALL_LIBS]")
+DEFINES += INSTALLS_LIBDIR=\\\"$$[QT_INSTALL_LIBS]\\\"
+
 contains(DEFINES, USE_DBUS) {
     message("Building bridge with dbus support")
 
@@ -18,10 +21,12 @@ contains(DEFINES, USE_SYSTEMD) {
     message("Building bridge with systemd support")
     PKGCONFIG += libsystemd-daemon
 
+    message("SPEC_UNITDIR: $$SPEC_UNITDIR")
+
     autostart.files = \
         systemd/qabridge.service \
         systemd/qabridge.socket
-    autostart.path = /lib/systemd/system
+    autostart.path = $$SPEC_UNITDIR
     INSTALLS += autostart
 }
 
