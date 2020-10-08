@@ -73,7 +73,7 @@ void QAUserService::launchProcess(const QString &appName, const QStringList &arg
 
     QProcess *process = new QProcess(this);
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert("LD_PRELOAD", "/usr/lib/libqapreloadhook.so");
+    env.insert("LD_PRELOAD", INSTALLS_LIBDIR"/libqapreloadhook.so");
     process->setProcessEnvironment(env);
     process->setProgram(appName);
     process->setArguments(arguments);

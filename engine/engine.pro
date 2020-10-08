@@ -62,6 +62,7 @@ HEADERS += \
     src/QAPendingEvent.hpp
 
 TARGET = qaengine
-target.path = /usr/lib
+TARGETPATH = $$[QT_INSTALL_LIBS]
+target.path = $$TARGETPATH
 
 INSTALLS = target

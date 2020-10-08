@@ -6,6 +6,9 @@ PKGCONFIG += \
 
 message("Building user service")
 
+message("INSTALLS_LIBDIR: $$[QT_INSTALL_LIBS]")
+DEFINES += INSTALLS_LIBDIR=\\\"$$[QT_INSTALL_LIBS]\\\"
+
 TEMPLATE = app
 TARGET = qabridge-user
 TARGETPATH = /usr/bin
@@ -13,7 +16,7 @@ target.path = $$TARGETPATH
 INSTALLS += target
 
 autostart.files = systemd/qaservice.service
-autostart.path = /usr/lib/systemd/user
+autostart.path = $$[QT_INSTALL_LIBS]/systemd/user
 INSTALLS += autostart
 
 dbus.files = dbus/ru.omprussia.qaservice.service
