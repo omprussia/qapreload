@@ -4,6 +4,46 @@ Library implements common subset of commands to perform UI operations
 
 Library must be injected into application. bridge is responsible for injecting while launching applications via Appium framework. For Aurora OS and Sailfish OS bridge is installed via rpm package and automatically listening for incoming communications from Appium driver on 8888 port. On other platforms you should build project and run bridge target manually.
 
+## Run tests
+
+### Prerequisites
+
+- Build and run `appium-aurora` docker container
+
+### For Aurora OS and Sailfish OS targets
+
+- Build and install `qapreload` rpm to device
+
+### For Desktop targets
+
+- Build and run `bridge` from this project
+
+	Extra: if you running Linux-based distro, need to manually copy built `libqapreloadhook.so` and `libqaengine.so` to libdir (usually `/usr/lib` or `/usr/lib64`), otherwise bridge won't be able to automatically inject library to applciation.
+
+Note: your application and `qapreload` should be built with same Qt versions
+
+### Python example
+
+To initialize Appium driver use following example:
+
+```
+#!/usr/bin/env python3
+
+from appium import webdriver
+
+def get_driver(device = '192.168.1.248', app = '/usr/bin/aurora-test-example', auto_launch = True):
+    appium_socket = 'http://localhost:4723/wd/hub'
+    data = {
+        'platformName': 'Aurora',
+        'appPackage': app,
+        'deviceName': device,
+        'autoLaunch': auto_launch,
+    }
+    return webdriver.Remote(appium_socket, data)
+
+driver = get_driver()
+```
+
 ## Aurora OS and Sailfish OS specific execute_script methods list
 
 ### app:pullDownTo
