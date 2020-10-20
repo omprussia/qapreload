@@ -190,7 +190,7 @@ dump current page items tree
 
 Usage:
 
-`driver.execute_script("app:dumpCurrentPage""`
+`driver.execute_script("app:dumpCurrentPage")`
 
 ### app:dumpTree
 
@@ -208,3 +208,71 @@ Usage:
 
 `driver.execute_script("system:shell", "ls", ["-la", "/"])`
 
+
+## Qt Widgets specific execute_script methods list
+
+### app:dumpInView
+
+List elements in view
+
+Usage:
+
+`driver.execute_script("app:dumpInView", "MyItem_0x12345678")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:posInView
+
+Returns center coordinates of element item in view
+
+Usage:
+
+`driver.execute_script("app:posInView", "MyItem_0x12345678", "ElementName")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:clickInView
+
+Click center coordinates of element item in view
+
+Usage:
+
+`driver.execute_script("app:clickInView", "MyItem_0x12345678", "ElementName")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:scrollInView
+
+Scroll view to show element
+
+Usage:
+
+`driver.execute_script("app:scrollInView", "MyItem_0x12345678", "ElementName")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:dumpInMenu
+
+List all menu elements
+
+Usage:
+
+`driver.execute_script("app:dumpInMenu")`
+
+### app:triggerInMenu
+
+Trigger menu item
+
+Usage:
+
+`driver.execute_script("app:triggerInMenu", "MenuItemName")`
+
+### app:dumpInComboBox
+
+List elements in ComboBox
+
+Usage:
+
+`driver.execute_script("app:dumpInComboBox", "MyItem_0x12345678")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
