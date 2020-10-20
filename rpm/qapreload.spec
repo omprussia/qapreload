@@ -9,7 +9,7 @@ Version:    1.0.0
 Release:    1
 Group:      Qt/Qt
 License:    LGPL3
-URL:        https://github.com/coderus/qapreload
+URL:        https://github.com/omprussia/qapreload
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5DBus)
