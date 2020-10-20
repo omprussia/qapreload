@@ -2,9 +2,6 @@
 QT = core network
 CONFIG += link_pkgconfig
 
-message("INSTALLS_LIBDIR: $$[QT_INSTALL_LIBS]")
-DEFINES += INSTALLS_LIBDIR=\\\"$$[QT_INSTALL_LIBS]\\\"
-
 contains(DEFINES, USE_DBUS) {
     message("Building bridge with dbus support")
 

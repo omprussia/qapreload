@@ -6,9 +6,6 @@ PKGCONFIG += \
 
 message("Building user service")
 
-message("INSTALLS_LIBDIR: $$[QT_INSTALL_LIBS]")
-DEFINES += INSTALLS_LIBDIR=\\\"$$[QT_INSTALL_LIBS]\\\"
-
 TEMPLATE = app
 TARGET = qabridge-user
 TARGETPATH = /usr/bin

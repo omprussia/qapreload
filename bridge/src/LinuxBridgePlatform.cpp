@@ -34,7 +34,7 @@ bool LinuxBridgePlatform::lauchAppStandalone(const QString &appName, const QStri
 
     QProcess *process = new QProcess(this);
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    env.insert("LD_PRELOAD", INSTALLS_LIBDIR"/libqapreloadhook.so");
+    env.insert("LD_PRELOAD", "libqapreloadhook.so");
     process->setProcessEnvironment(env);
     process->setProgram(appName);
     process->setArguments(arguments);
