@@ -28,6 +28,8 @@ public slots:
     virtual void initialize() = 0;
 
 protected:
+    void tryInitialize();
+
     void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QObject *item = nullptr);
     void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QObject *parentItem = nullptr);
     void setProperty(QTcpSocket *socket, const QString &property, const QVariant &value, const QString &elementId);
