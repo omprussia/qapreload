@@ -19,6 +19,8 @@ public:
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) override;
     void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) override;
 
+    void removeItem(QObject *o) override;
+
     static QString getClassName(QObject *item);
     static QString uniqueId(QObject *item);
 

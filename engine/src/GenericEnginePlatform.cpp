@@ -84,6 +84,19 @@ void GenericEnginePlatform::elementReply(QTcpSocket *socket, QObjectList element
     }
 }
 
+void GenericEnginePlatform::removeItem(QObject *o)
+{
+    QHash<QString, QObject*>::iterator i = m_items.begin();
+    while (i != m_items.end()) {
+        if (i.value() == o) {
+            i = m_items.erase(i);
+            break;
+        } else {
+            ++i;
+        }
+    }
+}
+
 void GenericEnginePlatform::findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple, QObject *item)
 {
     qWarning()

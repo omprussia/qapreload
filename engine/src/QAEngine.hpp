@@ -13,11 +13,14 @@ class QAEngine : public QObject
 public:
     static QAEngine *instance();
     static bool isLoaded();
+    static void objectRemoved(QObject *o);
 
     virtual ~QAEngine();
 
     static QString processName();
     static bool metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
+
+    void removeItem(QObject *o);
 
 public slots:
     void initialize();
