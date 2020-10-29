@@ -12,6 +12,8 @@ public:
     virtual void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) = 0;
     virtual void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) = 0;
 
+    virtual void removeItem(QObject *o) = 0;
+
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) = 0;
     virtual void closeAppCommand(QTcpSocket *socket, const QString &appName) = 0;
