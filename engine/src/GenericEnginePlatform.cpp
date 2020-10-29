@@ -37,7 +37,7 @@ GenericEnginePlatform::GenericEnginePlatform(QObject *parent)
     connect(m_mouseEngine, &QAMouseEngine::mouseEvent, this, &GenericEnginePlatform::onMouseEvent);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &GenericEnginePlatform::onKeyEvent);
 
-    QTimer::singleShot(0, this, &GenericEnginePlatform::initialize);
+    QTimer::singleShot(0, this, &GenericEnginePlatform::tryInitialize);
 }
 
 void GenericEnginePlatform::socketReply(QTcpSocket *socket, const QVariant &value, int status)
@@ -329,6 +329,13 @@ QRect GenericEnginePlatform::getAbsGeometry(QObject *item)
 
 QJsonObject GenericEnginePlatform::dumpObject(QObject *item, int depth)
 {
+    if (!item) {
+        qCritical()
+            << Q_FUNC_INFO
+            << "No object!";
+        return QJsonObject();
+    }
+
     QJsonObject object;
 
     const QString className = getClassName(item);
@@ -441,6 +448,27 @@ QString GenericEnginePlatform::uniqueId(QObject *item)
     return QStringLiteral("%1_0x%2").arg(getClassName(item))
             .arg(reinterpret_cast<quintptr>(item),
                  QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
+}
+
+void GenericEnginePlatform::tryInitialize()
+{
+    static bool initializeDelayed = false;
+    if (qGuiApp->topLevelWindows().isEmpty()) {
+        qDebug()
+            << Q_FUNC_INFO
+            << "Unable to init without a Window instance" << endl
+            << "Delay initialization";
+
+        connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &GenericEnginePlatform::tryInitialize);
+        initializeDelayed = true;
+        return;
+    }
+
+    if (initializeDelayed) {
+        disconnect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &GenericEnginePlatform::tryInitialize);
+    }
+
+    initialize();
 }
 
 void GenericEnginePlatform::setProperty(QTcpSocket *socket, const QString &property, const QVariant &value, const QString &elementId)
