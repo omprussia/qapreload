@@ -53,6 +53,14 @@ QABridge::QABridge(QObject *parent)
 #endif
     , m_socketServer(new QABridgeSocketServer(this))
 {
+    qDebug()
+        << "Version:"
+#ifdef QAPRELOAD_VERSION
+        << QStringLiteral(QAPRELOAD_VERSION);
+#else
+        << QStringLiteral("2.0.0-dev");
+#endif
+
     qRegisterMetaType<QTcpSocket*>();
 
     connect(m_socketServer, &QABridgeSocketServer::commandReceived,

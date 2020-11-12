@@ -5,7 +5,7 @@
 Name:       qapreload
 
 Summary:    Preload library for QA
-Version:    1.0.0
+Version:    2.0.0
 Release:    1
 Group:      Qt/Qt
 License:    LGPL3
@@ -51,6 +51,7 @@ Requires:   %{name}
 %build
 
 %qtc_qmake5 \
+    "PROJECT_PACKAGE_VERSION=%{version}" \
     SPEC_UNITDIR=%{_unitdir} \
     DEFINES+=Q_OS_SAILFISH \
     DEFINES+=USE_DBUS \

@@ -4,6 +4,15 @@ CONFIG += link_pkgconfig
 PKGCONFIG += \
     contentaction5
 
+isEmpty(PROJECT_PACKAGE_VERSION) {
+    QAPRELOAD_VERSION = "2.0.0-dev"
+} else {
+    QAPRELOAD_VERSION = $$PROJECT_PACKAGE_VERSION
+}
+
+message("QAPRELOAD_VERSION: $$QAPRELOAD_VERSION")
+DEFINES += QAPRELOAD_VERSION=\\\"$$QAPRELOAD_VERSION\\\"
+
 message("Building user service")
 
 TEMPLATE = app
