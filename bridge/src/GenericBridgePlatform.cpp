@@ -123,14 +123,14 @@ void GenericBridgePlatform::appConnectCommand(QTcpSocket *socket)
     const QString appName = m_socketAppName.value(socket);
     qDebug()
         << Q_FUNC_INFO
-        << socket << appName;
+        << socket << appName << m_applicationSocket.value(appName);
 
     if (appName == QLatin1String("headless")) {
         socketReply(socket, QString());
         return;
     }
 
-    if (m_applicationSocket.value(appName) != nullptr) {
+    if (!m_applicationSocket.value(appName)) {
         QTimer maxTimer;
         connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
         maxTimer.start(30000);
