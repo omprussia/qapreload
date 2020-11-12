@@ -6,4 +6,4 @@ User=root
 ExecStart=/usr/bin/qabridge
 
 [Install]
-WantedBy=sockets.target
+WantedBy=multi-user.target
