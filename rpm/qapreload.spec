@@ -74,6 +74,11 @@ else
 fi
 /sbin/ldconfig
 
+/usr/bin/env systemctl disable qabridge.socket
+/usr/bin/env systemctl stop qabridge.socket
+/usr/bin/env systemctl enable qabridge.service
+/usr/bin/env systemctl restart qabridge.service
+
 %preun ld
 if [ "$1" = "0" ]; then
 echo Uninstalling package
@@ -82,15 +87,15 @@ fi
 /sbin/ldconfig
 
 %post
-/bin/systemctl daemon-reload
-/bin/systemctl stop qabridge.service
-/bin/systemctl restart qabridge.socket
-/bin/systemctl enable qabridge.socket
-/bin/systemctl-user daemon-reload
-/bin/systemctl-user restart qaservice.service
+/usr/bin/env systemctl daemon-reload
+/usr/bin/env systemctl stop qabridge.service
+/usr/bin/env systemctl restart qabridge.socket
+/usr/bin/env systemctl enable qabridge.socket
+/usr/bin/env systemctl-user daemon-reload
+/usr/bin/env systemctl-user restart qaservice.service
 
-/bin/systemctl-user restart booster-qt5.service
-/bin/systemctl-user restart booster-silica-qt5.service
+/usr/bin/env systemctl-user restart booster-qt5.service
+/usr/bin/env systemctl-user restart booster-silica-qt5.service
 
 %files
 %defattr(-,root,root,-)

@@ -4,3 +4,6 @@ Description=qabridge appium service
 [Service]
 User=root
 ExecStart=/usr/bin/qabridge
+
+[Install]
+WantedBy=sockets.target
