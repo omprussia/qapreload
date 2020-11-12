@@ -53,6 +53,14 @@ void QAEngine::initialize()
     qDebug()
         << Q_FUNC_INFO;
 
+    qDebug()
+        << "Version:"
+#ifdef QAPRELOAD_VERSION
+        << QStringLiteral(QAPRELOAD_VERSION);
+#else
+        << QStringLiteral("2.0.0-dev");
+#endif
+
     setParent(qGuiApp);
 
 #if defined Q_OS_SAILFISH
