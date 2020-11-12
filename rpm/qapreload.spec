@@ -67,6 +67,23 @@ rm -rf %{buildroot}
 
 %qmake5_install
 
+%pre
+/usr/bin/env systemctl disable qabridge.service
+
+%post
+/usr/bin/env systemctl daemon-reload
+/usr/bin/env systemctl stop qabridge.service
+/usr/bin/env systemctl restart qabridge.socket
+/usr/bin/env systemctl enable qabridge.socket
+/usr/bin/env systemctl-user daemon-reload
+/usr/bin/env systemctl-user restart qaservice.service
+
+/usr/bin/env systemctl-user restart booster-qt5.service
+/usr/bin/env systemctl-user restart booster-silica-qt5.service
+
+%pre ld
+/usr/bin/env systemctl disable qabridge.socket
+
 %post ld
 if grep libqapreloadhook /etc/ld.so.preload > /dev/null; then
     echo "Preload already exists"
@@ -86,17 +103,6 @@ echo Uninstalling package
 sed -i "/libqapreloadhook/ d" /etc/ld.so.preload
 fi
 /sbin/ldconfig
-
-%post
-/usr/bin/env systemctl daemon-reload
-/usr/bin/env systemctl stop qabridge.service
-/usr/bin/env systemctl restart qabridge.socket
-/usr/bin/env systemctl enable qabridge.socket
-/usr/bin/env systemctl-user daemon-reload
-/usr/bin/env systemctl-user restart qaservice.service
-
-/usr/bin/env systemctl-user restart booster-qt5.service
-/usr/bin/env systemctl-user restart booster-silica-qt5.service
 
 %files
 %defattr(-,root,root,-)
