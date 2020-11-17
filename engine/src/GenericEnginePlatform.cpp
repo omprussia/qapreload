@@ -209,10 +209,14 @@ QObjectList GenericEnginePlatform::findItemsByText(const QString &text, bool par
 
 QObjectList GenericEnginePlatform::findItemsByXpath(const QString &xpath, QObject *parentItem)
 {
+    qWarning()
+        << Q_FUNC_INFO
+        << xpath << parentItem;
+
     QObjectList items;
 
     if (!parentItem) {
-        return items;
+        parentItem = m_rootObject;
     }
 
     QString out;
@@ -227,6 +231,9 @@ QObjectList GenericEnginePlatform::findItemsByXpath(const QString &xpath, QObjec
     query.setQuery(xpath);
 
     if (!query.isValid()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "Query not valid!";
         return items;
     }
     QString tempString;
