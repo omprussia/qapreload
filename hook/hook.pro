@@ -3,9 +3,12 @@ TARGET = qapreloadhook
 TEMPLATE = lib
 
 contains(DEFINES, Q_OS_SAILFISH) {
-    QT =
+QT =
+CONFIG += link_pkgconfig
+PKGCONFIG += libshadowutils
+INCLUDEPATH += /usr/include/libshadowutils
 } else {
-    QT = core core-private
+QT = core core-private
 }
 
 CONFIG += plugin
