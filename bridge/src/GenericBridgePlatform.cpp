@@ -125,25 +125,6 @@ void GenericBridgePlatform::appConnectCommand(QTcpSocket *socket)
         << Q_FUNC_INFO
         << socket << appName << m_applicationSocket.value(appName);
 
-    if (appName == QLatin1String("headless")) {
-        socketReply(socket, QString());
-        return;
-    }
-
-    if (!m_applicationSocket.value(appName)) {
-        QTimer maxTimer;
-        connect(&maxTimer, &QTimer::timeout, m_connectLoop, &QEventLoop::quit);
-        maxTimer.start(30000);
-        qDebug()
-            << Q_FUNC_INFO
-            << "Starting eventloop connect";
-        m_connectLoop->exec();
-        qDebug()
-            << Q_FUNC_INFO
-            << "Exiting eventloop connect";
-        maxTimer.stop();
-    }
-
     socketReply(socket, QString());
 }
 
