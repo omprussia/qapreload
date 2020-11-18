@@ -79,9 +79,10 @@ void QAEngine::initialize()
 
 void QAEngine::onPlatformReady()
 {
-    qDebug()
-        << Q_FUNC_INFO;
-    s_processName = QFileInfo(qApp->applicationFilePath()).baseName();
+    s_processName = QFileInfo(qApp->arguments().first()).baseName();
+    qWarning()
+        << Q_FUNC_INFO
+        << "Process name:" << s_processName;
 
     m_client = new QAEngineSocketClient(this);
     connect(m_client, &QAEngineSocketClient::commandReceived,
