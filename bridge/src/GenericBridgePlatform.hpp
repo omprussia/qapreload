@@ -58,7 +58,7 @@ private slots:
     virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariant &paramsArg) override;
 
 // GenericBridgePlatform slots
-    void executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
+    void executeCommand_system_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
 
     void forwardToApp(QTcpSocket *socket, const QByteArray &data);
     void forwardToApp(QTcpSocket *socket, const QString &appName, const QByteArray &data);
