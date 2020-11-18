@@ -596,7 +596,7 @@ void GenericBridgePlatform::executeAsyncCommand(QTcpSocket *socket, const QStrin
     execute(socket, methodName, paramsArg.toList());
 }
 
-void GenericBridgePlatform::executeCommand_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
+void GenericBridgePlatform::executeCommand_system_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg)
 {
     qDebug()
         << Q_FUNC_INFO
