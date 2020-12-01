@@ -6,6 +6,7 @@
 #include <QDBusReply>
 #include <QDebug>
 #include <QDir>
+#include <QEvent>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>

@@ -1266,9 +1266,26 @@ void GenericEnginePlatform::performTouchCommand(QTcpSocket *socket, const QVaria
         << Q_FUNC_INFO
         << socket << paramsArg;
 
-    processTouchActionList(paramsArg);
-    socketReply(socket, QString());
+    QEventLoop loop;
+    connect(m_mouseEngine->performTouchAction(paramsArg.toList()),
+            &QAPendingEvent::completed, &loop, &QEventLoop::quit);
+    loop.exec();
 
+    socketReply(socket, QString());
+}
+
+void GenericEnginePlatform::performMultiActionCommand(QTcpSocket *socket, const QVariant &paramsArg)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << paramsArg;
+
+    QEventLoop loop;
+    connect(m_mouseEngine->performMultiAction(paramsArg.toList()),
+            &QAPendingEvent::completed, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    socketReply(socket, QString());
 }
 
 void GenericEnginePlatform::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
