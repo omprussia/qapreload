@@ -19,6 +19,7 @@
 
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
+#include "QAEngine.hpp"
 
 #include <mlite5/MGConfItem>
 
@@ -525,6 +526,84 @@ void SailfishEnginePlatform::initialize()
         connect(m_rootQuickItem, &QQuickItem::childrenChanged,
                 this, &SailfishEnginePlatform::onChildrenChanged); // let's wait for loading
     }
+}
+
+void SailfishEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << appName;
+
+    if (appName != QAEngine::processName()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << appName << "is not" << QAEngine::processName();
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    if (!m_rootWindow) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No window!";
+        return;
+    }
+
+    if (!m_rootQuickItem) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No root item!";
+        return;
+    }
+
+    if (m_rootQuickItem->childItems().isEmpty()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No child items!";
+        return;
+    }
+
+    m_rootWindow->raise();
+    m_rootWindow->requestActivate();
+    QMetaObject::invokeMethod(m_rootQuickItem->childItems().first(), "activate", Qt::QueuedConnection);
+
+    socketReply(socket, QString());
+}
+
+void SailfishEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QString &appName)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << socket << appName;
+
+    if (appName != QAEngine::processName()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << appName << "is not" << QAEngine::processName();
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    if (!m_rootWindow) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No window!";
+        return;
+    }
+
+    qDebug() << m_rootQuickItem;
+    if (m_rootQuickItem->childItems().isEmpty()) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "No children!";
+
+        socketReply(socket, QStringLiteral("NOT_RUNNING"));
+    } else {
+        qDebug() << m_rootQuickWindow;
+    }
+
+    const bool isAppActive = m_rootWindow->isActive();
+    socketReply(socket, isAppActive ? QStringLiteral("RUNNING_IN_FOREGROUND") : QStringLiteral("RUNNING_IN_BACKGROUND"));
 }
 
 void SailfishEnginePlatform::backCommand(QTcpSocket *socket)
