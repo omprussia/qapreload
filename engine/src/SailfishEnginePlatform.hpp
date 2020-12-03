@@ -30,6 +30,8 @@ public slots:
 
 private slots:
     // IEnginePlatform interface
+    virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
+    virtual void queryAppStateCommand(QTcpSocket *socket, const QString &appName) override;
     virtual void backCommand(QTcpSocket *socket) override;
     virtual void forwardCommand(QTcpSocket *socket) override;
     virtual void getOrientationCommand(QTcpSocket *socket) override;
