@@ -945,3 +945,26 @@ void SailfishEnginePlatform::executeCommand_app_dumpCover(QTcpSocket *socket)
         socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
     }
 }
+
+void SailfishEnginePlatform::findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
+{
+    QObjectList items;
+    if (selector == QLatin1String("DeclarativeCover")) {
+        items.append(getCoverItem());
+    } else if (selector == QLatin1String("QQuickRootItem")) {
+        for (QWindow *window : qGuiApp->allWindows()) {
+            QQuickWindow *qw = qobject_cast<QQuickWindow*>(window);
+            if (!qw) {
+                continue;
+            }
+            items.append(qw->contentItem());
+        }
+    } else {
+        items = findItemsByClassName(selector, parentItem);
+    }
+
+    qDebug()
+        << Q_FUNC_INFO
+        << selector << multiple << items;
+    elementReply(socket, items, multiple);
+}
