@@ -67,6 +67,7 @@ private slots:
 
     // own methods
     void onChildrenChanged();
+    void getScreenshotCoverCommand(QTcpSocket *socket);
 
 private:
     QQuickItem *getCoverItem();
