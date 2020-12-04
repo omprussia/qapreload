@@ -47,6 +47,8 @@ protected:
     QQuickWindow *m_rootQuickWindow = nullptr;
 
 private slots:
+    void onFocusWindowChanged(QWindow *window);
+
     // IEnginePlatform interface
     virtual void getPageSourceCommand(QTcpSocket *socket) override;
 
