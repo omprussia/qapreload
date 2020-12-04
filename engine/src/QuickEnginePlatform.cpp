@@ -213,45 +213,19 @@ void QuickEnginePlatform::initialize()
     qDebug()
         << Q_FUNC_INFO;
 
-    QWindow *window = qGuiApp->topLevelWindows().first();
+    QWindow *window = qGuiApp->focusWindow();
+    if (!window) {
+        window = qGuiApp->topLevelWindows().first();
+    }
     if (!window) {
         qWarning()
             << Q_FUNC_INFO
             << "No windows!";
         return;
     }
-    qDebug()
-        << Q_FUNC_INFO
-        << window;
 
-    QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
-
-    if (!qWindow) {
-        qWarning()
-            << Q_FUNC_INFO
-            << window << "is not QQuickWindow!";
-        return;
-    }
-    m_rootQuickWindow = qWindow;
-    m_rootWindow = window;
-    qDebug()
-        << Q_FUNC_INFO
-        << qWindow;
-    m_rootQuickItem = qWindow->contentItem();
-    if (!m_rootQuickItem) {
-        qWarning()
-            << Q_FUNC_INFO
-            << "No root item!";
-        return;
-    }
-    m_rootObject = m_rootQuickItem;
-
-    if (m_rootQuickItem->childItems().isEmpty()) {
-        qWarning()
-            << Q_FUNC_INFO
-            << "No children items!";
-        return;
-    }
+    onFocusWindowChanged(window);
+    connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &QuickEnginePlatform::onFocusWindowChanged);
 
     emit ready();
 }
@@ -341,6 +315,35 @@ QQmlEngine *QuickEnginePlatform::getEngine(QQuickItem *item)
         engine = qmlEngine(item->childItems().first());
     }
     return engine;
+}
+
+void QuickEnginePlatform::onFocusWindowChanged(QWindow *window)
+{
+    qWarning()
+        << Q_FUNC_INFO
+        << window;
+
+    QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
+
+    if (!qWindow) {
+        qWarning()
+            << Q_FUNC_INFO
+            << window << "is not QQuickWindow!";
+        return;
+    }
+    qDebug()
+        << Q_FUNC_INFO
+        << qWindow;
+//    if (!m_rootQuickItem) {
+//        qWarning()
+//            << Q_FUNC_INFO
+//            << "No root item!";
+//        return;
+//    }
+    m_rootQuickWindow = qWindow;
+    m_rootWindow = window;
+    m_rootQuickItem = qWindow->contentItem();
+    m_rootObject = m_rootQuickItem;
 }
 
 void QuickEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
