@@ -305,6 +305,157 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket
     socketReply(socket, recursiveDumpModel(model, QModelIndex()));
 }
 
+void WidgetsEnginePlatform::executeCommand_app_dumpInTabBar(QTcpSocket *socket, const QString &elementId)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QTabBar *tabBar = qobject_cast<QTabBar*>(item);
+    if (!tabBar) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QStringList tabs;
+
+    for (int i = 0; i < tabBar->count(); i++) {
+        tabs.append(tabBar->tabText(i));
+    }
+
+    socketReply(socket, tabs);
+}
+
+void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << display;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QTabBar *tabBar = qobject_cast<QTabBar*>(item);
+    if (!tabBar) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    for (int i = 0; i < tabBar->count(); i++) {
+        if (tabBar->tabText(i) == display) {
+            QRect rect = tabBar->tabRect(i);
+
+            const QPoint itemPos = getAbsPosition(item);
+            const QPoint indexCenter(rect.center().x() + itemPos.x(), rect.center().y() + itemPos.y());
+
+            socketReply(socket, QStringList({QString::number(indexCenter.x()), QString::number(indexCenter.y())}));
+            return;
+        }
+    }
+
+    socketReply(socket, QString(), 11);
+}
+
+void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, double idx)
+{
+    const int index = idx;
+
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << index;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QTabBar *tabBar = qobject_cast<QTabBar*>(item);
+    if (!tabBar) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    if (index >= tabBar->count()) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QRect rect = tabBar->tabRect(index);
+
+    const QPoint itemPos = getAbsPosition(item);
+    const QPoint indexCenter(rect.center().x() + itemPos.x(), rect.center().y() + itemPos.y());
+
+    socketReply(socket, QStringList({QString::number(indexCenter.x()), QString::number(indexCenter.y())}));
+}
+
+void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << display;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QTabBar *tabBar = qobject_cast<QTabBar*>(item);
+    if (!tabBar) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    for (int i = 0; i < tabBar->count(); i++) {
+        if (tabBar->tabText(i) == display) {
+            tabBar->setCurrentIndex(i);
+            socketReply(socket, QString());
+            return;
+        }
+    }
+
+    socketReply(socket, QString(), 1);
+}
+
+void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, double idx)
+{
+    const int index = idx;
+
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << index;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QTabBar *tabBar = qobject_cast<QTabBar*>(item);
+    if (!tabBar) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    if (index >= tabBar->count()) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    tabBar->setCurrentIndex(index);
+    socketReply(socket, QString());
+}
+
 QModelIndex WidgetsEnginePlatform::recursiveFindModel(QAbstractItemModel *model, QModelIndex index, const QString &display, bool partial)
 {
     for (int r = 0; r < model->rowCount(index); r++) {
