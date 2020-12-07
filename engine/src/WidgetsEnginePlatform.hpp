@@ -52,7 +52,11 @@ private slots:
     void executeCommand_app_triggerInMenu(QTcpSocket *socket, const QString &text);
     void executeCommand_app_dumpInMenu(QTcpSocket *socket);
     void executeCommand_app_dumpInComboBox(QTcpSocket *socket, const QString &elementId);
-
+    void executeCommand_app_dumpInTabBar(QTcpSocket *socket, const QString &elementId);
+    void executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, double idx);
+    void executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, double idx);
 private:
     QModelIndex recursiveFindModel(QAbstractItemModel *model, QModelIndex index, const QString &display, bool partial = false);
     QStringList recursiveDumpModel(QAbstractItemModel *model, QModelIndex index);

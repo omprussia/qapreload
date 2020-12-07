@@ -152,7 +152,7 @@ Usage:
 
 `driver.execute_script("app:enterCode", "12345#")`
 
-### touch:pressAndHold
+### touch:pressAndHold (deprecated, use TouchAction instead)
 
 perform press and hold touch action on choosen coordinates
 
@@ -160,7 +160,7 @@ Usage:
 
 `driver.execute_script("touch:pressAndHold", 20, 40)`
 
-### touch:mouseSwipe
+### touch:mouseSwipe (deprecated, use TouchAction instead)
 
 perform mouse swipe touch action from one point to another
 
@@ -168,7 +168,7 @@ Usage:
 
 `driver.execute_script("touch:mouseSwipe", 20, 40, 60, 80)`
 
-### touch:mouseDrag
+### touch:mouseDrag (deprecated, use TouchAction instead)
 
 perform mouse drag touch action from one point to another
 
@@ -314,5 +314,43 @@ List elements in ComboBox
 Usage:
 
 `driver.execute_script("app:dumpInComboBox", "MyItem_0x12345678")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:dumpInTabBar
+
+List elements in TabBar
+
+Usage:
+
+`driver.execute_script("app:dumpInTabBar", "MyItem_0x12345678")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:posInTabBar
+
+Returns center coordinates of element item in TabBar
+
+Usage:
+
+`driver.execute_script("app:posInTabBar", "MyItem_0x12345678", "ElementName")`
+
+or by index
+
+`driver.execute_script("app:posInTabBar", "MyItem_0x12345678", 1`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:activateInTabBar
+
+Activates TabBar element
+
+Usage:
+
+`driver.execute_script("app:activateInTabBar", "MyItem_0x12345678", "ElementName")`
+
+or by index
+
+`driver.execute_script("app:activateInTabBar", "MyItem_0x12345678", 1)`
 
 `"MyItem_0x12345678"` is element.id, you should find element before using this method
