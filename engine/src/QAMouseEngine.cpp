@@ -1,6 +1,8 @@
 // Copyright (c) 2019-2020 Open Mobile Platform LLC.
+#include "QAEngine.hpp"
 #include "QAMouseEngine.hpp"
 #include "QAPendingEvent.hpp"
+#include "IEnginePlatform.hpp"
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -420,7 +422,14 @@ void EventWorker::start()
         } else if (action == QLatin1String("longPress")) {
             const int posX = options.value(QStringLiteral("x")).toInt();
             const int posY = options.value(QStringLiteral("y")).toInt();
-            const QPoint point(posX, posY);
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsPosition(item);
+                }
+            }
 
             sendPress(point);
             previousPoint = point;
@@ -433,14 +442,28 @@ void EventWorker::start()
         } else if (action == QLatin1String("press")) {
             const int posX = options.value(QStringLiteral("x")).toInt();
             const int posY = options.value(QStringLiteral("y")).toInt();
-            const QPoint point(posX, posY);
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsPosition(item);
+                }
+            }
 
             sendPress(point);
             previousPoint = point;
         } else if (action == QLatin1String("moveTo")) {
             const int posX = options.value(QStringLiteral("x")).toInt();
             const int posY = options.value(QStringLiteral("y")).toInt();
-            const QPoint point(posX, posY);
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsPosition(item);
+                }
+            }
 
             const int duration = options.value(QStringLiteral("duration"), 500).toInt();
             const int steps = options.value(QStringLiteral("steps"), 20).toInt();
@@ -453,7 +476,14 @@ void EventWorker::start()
         } else if (action == QLatin1String("tap")) {
             const int posX = options.value(QStringLiteral("x")).toInt();
             const int posY = options.value(QStringLiteral("y")).toInt();
-            const QPoint point(posX, posY);
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsPosition(item);
+                }
+            }
 
             const int count = options.value(QStringLiteral("count")).toInt();
             for (int i = 0; i < count; i++) {

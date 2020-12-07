@@ -18,10 +18,8 @@ public:
     QWidget *getItem(const QString &elementId);
 
 public slots:
-    virtual void initialize() override;
+    virtual void initialize() override;\
 
-protected:
-    QList<QObject*> childrenList(QObject *parentItem) override;
     QObject *getParent(QObject *item) override;
 
     QPoint getAbsPosition(QObject *item) override;
@@ -29,6 +27,9 @@ protected:
     QSize getSize(QObject *item) override;
     bool isItemEnabled(QObject *item) override;
     bool isItemVisible(QObject *item) override;
+
+protected:
+    QList<QObject*> childrenList(QObject *parentItem) override;
 
     void grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground = false) override;
 

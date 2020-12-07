@@ -14,6 +14,18 @@ public:
 
     virtual void removeItem(QObject *o) = 0;
 
+    virtual bool containsObject(const QString &elementId) = 0;
+    virtual QObject *getObject(const QString &elementId) = 0;
+    virtual QObject *getParent(QObject *item) = 0;
+    virtual QString getText(QObject *item) = 0;
+    virtual QPoint getAbsPosition(QObject *item) = 0;
+    virtual QPoint getPosition(QObject *item) = 0;
+    virtual QSize getSize(QObject *item) = 0;
+    virtual QRect getGeometry(QObject *item) = 0;
+    virtual QRect getAbsGeometry(QObject *item) = 0;
+    virtual bool isItemEnabled(QObject *item) = 0;
+    virtual bool isItemVisible(QObject *item) = 0;
+
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) = 0;
     virtual void closeAppCommand(QTcpSocket *socket, const QString &appName) = 0;
