@@ -16,6 +16,13 @@ public:
     explicit QuickEnginePlatform(QObject *parent);
     QQuickItem *getItem(const QString &elementId);
 
+    QObject *getParent(QObject *item) override;
+    QPoint getAbsPosition(QObject *item) override;
+    QPoint getPosition(QObject *item) override;
+    QSize getSize(QObject *item) override;
+    bool isItemEnabled(QObject *item) override;
+    bool isItemVisible(QObject *item) override;
+
 public slots:
     virtual void initialize() override;
 
@@ -25,13 +32,6 @@ protected:
     QQuickItem *findParentFlickable(QQuickItem *rootItem = nullptr);
     QVariantList findNestedFlickable(QQuickItem *parentItem = nullptr);
     QQuickItem *getApplicationWindow();
-
-    QObject *getParent(QObject *item) override;
-    QPoint getAbsPosition(QObject *item) override;
-    QPoint getPosition(QObject *item) override;
-    QSize getSize(QObject *item) override;
-    bool isItemEnabled(QObject *item) override;
-    bool isItemVisible(QObject *item) override;
 
     QVariant executeJS(const QString &jsCode, QQuickItem *item);
 

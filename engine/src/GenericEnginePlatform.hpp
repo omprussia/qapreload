@@ -24,10 +24,17 @@ public:
     static QString getClassName(QObject *item);
     static QString uniqueId(QObject *item);
 
+    bool containsObject(const QString &elementId) override;
+    QObject *getObject(const QString &elementId) override;
+    QString getText(QObject *item) override;
+    QRect getGeometry(QObject *item) override;
+    QRect getAbsGeometry(QObject *item) override;
+
 public slots:
     virtual void initialize() = 0;
 
 protected:
+    friend class QAMouseEngine;
     void tryInitialize();
 
     void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QObject *item = nullptr);
@@ -41,18 +48,6 @@ protected:
     QObjectList findItemsByText(const QString &text, bool partial = true, QObject *parentItem = nullptr);
     QObjectList findItemsByXpath(const QString &xpath, QObject *parentItem = nullptr);
     QObjectList filterVisibleItems(QObjectList items);
-
-    bool containsObject(const QString &elementId);
-    QObject *getObject(const QString &elementId);
-    virtual QObject *getParent(QObject *item) = 0;
-    QString getText(QObject *item);
-    virtual QPoint getAbsPosition(QObject *item) = 0;
-    virtual QPoint getPosition(QObject *item) = 0;
-    virtual QSize getSize(QObject *item) = 0;
-    QRect getGeometry(QObject *item);
-    QRect getAbsGeometry(QObject *item);
-    virtual bool isItemEnabled(QObject *item) = 0;
-    virtual bool isItemVisible(QObject *item) = 0;
 
     QJsonObject dumpObject(QObject *item, int depth = 0);
     QJsonObject recursiveDumpTree(QObject *rootItem, int depth = 0);
