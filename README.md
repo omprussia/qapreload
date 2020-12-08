@@ -317,6 +317,20 @@ Usage:
 
 `"MyItem_0x12345678"` is element.id, you should find element before using this method
 
+### app:activateInComboBox
+
+Activates ComboBox element
+
+Usage:
+
+`driver.execute_script("app:activateInComboBox", "MyItem_0x12345678", "ElementName")`
+
+or by index (starts from 0)
+
+`driver.execute_script("app:activateInComboBox", "MyItem_0x12345678", 1)`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
 ### app:dumpInTabBar
 
 List elements in TabBar
@@ -335,7 +349,7 @@ Usage:
 
 `driver.execute_script("app:posInTabBar", "MyItem_0x12345678", "ElementName")`
 
-or by index
+or by index (starts from 0)
 
 `driver.execute_script("app:posInTabBar", "MyItem_0x12345678", 1`
 
@@ -349,7 +363,7 @@ Usage:
 
 `driver.execute_script("app:activateInTabBar", "MyItem_0x12345678", "ElementName")`
 
-or by index
+or by index (starts from 0)
 
 `driver.execute_script("app:activateInTabBar", "MyItem_0x12345678", 1)`
 

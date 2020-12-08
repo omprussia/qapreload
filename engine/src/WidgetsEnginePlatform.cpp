@@ -305,6 +305,63 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket
     socketReply(socket, recursiveDumpModel(model, QModelIndex()));
 }
 
+void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *socket, const QString &elementId, const QString &display)
+{
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << display;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QComboBox *comboBox = qobject_cast<QComboBox*>(item);
+    if (!comboBox) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    int index = comboBox->findText(display);
+    if (index < 0) {
+        socketReply(socket, QString(), 1);
+    }
+
+    comboBox->setCurrentIndex(index);
+
+    socketReply(socket, QString());
+}
+
+void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *socket, const QString &elementId, double idx)
+{
+    const int index = idx;
+
+    qDebug()
+        << Q_FUNC_INFO
+        << socket << elementId << index;
+
+    QWidget *item = getItem(elementId);
+    if (!item) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    QComboBox *comboBox = qobject_cast<QComboBox*>(item);
+    if (!comboBox) {
+        socketReply(socket, QString(), 1);
+        return;
+    }
+
+    if (index >= comboBox->count()) {
+        socketReply(socket, QString(), 1);
+    }
+
+    comboBox->setCurrentIndex(index);
+
+    socketReply(socket, QString());
+}
+
 void WidgetsEnginePlatform::executeCommand_app_dumpInTabBar(QTcpSocket *socket, const QString &elementId)
 {
     qDebug()
