@@ -975,6 +975,22 @@ void GenericEnginePlatform::getScreenshotCommand(QTcpSocket *socket)
     grabScreenshot(socket, m_rootObject, true);
 }
 
+void GenericEnginePlatform::getWindowRectCommand(QTcpSocket *socket)
+{
+    qWarning()
+        << Q_FUNC_INFO;
+
+    QJsonObject reply;
+    const QRect geometry = m_rootWindow->geometry();
+    reply.insert(QStringLiteral("centerx"), geometry.center().x());
+    reply.insert(QStringLiteral("centery"), geometry.center().y());
+    reply.insert(QStringLiteral("x"), geometry.x());
+    reply.insert(QStringLiteral("y"), geometry.y());
+    reply.insert(QStringLiteral("width"), geometry.width());
+    reply.insert(QStringLiteral("height"), geometry.height());
+    socketReply(socket, reply);
+}
+
 void GenericEnginePlatform::elementEnabledCommand(QTcpSocket *socket, const QString &elementId)
 {
     qWarning()
