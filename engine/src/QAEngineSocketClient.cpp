@@ -49,7 +49,7 @@ void QAEngineSocketClient::connectToBridge()
         << m_socket->write(data)
         << m_socket->waitForBytesWritten();
 
-    connect(m_socket, &QTcpSocket::readyRead, this, &QAEngineSocketClient::readSocket);
+    connect(m_socket, &QTcpSocket::readyRead, this, &QAEngineSocketClient::readSocket, Qt::UniqueConnection);
 }
 
 void QAEngineSocketClient::readSocket()

@@ -69,6 +69,8 @@ private slots:
     void onChildrenChanged();
     void getScreenshotCoverCommand(QTcpSocket *socket);
 
+    void bridgeStatusChanged(const QString &interface, const QVariantMap &properties, const QStringList &);
+
 private:
     QQuickItem *getCoverItem();
     QQuickItem *getPageStack();
