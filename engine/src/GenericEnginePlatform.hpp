@@ -104,6 +104,7 @@ private slots:
     virtual void getTextCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void getElementScreenshotCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void getScreenshotCommand(QTcpSocket *socket) override;
+    virtual void getWindowRectCommand(QTcpSocket *socket) override;
     virtual void elementEnabledCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void elementDisplayedCommand(QTcpSocket *socket, const QString &elementId) override;
     virtual void elementSelectedCommand(QTcpSocket *socket, const QString &elementId) override;
