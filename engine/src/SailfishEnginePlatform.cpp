@@ -16,12 +16,15 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QStandardPaths>
+#include <QTimer>
 
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
 #include "QAEngine.hpp"
 
 #include <mlite5/MGConfItem>
+
+#include <QtDBus/QDBusConnection>
 
 SailfishEnginePlatform::SailfishEnginePlatform(QObject *parent)
     : QuickEnginePlatform(parent)
@@ -110,6 +113,25 @@ void SailfishEnginePlatform::getScreenshotCoverCommand(QTcpSocket *socket)
         << socket;
 
     grabScreenshot(socket, getCoverItem(), true);
+}
+
+void SailfishEnginePlatform::bridgeStatusChanged(const QString &interface, const QVariantMap &properties, const QStringList &)
+{
+
+    if (interface != QLatin1String("org.freedesktop.systemd1.Unit")) {
+        return;
+    }
+
+    if (properties.contains(QStringLiteral("ActiveState"))) {
+        const QString activeState = properties.value(QStringLiteral("ActiveState")).toString();
+        qWarning()
+            << Q_FUNC_INFO
+            << activeState;
+
+        if (activeState == QLatin1String("active")) {
+            QTimer::singleShot(1000, this, &SailfishEnginePlatform::ready);
+        }
+    }
 }
 
 void SailfishEnginePlatform::pullDownTo(const QString &text)
@@ -500,6 +522,14 @@ void SailfishEnginePlatform::initialize()
     qWarning()
         << Q_FUNC_INFO
         << m_rootQuickItem;
+
+    QDBusConnection::systemBus().connect(
+        QString(),
+        QStringLiteral("/org/freedesktop/systemd1/unit/qabridge_2eservice"),
+        QStringLiteral("org.freedesktop.DBus.Properties"),
+        QStringLiteral("PropertiesChanged"),
+        this,
+        SLOT(bridgeStatusChanged(QString, QVariantMap, QStringList)));
 
     QuickEnginePlatform::initialize();
 
