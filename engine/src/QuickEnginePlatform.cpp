@@ -24,6 +24,10 @@
 #include <private/qquickwindow_p.h>
 #include <private/qquickitem_p.h>
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(categoryQuickEnginePlatform, "omp.qaengine.platform.quick", QtInfoMsg)
+
 QList<QObject *> QuickEnginePlatform::childrenList(QObject *parentItem)
 {
     QList<QObject*> result;
@@ -50,14 +54,14 @@ QQuickItem *QuickEnginePlatform::getItem(const QString &elementId)
     return qobject_cast<QQuickItem*>(getObject(elementId));
 }
 
-QuickEnginePlatform::QuickEnginePlatform(QObject *parent)
-    : GenericEnginePlatform(parent)
+QuickEnginePlatform::QuickEnginePlatform(QWindow *window)
+    : GenericEnginePlatform(window)
 {
 }
 
 QQuickItem *QuickEnginePlatform::findParentFlickable(QQuickItem *rootItem)
 {
-    qDebug()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << rootItem;
 
@@ -76,7 +80,7 @@ QQuickItem *QuickEnginePlatform::findParentFlickable(QQuickItem *rootItem)
 
 QVariantList QuickEnginePlatform::findNestedFlickable(QQuickItem *parentItem)
 {
-    qDebug()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << parentItem;
 
@@ -99,7 +103,7 @@ QVariantList QuickEnginePlatform::findNestedFlickable(QQuickItem *parentItem)
 
 QQuickItem *QuickEnginePlatform::getApplicationWindow()
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO;
 
     QQuickItem *applicationWindow = m_rootQuickItem;
@@ -111,7 +115,7 @@ QQuickItem *QuickEnginePlatform::getApplicationWindow()
 
 QPoint QuickEnginePlatform::getAbsPosition(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -131,7 +135,7 @@ QPoint QuickEnginePlatform::getAbsPosition(QObject *item)
 
 QPoint QuickEnginePlatform::getPosition(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -144,7 +148,7 @@ QPoint QuickEnginePlatform::getPosition(QObject *item)
 
 QSize QuickEnginePlatform::getSize(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -157,7 +161,7 @@ QSize QuickEnginePlatform::getSize(QObject *item)
 
 bool QuickEnginePlatform::isItemEnabled(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -170,7 +174,7 @@ bool QuickEnginePlatform::isItemEnabled(QObject *item)
 
 bool QuickEnginePlatform::isItemVisible(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -183,7 +187,7 @@ bool QuickEnginePlatform::isItemVisible(QObject *item)
 
 QVariant QuickEnginePlatform::executeJS(const QString &jsCode, QQuickItem *item)
 {
-    qDebug()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << jsCode << item;
 
@@ -191,7 +195,9 @@ QVariant QuickEnginePlatform::executeJS(const QString &jsCode, QQuickItem *item)
     bool isUndefined = false;
     const QVariant reply = expr.evaluate(&isUndefined);
     if (expr.hasError()) {
-        qWarning() << Q_FUNC_INFO << expr.error().toString();
+        qCWarning(categoryQuickEnginePlatform)
+            << Q_FUNC_INFO
+            << expr.error().toString();
     }
     return isUndefined ? QVariant(QStringLiteral("undefined")) : reply;
 }
@@ -210,29 +216,38 @@ QObject *QuickEnginePlatform::getParent(QObject *item)
 
 void QuickEnginePlatform::initialize()
 {
-    qDebug()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO;
 
-    QWindow *window = qGuiApp->focusWindow();
-    if (!window) {
-        window = qGuiApp->topLevelWindows().first();
-    }
-    if (!window) {
-        qWarning()
+    if (!m_rootWindow) {
+        qCDebug(categoryQuickEnginePlatform)
             << Q_FUNC_INFO
             << "No windows!";
         return;
-    }
+    }    
 
-    onFocusWindowChanged(window);
-    connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &QuickEnginePlatform::onFocusWindowChanged);
+    QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(m_rootWindow);
+
+    if (!qWindow) {
+        qCWarning(categoryQuickEnginePlatform)
+            << Q_FUNC_INFO
+            << m_rootWindow << "is not QQuickWindow!";
+        return;
+    }
+    qCDebug(categoryQuickEnginePlatform)
+        << Q_FUNC_INFO
+        << qWindow;
+
+    m_rootQuickWindow = qWindow;
+    m_rootQuickItem = qWindow->contentItem();
+    m_rootObject = m_rootQuickItem;
 
     emit ready();
 }
 
 void QuickEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << socket << item << fillBackground;
 
@@ -267,7 +282,7 @@ void QuickEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bool
 
 void QuickEnginePlatform::pressAndHoldItem(QObject *qitem, int delay)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << qitem << delay;
 
@@ -286,7 +301,7 @@ void QuickEnginePlatform::pressAndHoldItem(QObject *qitem, int delay)
 
 void QuickEnginePlatform::clearFocus()
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO;
 
     QQuickWindowPrivate *wp = QQuickWindowPrivate::get(m_rootQuickWindow);
@@ -295,7 +310,7 @@ void QuickEnginePlatform::clearFocus()
 
 void QuickEnginePlatform::clearComponentCache()
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO;
 
     QQmlEngine *engine = getEngine();
@@ -317,38 +332,9 @@ QQmlEngine *QuickEnginePlatform::getEngine(QQuickItem *item)
     return engine;
 }
 
-void QuickEnginePlatform::onFocusWindowChanged(QWindow *window)
-{
-    qWarning()
-        << Q_FUNC_INFO
-        << window;
-
-    QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(window);
-
-    if (!qWindow) {
-        qWarning()
-            << Q_FUNC_INFO
-            << window << "is not QQuickWindow!";
-        return;
-    }
-    qDebug()
-        << Q_FUNC_INFO
-        << qWindow;
-//    if (!m_rootQuickItem) {
-//        qWarning()
-//            << Q_FUNC_INFO
-//            << "No root item!";
-//        return;
-//    }
-    m_rootQuickWindow = qWindow;
-    m_rootWindow = window;
-    m_rootQuickItem = qWindow->contentItem();
-    m_rootObject = m_rootQuickItem;
-}
-
 void QuickEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << socket;
 
@@ -365,7 +351,7 @@ void QuickEnginePlatform::onKeyEvent(QKeyEvent *event)
 
 void QuickEnginePlatform::executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << socket << posx << posy;
 
@@ -375,7 +361,7 @@ void QuickEnginePlatform::executeCommand_touch_pressAndHold(QTcpSocket *socket, 
 
 void QuickEnginePlatform::executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << socket << posx << posy << stopx << stopy;
 
@@ -385,7 +371,7 @@ void QuickEnginePlatform::executeCommand_touch_mouseSwipe(QTcpSocket *socket, do
 
 void QuickEnginePlatform::executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << socket << posx << posy << stopx << stopy;
 
@@ -395,7 +381,7 @@ void QuickEnginePlatform::executeCommand_touch_mouseDrag(QTcpSocket *socket, dou
 
 void QuickEnginePlatform::executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << method << params;
 
@@ -431,7 +417,7 @@ void QuickEnginePlatform::executeCommand_app_method(QTcpSocket *socket, const QS
 
 void QuickEnginePlatform::executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode)
 {
-    qWarning()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << jsCode;
 
@@ -442,7 +428,7 @@ void QuickEnginePlatform::executeCommand_app_js(QTcpSocket *socket, const QStrin
     }
 
     QVariant result = executeJS(jsCode, item);
-    qDebug()
+    qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
         << result;
     socketReply(socket, result);

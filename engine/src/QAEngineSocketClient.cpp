@@ -9,6 +9,10 @@
 #include <QJsonParseError>
 #include <QTcpSocket>
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(categorySocketClient, "omp.qaengine.socket", QtInfoMsg)
+
 QAEngineSocketClient::QAEngineSocketClient(QObject *parent)
     : QObject(parent)
 {
@@ -17,7 +21,7 @@ QAEngineSocketClient::QAEngineSocketClient(QObject *parent)
 
 void QAEngineSocketClient::connectToBridge()
 {
-    qDebug()
+    qCDebug(categorySocketClient)
         << Q_FUNC_INFO;
 
     if (!m_socket) {
@@ -27,7 +31,7 @@ void QAEngineSocketClient::connectToBridge()
     m_socket->connectToHost(QHostAddress(QHostAddress::LocalHost), 8888);
     m_socket->waitForConnected();
     if (!m_socket->isOpen()) {
-        qWarning()
+        qCWarning(categorySocketClient)
             << Q_FUNC_INFO
             << "Can't connect to bridge socket";
         m_socket->deleteLater();
@@ -43,7 +47,7 @@ void QAEngineSocketClient::connectToBridge()
 
     QByteArray data = QJsonDocument(root).toJson(QJsonDocument::Compact);
 
-    qWarning()
+    qCDebug(categorySocketClient)
         << Q_FUNC_INFO
         << "Writing to bridge socket:"
         << m_socket->write(data)
@@ -56,7 +60,7 @@ void QAEngineSocketClient::readSocket()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
 
-    qDebug()
+    qCDebug(categorySocketClient)
         << Q_FUNC_INFO
         << socket << socket->bytesAvailable();
 

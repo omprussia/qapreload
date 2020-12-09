@@ -14,7 +14,7 @@ class WidgetsEnginePlatform : public GenericEnginePlatform
 {
     Q_OBJECT
 public:
-    explicit WidgetsEnginePlatform(QObject *parent);
+    explicit WidgetsEnginePlatform(QWindow *window);
     QWidget *getItem(const QString &elementId);
 
 public slots:
@@ -39,8 +39,6 @@ protected:
     QWidget *m_rootWidget = nullptr;
 
 private slots:
-    void onFocusWindowChanged(QWindow *window);
-
     // IEnginePlatform interface
     virtual void getPageSourceCommand(QTcpSocket *socket) override;
 

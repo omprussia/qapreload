@@ -8,6 +8,9 @@
 #include <QJsonDocument>
 #include <QTcpSocket>
 #include <QMetaMethod>
+#include <QWindow>
+#include <QTimer>
+#include <QQuickWindow>
 
 #if defined Q_OS_SAILFISH
 #include "SailfishEnginePlatform.hpp"
@@ -18,6 +21,10 @@
 #endif
 
 #include "QAEngineSocketClient.hpp"
+
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(categoryEngine, "omp.qaengine.engine", QtInfoMsg)
 
 namespace {
 
@@ -31,6 +38,9 @@ inline QGenericArgument qVariantToArgument(const QVariant &variant) {
 QAEngine *s_instance = nullptr;
 
 QString s_processName;
+
+QHash<QWindow*, IEnginePlatform*> s_windows;
+QWindow *s_lastFocusWindow = nullptr;
 
 }
 
@@ -48,17 +58,27 @@ void QAEngine::objectRemoved(QObject *o)
     s_instance->removeItem(o);
 }
 
-IEnginePlatform *QAEngine::getPlatform()
+IEnginePlatform *QAEngine::getPlatform(bool silent)
 {
-    return m_platform;
+    if (s_windows.contains(s_lastFocusWindow)) {
+        return s_windows.value(s_lastFocusWindow);
+    } else {
+        if (!silent) {
+            qCWarning(categoryEngine)
+                << Q_FUNC_INFO
+                << "No platform for window:" << s_lastFocusWindow;
+        }
+    }
+    return nullptr;
 }
 
 void QAEngine::initialize()
 {
-    qDebug()
-        << Q_FUNC_INFO;
+    qCDebug(categoryEngine)
+        << Q_FUNC_INFO
+        << qApp->arguments().first();
 
-    qDebug()
+    qCDebug(categoryEngine)
         << "Version:"
 #ifdef QAPRELOAD_VERSION
         << QStringLiteral(QAPRELOAD_VERSION);
@@ -68,31 +88,64 @@ void QAEngine::initialize()
 
     setParent(qGuiApp);
 
-#if defined Q_OS_SAILFISH
-    m_platform = new SailfishEnginePlatform(this);
-#else
-    QApplication *wapp = qobject_cast<QApplication*>(qGuiApp);
-    if (wapp) {
-        m_platform = new WidgetsEnginePlatform(this);
-    } else {
-        m_platform = new QuickEnginePlatform(this);
+    connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &QAEngine::onFocusWindowChanged);
+    if (!qGuiApp->topLevelWindows().isEmpty()) {
+        onFocusWindowChanged(qGuiApp->topLevelWindows().first());
     }
-#endif
+}
 
-    connect(m_platform, &IEnginePlatform::ready, this, &QAEngine::onPlatformReady);
+void QAEngine::onFocusWindowChanged(QWindow *window)
+{
+    qCDebug(categoryEngine)
+        << "focusWindowChanged" << window
+        << "appName" << qApp->arguments().first();
+
+    if (!window) {
+        return;
+    }
+
+    if (!s_windows.contains(window)) {
+        IEnginePlatform *platform = nullptr;
+#if defined Q_OS_SAILFISH
+        platform = new SailfishEnginePlatform(window);
+#else
+        if (qobject_cast<QQuickWindow*>(window)) {
+            platform = new QuickEnginePlatform(window);
+        } else {
+            platform = new WidgetsEnginePlatform(window);
+        }
+#endif
+        connect(platform, &IEnginePlatform::ready, this, &QAEngine::onPlatformReady);
+        connect(window, &QWindow::destroyed, [window]() {
+            s_windows.remove(window);
+        });
+        QTimer::singleShot(0, platform, &IEnginePlatform::initialize);
+
+        s_windows.insert(window, platform);
+    }
+
+    s_lastFocusWindow = window;
 }
 
 void QAEngine::onPlatformReady()
 {
-    s_processName = QFileInfo(qApp->arguments().first()).baseName();
-    qWarning()
-        << Q_FUNC_INFO
-        << "Process name:" << s_processName;
+    IEnginePlatform *platform = qobject_cast<IEnginePlatform*>(sender());
+    if (!platform) {
+        return;
+    }
 
-    m_client = new QAEngineSocketClient(this);
-    connect(m_client, &QAEngineSocketClient::commandReceived,
-            this, &QAEngine::processCommand);
-    m_client->connectToBridge();
+    s_processName = QFileInfo(qApp->arguments().first()).baseName();
+    qCDebug(categoryEngine)
+        << Q_FUNC_INFO
+        << "Process name:" << s_processName
+        << "platform:" << platform << platform->window();
+
+    if (!m_client) {
+        m_client = new QAEngineSocketClient(this);
+        connect(m_client, &QAEngineSocketClient::commandReceived,
+                this, &QAEngine::processCommand);
+        m_client->connectToBridge();
+    }
 }
 
 QAEngine *QAEngine::instance()
@@ -133,7 +186,7 @@ bool QAEngine::metaInvoke(QTcpSocket *socket, QObject *object, const QString &me
                         arguments[i] = qVariantToArgument(params[i]);
                     }
                 }
-                qDebug()
+                qCDebug(categoryEngine)
                     << Q_FUNC_INFO
                     << "found" << methodName
                     << "in" << mo->className();
@@ -168,19 +221,20 @@ bool QAEngine::metaInvoke(QTcpSocket *socket, QObject *object, const QString &me
 
 void QAEngine::removeItem(QObject *o)
 {
-    if (!m_platform) {
-        return;
+    if (auto platform = getPlatform(true)) {
+        platform->removeItem(o);
     }
-
-    m_platform->removeItem(o);
+    if (s_lastFocusWindow == o) {
+        s_lastFocusWindow = qGuiApp->topLevelWindows().last();
+    }
 }
 
 void QAEngine::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 {
-    qDebug()
+    qCDebug(categoryEngine)
         << Q_FUNC_INFO
         << socket;
-    qDebug().noquote() << cmd;
+    qCDebug(categoryEngine).noquote() << cmd;
 
     QJsonParseError error;
     QJsonDocument json = QJsonDocument::fromJson(cmd, &error);
@@ -210,15 +264,28 @@ void QAEngine::processCommand(QTcpSocket *socket, const QByteArray &cmd)
 bool QAEngine::processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params)
 {
     const QString methodName = QStringLiteral("%1Command").arg(action);
-    qDebug()
+    qCDebug(categoryEngine)
         << Q_FUNC_INFO
         << socket << methodName << params;
 
-    bool implemented = true;
-    bool result = metaInvoke(socket, m_platform, methodName, params, &implemented);
+    bool result = false;
+    if (auto platform = getPlatform()) {
+        qCDebug(categoryEngine) << Q_FUNC_INFO << platform << platform->window() << platform->rootObject();
+        bool implemented = true;
+        result = metaInvoke(socket, platform, methodName, params, &implemented);
 
-    if (!implemented) {
-        m_platform->socketReply(socket, QStringLiteral("not_implemented"), 405);
+        if (!implemented) {
+            platform->socketReply(socket, QStringLiteral("not_implemented"), 405);
+        }
+    } else {
+        QJsonObject reply;
+        reply.insert(QStringLiteral("status"), 1);
+        reply.insert(QStringLiteral("value"), QStringLiteral("no platform!"));
+
+        const QByteArray data = QJsonDocument(reply).toJson(QJsonDocument::Compact);
+
+        socket->write(data);
+        socket->flush();
     }
 
     return result;

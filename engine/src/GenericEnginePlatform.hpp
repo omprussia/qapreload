@@ -15,7 +15,10 @@ class GenericEnginePlatform : public IEnginePlatform
 {
     Q_OBJECT
 public:
-    explicit GenericEnginePlatform(QObject *parent);
+    explicit GenericEnginePlatform(QWindow *window);
+    QWindow* window() override;
+    QObject* rootObject() override;
+
     void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) override;
     void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) override;
 
@@ -30,12 +33,8 @@ public:
     QRect getGeometry(QObject *item) override;
     QRect getAbsGeometry(QObject *item) override;
 
-public slots:
-    virtual void initialize() = 0;
-
 protected:
     friend class QAMouseEngine;
-    void tryInitialize();
 
     void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QObject *item = nullptr);
     void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QObject *parentItem = nullptr);
