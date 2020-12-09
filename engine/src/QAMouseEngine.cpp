@@ -15,6 +15,10 @@
 #include <QDebug>
 #include <QThread>
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(categoryMouseEngine, "omp.qaengine.mouse", QtInfoMsg)
+
 QAMouseEngine::QAMouseEngine(QObject *parent)
     : QObject(parent)
     , m_eta(new QElapsedTimer())
@@ -383,12 +387,10 @@ EventWorker::EventWorker(const QVariantList &actions, QAMouseEngine *engine)
     , m_actions(actions)
     , m_engine(engine)
 {
-    qDebug() << "Created EventWorker" << this;
 }
 
 EventWorker::~EventWorker()
 {
-    qDebug() << "Deleted EventWorker" << this;
 }
 
 EventWorker* EventWorker::PerformTouchAction(const QVariantList &actions, QAMouseEngine *engine)
@@ -415,7 +417,6 @@ void EventWorker::start()
 
         if (action == QLatin1String("wait")) {
             const int delay = options.value(QStringLiteral("ms")).toInt();
-            qDebug() << "waiting for" << delay;
             QEventLoop loop;
             QTimer::singleShot(delay, &loop, &QEventLoop::quit);
             loop.exec();
@@ -435,7 +436,6 @@ void EventWorker::start()
             previousPoint = point;
 
             const int delay = options.value(QStringLiteral("duration")).toInt();
-            qDebug() << "waiting for" << delay;
             QEventLoop loop;
             QTimer::singleShot(delay, &loop, &QEventLoop::quit);
             loop.exec();
@@ -492,7 +492,9 @@ void EventWorker::start()
             }
             previousPoint = point;
         } else {
-            qWarning() << Q_FUNC_INFO << action;
+            qCWarning(categoryMouseEngine)
+                << Q_FUNC_INFO
+                << "Unknown action:" << action;
         }
     }
 
@@ -501,7 +503,7 @@ void EventWorker::start()
 
 void EventWorker::sendPress(const QPointF &point)
 {
-    qWarning()
+    qCDebug(categoryMouseEngine)
         << Q_FUNC_INFO << point;
 
     emit pressed(point);
@@ -509,7 +511,7 @@ void EventWorker::sendPress(const QPointF &point)
 
 void EventWorker::sendRelease(const QPointF &point)
 {
-    qWarning()
+    qCDebug(categoryMouseEngine)
         << Q_FUNC_INFO << point;
 
     emit released(point);
@@ -517,7 +519,7 @@ void EventWorker::sendRelease(const QPointF &point)
 
 void EventWorker::sendRelease(const QPointF &point, int delay)
 {
-    qWarning()
+    qCDebug(categoryMouseEngine)
         << Q_FUNC_INFO
         << point << delay;
 
@@ -534,7 +536,7 @@ void EventWorker::sendRelease(const QPointF &point, int delay)
 
 void EventWorker::sendMove(const QPointF &point)
 {
-    qWarning()
+    qCDebug(categoryMouseEngine)
         << Q_FUNC_INFO
         << point;
 
@@ -543,7 +545,7 @@ void EventWorker::sendMove(const QPointF &point)
 
 void EventWorker::sendMove(const QPointF &previousPoint, const QPointF &point, int duration, int moveSteps)
 {
-    qWarning()
+    qCDebug(categoryMouseEngine)
         << Q_FUNC_INFO
         << previousPoint << point << duration << moveSteps;
 

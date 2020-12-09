@@ -7,7 +7,7 @@ class SailfishEnginePlatform : public QuickEnginePlatform
 {
     Q_OBJECT
 public:
-    explicit SailfishEnginePlatform(QObject *parent);
+    explicit SailfishEnginePlatform(QWindow *window);
 
     enum SwipeDirection {
         SwipeDirectionUp,

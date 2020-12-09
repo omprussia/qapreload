@@ -5,13 +5,17 @@
 #include <QPoint>
 #include <QSize>
 #include <QRect>
+#include <QWindow>
 
 class QTcpSocket;
 class IEnginePlatform : public QObject
 {
     Q_OBJECT
 public:
-    explicit IEnginePlatform(QObject* parent) : QObject(parent) {}
+    explicit IEnginePlatform(QWindow* window) : QObject(window) {}
+    virtual QWindow* window() = 0;
+    virtual QObject* rootObject() = 0;
+
     virtual void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) = 0;
     virtual void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) = 0;
 
@@ -28,6 +32,9 @@ public:
     virtual QRect getAbsGeometry(QObject *item) = 0;
     virtual bool isItemEnabled(QObject *item) = 0;
     virtual bool isItemVisible(QObject *item) = 0;
+
+public slots:
+    virtual void initialize() = 0;
 
 private slots:
     virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) = 0;

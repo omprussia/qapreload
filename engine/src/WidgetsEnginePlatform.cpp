@@ -26,6 +26,10 @@
 #include <private/qapplication_p.h>
 #include <private/qwidget_p.h>
 
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(categoryWidgetsEnginePlatform, "omp.qaengine.platform.widgets", QtInfoMsg)
+
 QList<QObject *> WidgetsEnginePlatform::childrenList(QObject *parentItem)
 {
     QList<QObject*> result;
@@ -52,53 +56,33 @@ QWidget *WidgetsEnginePlatform::getItem(const QString &elementId)
     return qobject_cast<QWidget*>(getObject(elementId));
 }
 
-WidgetsEnginePlatform::WidgetsEnginePlatform(QObject *parent)
-    : GenericEnginePlatform(parent)
+WidgetsEnginePlatform::WidgetsEnginePlatform(QWindow *window)
+    : GenericEnginePlatform(window)
 {
 
 }
 
 void WidgetsEnginePlatform::initialize()
 {
-    connect(qApp, &QApplication::focusWindowChanged, this, &WidgetsEnginePlatform::onFocusWindowChanged);
-    if (qApp->activeWindow()) {
-        onFocusWindowChanged(qApp->activeWindow()->windowHandle());
-    }
-}
-
-void WidgetsEnginePlatform::onFocusWindowChanged(QWindow *window)
-{
-    bool wasEmpty = !m_rootWindow;
-
-    if (!window) {
+    if (!m_rootWindow) {
         return;
     }
 
-    m_rootWindow = window;
-    m_rootWidget = qApp->activeWindow();
+    if (qApp->activePopupWidget()) {
+        m_rootWidget = qApp->activePopupWidget();
+    } else if (qApp->activeModalWidget()) {
+        m_rootWidget = qApp->activeModalWidget();
+    } else {
+        qApp->focusWidget();
+    }
     m_rootObject = m_rootWidget;
 
-    m_rootWidgets.insert(window, qApp->activeWindow());
-
-    connect(m_rootWindow, &QObject::destroyed, [this](QObject *o) {
-        m_rootWidgets.remove(o);
-        if (m_rootWindow != o) {
-            return;
-        }
-
-        m_rootWindow = qGuiApp->topLevelWindows().last();
-        m_rootWidget = m_rootWidgets.value(m_rootWindow);
-        m_rootObject = m_rootWidget;
-    });
-
-    if (wasEmpty) {
-        emit ready();
-    }
+    emit ready();
 }
 
 void WidgetsEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket;
 
@@ -109,7 +93,7 @@ void WidgetsEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
 
 void WidgetsEnginePlatform::executeCommand_app_dumpInView(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -131,7 +115,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInView(QTcpSocket *socket, co
         return;
     }
 
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << view << model;
 
@@ -140,7 +124,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInView(QTcpSocket *socket, co
 
 void WidgetsEnginePlatform::executeCommand_app_posInView(QTcpSocket *socket, const QString &elementId, const QString &display)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << display;
 
@@ -173,7 +157,7 @@ void WidgetsEnginePlatform::executeCommand_app_posInView(QTcpSocket *socket, con
 
 void WidgetsEnginePlatform::executeCommand_app_clickInView(QTcpSocket *socket, const QString &elementId, const QString &display)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << display;
 
@@ -207,7 +191,7 @@ void WidgetsEnginePlatform::executeCommand_app_clickInView(QTcpSocket *socket, c
 
 void WidgetsEnginePlatform::executeCommand_app_scrollInView(QTcpSocket *socket, const QString &elementId, const QString &display)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << display;
 
@@ -244,7 +228,7 @@ void WidgetsEnginePlatform::executeCommand_app_scrollInView(QTcpSocket *socket, 
 
 void WidgetsEnginePlatform::executeCommand_app_triggerInMenu(QTcpSocket *socket, const QString &text)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << text;
 
@@ -261,7 +245,7 @@ void WidgetsEnginePlatform::executeCommand_app_triggerInMenu(QTcpSocket *socket,
 
 void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket;
 
@@ -276,7 +260,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(QTcpSocket *socket)
 
 void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -298,7 +282,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket
         return;
     }
 
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << comboBox << model;
 
@@ -307,7 +291,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket
 
 void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *socket, const QString &elementId, const QString &display)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << display;
 
@@ -337,7 +321,7 @@ void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *so
 {
     const int index = idx;
 
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << index;
 
@@ -364,7 +348,7 @@ void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *so
 
 void WidgetsEnginePlatform::executeCommand_app_dumpInTabBar(QTcpSocket *socket, const QString &elementId)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -391,7 +375,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInTabBar(QTcpSocket *socket, 
 
 void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << display;
 
@@ -426,7 +410,7 @@ void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, c
 {
     const int index = idx;
 
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << index;
 
@@ -457,7 +441,7 @@ void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, c
 
 void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << display;
 
@@ -488,7 +472,7 @@ void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(QTcpSocket *sock
 {
     const int index = idx;
 
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << index;
 
@@ -550,7 +534,7 @@ QStringList WidgetsEnginePlatform::recursiveDumpModel(QAbstractItemModel *model,
 
 QPoint WidgetsEnginePlatform::getAbsPosition(QObject *item)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << item << m_rootWidget;
 
@@ -558,7 +542,7 @@ QPoint WidgetsEnginePlatform::getAbsPosition(QObject *item)
     if (!w) {
         return QPoint();
     }
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << item << w;
 
@@ -571,7 +555,7 @@ QPoint WidgetsEnginePlatform::getAbsPosition(QObject *item)
 
 QPoint WidgetsEnginePlatform::getPosition(QObject *item)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -584,7 +568,7 @@ QPoint WidgetsEnginePlatform::getPosition(QObject *item)
 
 QSize WidgetsEnginePlatform::getSize(QObject *item)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -597,7 +581,7 @@ QSize WidgetsEnginePlatform::getSize(QObject *item)
 
 bool WidgetsEnginePlatform::isItemEnabled(QObject *item)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -610,7 +594,7 @@ bool WidgetsEnginePlatform::isItemEnabled(QObject *item)
 
 bool WidgetsEnginePlatform::isItemVisible(QObject *item)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -623,7 +607,7 @@ bool WidgetsEnginePlatform::isItemVisible(QObject *item)
 
 void WidgetsEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << socket << item << fillBackground;
 
@@ -650,7 +634,7 @@ void WidgetsEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bo
 
 void WidgetsEnginePlatform::pressAndHoldItem(QObject *qitem, int delay)
 {
-    qDebug()
+    qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
         << qitem << delay;
 

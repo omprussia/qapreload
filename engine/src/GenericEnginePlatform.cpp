@@ -20,24 +20,32 @@
 
 #include "qpa/qwindowsysteminterface_p.h"
 
-//void GenericEnginePlatform::findStrategyAs_name(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
-//{
-//    qDebug() << Q_FUNC_INFO << parentItem;
-//}
+#include <QLoggingCategory>
 
-GenericEnginePlatform::GenericEnginePlatform(QObject *parent)
-    : IEnginePlatform(parent)
+Q_LOGGING_CATEGORY(categoryGenericEnginePlatform, "omp.qaengine.platform.generic", QtInfoMsg)
+
+GenericEnginePlatform::GenericEnginePlatform(QWindow *window)
+    : IEnginePlatform(window)
+    , m_rootWindow(window)
     , m_mouseEngine(new QAMouseEngine(this))
     , m_keyEngine(new QAKeyEngine(this))
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO;
 
     connect(m_mouseEngine, &QAMouseEngine::touchEvent, this, &GenericEnginePlatform::onTouchEvent);
     connect(m_mouseEngine, &QAMouseEngine::mouseEvent, this, &GenericEnginePlatform::onMouseEvent);
     connect(m_keyEngine, &QAKeyEngine::triggered, this, &GenericEnginePlatform::onKeyEvent);
+}
 
-    QTimer::singleShot(0, this, &GenericEnginePlatform::tryInitialize);
+QWindow *GenericEnginePlatform::window()
+{
+    return m_rootWindow;
+}
+
+QObject *GenericEnginePlatform::rootObject()
+{
+    return m_rootObject;
 }
 
 void GenericEnginePlatform::socketReply(QTcpSocket *socket, const QVariant &value, int status)
@@ -48,12 +56,12 @@ void GenericEnginePlatform::socketReply(QTcpSocket *socket, const QVariant &valu
 
     const QByteArray data = QJsonDocument(reply).toJson(QJsonDocument::Compact);
 
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket
         << data.size()
         << "Reply is:";
-    qDebug().noquote()
+    qCDebug(categoryGenericEnginePlatform).noquote()
         << data;
 
     socket->write(data);
@@ -99,7 +107,7 @@ void GenericEnginePlatform::removeItem(QObject *o)
 
 void GenericEnginePlatform::findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple, QObject *item)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << strategy << selector << multiple << item;
 
@@ -113,7 +121,7 @@ void GenericEnginePlatform::findElement(QTcpSocket *socket, const QString &strat
 
 void GenericEnginePlatform::findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple, QObject *parentItem)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << propertyName << propertyValue << multiple << parentItem;
 
@@ -142,7 +150,7 @@ QObject *GenericEnginePlatform::findItemByObjectName(const QString &objectName, 
 
 QObjectList GenericEnginePlatform::findItemsByClassName(const QString &className, QObject *parentItem)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << className << parentItem;
 
@@ -164,7 +172,7 @@ QObjectList GenericEnginePlatform::findItemsByClassName(const QString &className
 
 QObjectList GenericEnginePlatform::findItemsByProperty(const QString &propertyName, const QVariant &propertyValue, QObject *parentItem)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << propertyName << propertyValue << parentItem;
 
@@ -186,7 +194,7 @@ QObjectList GenericEnginePlatform::findItemsByProperty(const QString &propertyNa
 
 QObjectList GenericEnginePlatform::findItemsByText(const QString &text, bool partial, QObject *parentItem)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << text << partial << parentItem;
 
@@ -209,7 +217,7 @@ QObjectList GenericEnginePlatform::findItemsByText(const QString &text, bool par
 
 QObjectList GenericEnginePlatform::findItemsByXpath(const QString &xpath, QObject *parentItem)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << xpath << parentItem;
 
@@ -231,7 +239,7 @@ QObjectList GenericEnginePlatform::findItemsByXpath(const QString &xpath, QObjec
     query.setQuery(xpath);
 
     if (!query.isValid()) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << "Query not valid!";
         return items;
@@ -263,7 +271,7 @@ QObjectList GenericEnginePlatform::findItemsByXpath(const QString &xpath, QObjec
 
 QObjectList GenericEnginePlatform::filterVisibleItems(QObjectList items)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << items;
 
@@ -289,7 +297,7 @@ QObject *GenericEnginePlatform::getObject(const QString &elementId)
 
 QString GenericEnginePlatform::getText(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -318,7 +326,7 @@ QString GenericEnginePlatform::getText(QObject *item)
 
 QRect GenericEnginePlatform::getGeometry(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -327,7 +335,7 @@ QRect GenericEnginePlatform::getGeometry(QObject *item)
 
 QRect GenericEnginePlatform::getAbsGeometry(QObject *item)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << item;
 
@@ -360,7 +368,7 @@ QJsonObject GenericEnginePlatform::dumpObject(QObject *item, int depth)
             const QString propertyName = QString::fromLatin1(mo->property(i).name());
             if (m_blacklistedProperties.contains(moClassName)
                     && m_blacklistedProperties.value(moClassName).contains(propertyName)) {
-                qDebug()
+                qCDebug(categoryGenericEnginePlatform)
                     << "Found blacklisted:"
                     << moClassName << propertyName;
                 continue;
@@ -438,7 +446,7 @@ void GenericEnginePlatform::clickItem(QObject *item)
 {
     const QPoint itemAbs = getAbsPosition(item);
     const QSize size = getSize(item);
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << item << itemAbs << size;
 
@@ -457,30 +465,9 @@ QString GenericEnginePlatform::uniqueId(QObject *item)
                  QT_POINTER_SIZE * 2, 16, QLatin1Char('0'));
 }
 
-void GenericEnginePlatform::tryInitialize()
-{
-    static bool initializeDelayed = false;
-    if (qGuiApp->topLevelWindows().isEmpty()) {
-        qDebug()
-            << Q_FUNC_INFO
-            << "Unable to init without a Window instance" << endl
-            << "Delay initialization";
-
-        connect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &GenericEnginePlatform::tryInitialize);
-        initializeDelayed = true;
-        return;
-    }
-
-    if (initializeDelayed) {
-        disconnect(qGuiApp, &QGuiApplication::focusWindowChanged, this, &GenericEnginePlatform::tryInitialize);
-    }
-
-    initialize();
-}
-
 void GenericEnginePlatform::setProperty(QTcpSocket *socket, const QString &property, const QVariant &value, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << property << value << elementId;
 
@@ -495,7 +482,7 @@ void GenericEnginePlatform::setProperty(QTcpSocket *socket, const QString &prope
 
 void GenericEnginePlatform::clickPoint(int posx, int posy)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << posx << posy;
 
@@ -516,7 +503,7 @@ void GenericEnginePlatform::clickPoint(const QPoint &pos)
 
 void GenericEnginePlatform::pressAndHold(int posx, int posy, int delay)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << posx << posy << delay;
 
@@ -528,7 +515,7 @@ void GenericEnginePlatform::pressAndHold(int posx, int posy, int delay)
 
 void GenericEnginePlatform::mouseMove(int startx, int starty, int stopx, int stopy)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << startx << starty << stopx << stopy;
 
@@ -546,7 +533,7 @@ void GenericEnginePlatform::mouseMove(int startx, int starty, int stopx, int sto
 
 void GenericEnginePlatform::mouseDrag(int startx, int starty, int stopx, int stopy, int delay)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << startx << starty << stopx << stopy << delay;
 
@@ -604,17 +591,17 @@ void GenericEnginePlatform::processTouchActionList(const QVariant &actionListArg
 
 void GenericEnginePlatform::waitForPropertyChange(QObject *item, const QString &propertyName, const QVariant &value, int timeout)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << item << propertyName << value << timeout;
 
     if (!item) {
-        qWarning() << "item is null" << item;
+        qCWarning(categoryGenericEnginePlatform) << "item is null" << item;
         return;
     }
     int propertyIndex = item->metaObject()->indexOfProperty(propertyName.toLatin1().constData());
     if (propertyIndex < 0) {
-        qWarning() << Q_FUNC_INFO << item << "property" << propertyName << "is not valid!";
+        qCWarning(categoryGenericEnginePlatform) << Q_FUNC_INFO << item << "property" << propertyName << "is not valid!";
         return;
     }
     const QMetaProperty prop = item->metaObject()->property(propertyIndex);
@@ -622,7 +609,7 @@ void GenericEnginePlatform::waitForPropertyChange(QObject *item, const QString &
         return;
     }
     if (!prop.hasNotifySignal()) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << item << "property" << propertyName << "have on notifySignal!";
         return;
@@ -646,7 +633,7 @@ void GenericEnginePlatform::execute(QTcpSocket *socket, const QString &methodNam
     bool success = QAEngine::metaInvoke(socket, this, methodName, params, &handled);
 
     if (!handled || !success) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << methodName << "not handled!";
         socketReply(socket, QString());
@@ -710,12 +697,12 @@ void GenericEnginePlatform::onKeyEvent(QKeyEvent *event)
 
 void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << appName;
 
     if (appName != QAEngine::processName()) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << appName << "is not" << QAEngine::processName();
         socketReply(socket, QString(), 1);
@@ -723,7 +710,7 @@ void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString
     }
 
     if (!m_rootWindow) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << "No window!";
         return;
@@ -738,12 +725,12 @@ void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString
 
 void GenericEnginePlatform::closeAppCommand(QTcpSocket *socket, const QString &appName)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << appName;
 
     if (appName != QAEngine::processName()) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << appName << "is not" << QAEngine::processName();
         socketReply(socket, QString(), 1);
@@ -756,12 +743,12 @@ void GenericEnginePlatform::closeAppCommand(QTcpSocket *socket, const QString &a
 
 void GenericEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QString &appName)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << appName;
 
     if (appName != QAEngine::processName()) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << appName << "is not" << QAEngine::processName();
         socketReply(socket, QString(), 1);
@@ -769,7 +756,7 @@ void GenericEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QStri
     }
 
     if (!m_rootWindow) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << "No window!";
         return;
@@ -781,12 +768,12 @@ void GenericEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QStri
 
 void GenericEnginePlatform::backgroundCommand(QTcpSocket *socket, double seconds)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << seconds;
 
     if (!m_rootWindow) {
-        qWarning()
+        qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
             << "No window!";
         return;
@@ -811,7 +798,7 @@ void GenericEnginePlatform::backgroundCommand(QTcpSocket *socket, double seconds
 
 void GenericEnginePlatform::getClipboardCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
 
@@ -820,7 +807,7 @@ void GenericEnginePlatform::getClipboardCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::setClipboardCommand(QTcpSocket *socket, const QString &content)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << content;
 
@@ -830,7 +817,7 @@ void GenericEnginePlatform::setClipboardCommand(QTcpSocket *socket, const QStrin
 
 void GenericEnginePlatform::findElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << strategy << selector;
 
@@ -839,7 +826,7 @@ void GenericEnginePlatform::findElementCommand(QTcpSocket *socket, const QString
 
 void GenericEnginePlatform::findElementsCommand(QTcpSocket *socket, const QString &strategy, const QString &selector)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << strategy << selector;
 
@@ -848,7 +835,7 @@ void GenericEnginePlatform::findElementsCommand(QTcpSocket *socket, const QStrin
 
 void GenericEnginePlatform::findElementFromElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << strategy << selector << elementId;
 
@@ -857,7 +844,7 @@ void GenericEnginePlatform::findElementFromElementCommand(QTcpSocket *socket, co
 
 void GenericEnginePlatform::findElementsFromElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << strategy << selector << elementId;
 
@@ -866,7 +853,7 @@ void GenericEnginePlatform::findElementsFromElementCommand(QTcpSocket *socket, c
 
 void GenericEnginePlatform::getLocationCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -888,7 +875,7 @@ void GenericEnginePlatform::getLocationCommand(QTcpSocket *socket, const QString
 
 void GenericEnginePlatform::getLocationInViewCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -910,7 +897,7 @@ void GenericEnginePlatform::getLocationInViewCommand(QTcpSocket *socket, const Q
 
 void GenericEnginePlatform::getAttributeCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << attribute << elementId;
 
@@ -925,7 +912,7 @@ void GenericEnginePlatform::getAttributeCommand(QTcpSocket *socket, const QStrin
 
 void GenericEnginePlatform::getPropertyCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << attribute << elementId;
 
@@ -940,7 +927,7 @@ void GenericEnginePlatform::getPropertyCommand(QTcpSocket *socket, const QString
 
 void GenericEnginePlatform::getTextCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -954,7 +941,7 @@ void GenericEnginePlatform::getTextCommand(QTcpSocket *socket, const QString &el
 
 void GenericEnginePlatform::getElementScreenshotCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -968,7 +955,7 @@ void GenericEnginePlatform::getElementScreenshotCommand(QTcpSocket *socket, cons
 
 void GenericEnginePlatform::getScreenshotCommand(QTcpSocket *socket)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
 
@@ -977,7 +964,7 @@ void GenericEnginePlatform::getScreenshotCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::getWindowRectCommand(QTcpSocket *socket)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO;
 
     QJsonObject reply;
@@ -993,7 +980,7 @@ void GenericEnginePlatform::getWindowRectCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::elementEnabledCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -1002,7 +989,7 @@ void GenericEnginePlatform::elementEnabledCommand(QTcpSocket *socket, const QStr
 
 void GenericEnginePlatform::elementDisplayedCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -1011,7 +998,7 @@ void GenericEnginePlatform::elementDisplayedCommand(QTcpSocket *socket, const QS
 
 void GenericEnginePlatform::elementSelectedCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -1020,7 +1007,7 @@ void GenericEnginePlatform::elementSelectedCommand(QTcpSocket *socket, const QSt
 
 void GenericEnginePlatform::getSizeCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -1038,7 +1025,7 @@ void GenericEnginePlatform::getSizeCommand(QTcpSocket *socket, const QString &el
 
 void GenericEnginePlatform::setValueImmediateCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << value << elementId;
 
@@ -1052,7 +1039,7 @@ void GenericEnginePlatform::setValueImmediateCommand(QTcpSocket *socket, const Q
 
 void GenericEnginePlatform::replaceValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << value << elementId;
 
@@ -1061,7 +1048,7 @@ void GenericEnginePlatform::replaceValueCommand(QTcpSocket *socket, const QVaria
 
 void GenericEnginePlatform::setValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << value << elementId;
 
@@ -1070,7 +1057,7 @@ void GenericEnginePlatform::setValueCommand(QTcpSocket *socket, const QVariantLi
 
 void GenericEnginePlatform::clickCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -1085,7 +1072,7 @@ void GenericEnginePlatform::clickCommand(QTcpSocket *socket, const QString &elem
 
 void GenericEnginePlatform::clearCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -1094,7 +1081,7 @@ void GenericEnginePlatform::clearCommand(QTcpSocket *socket, const QString &elem
 
 void GenericEnginePlatform::submitCommand(QTcpSocket *socket, const QString &elementId)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId;
 
@@ -1104,7 +1091,7 @@ void GenericEnginePlatform::submitCommand(QTcpSocket *socket, const QString &ele
 
 void GenericEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1112,7 +1099,7 @@ void GenericEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::backCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1120,7 +1107,7 @@ void GenericEnginePlatform::backCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::forwardCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1128,7 +1115,7 @@ void GenericEnginePlatform::forwardCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::getOrientationCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1136,7 +1123,7 @@ void GenericEnginePlatform::getOrientationCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::setOrientationCommand(QTcpSocket *socket, const QString &orientation)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << orientation;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1144,7 +1131,7 @@ void GenericEnginePlatform::setOrientationCommand(QTcpSocket *socket, const QStr
 
 void GenericEnginePlatform::hideKeyboardCommand(QTcpSocket *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << strategy << key << keyCode << keyName;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1152,7 +1139,7 @@ void GenericEnginePlatform::hideKeyboardCommand(QTcpSocket *socket, const QStrin
 
 void GenericEnginePlatform::getCurrentActivityCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1160,7 +1147,7 @@ void GenericEnginePlatform::getCurrentActivityCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::implicitWaitCommand(QTcpSocket *socket, double msecs)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << msecs;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1168,7 +1155,7 @@ void GenericEnginePlatform::implicitWaitCommand(QTcpSocket *socket, double msecs
 
 void GenericEnginePlatform::activeCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1176,7 +1163,7 @@ void GenericEnginePlatform::activeCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::getAlertTextCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1184,7 +1171,7 @@ void GenericEnginePlatform::getAlertTextCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::isKeyboardShownCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1192,7 +1179,7 @@ void GenericEnginePlatform::isKeyboardShownCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::activateIMEEngineCommand(QTcpSocket *socket, const QVariant &engine)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << engine;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1200,7 +1187,7 @@ void GenericEnginePlatform::activateIMEEngineCommand(QTcpSocket *socket, const Q
 
 void GenericEnginePlatform::availableIMEEnginesCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1208,7 +1195,7 @@ void GenericEnginePlatform::availableIMEEnginesCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::getActiveIMEEngineCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1216,7 +1203,7 @@ void GenericEnginePlatform::getActiveIMEEngineCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::deactivateIMEEngineCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1224,7 +1211,7 @@ void GenericEnginePlatform::deactivateIMEEngineCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::isIMEActivatedCommand(QTcpSocket *socket)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1232,7 +1219,7 @@ void GenericEnginePlatform::isIMEActivatedCommand(QTcpSocket *socket)
 
 void GenericEnginePlatform::keyeventCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &sessionIDArg, const QVariant &flagsArg)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << keycodeArg << metaState << sessionIDArg << flagsArg;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1240,7 +1227,7 @@ void GenericEnginePlatform::keyeventCommand(QTcpSocket *socket, const QVariant &
 
 void GenericEnginePlatform::longPressKeyCodeCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << keycodeArg << metaState << flagsArg;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1248,7 +1235,7 @@ void GenericEnginePlatform::longPressKeyCodeCommand(QTcpSocket *socket, const QV
 
 void GenericEnginePlatform::pressKeyCodeCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << keycodeArg << metaState << flagsArg;
     socketReply(socket, QStringLiteral("not_implemented"), 405);
@@ -1256,7 +1243,7 @@ void GenericEnginePlatform::pressKeyCodeCommand(QTcpSocket *socket, const QVaria
 
 void GenericEnginePlatform::executeCommand(QTcpSocket *socket, const QString &command, const QVariantList &params)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << command << params;
 
@@ -1267,7 +1254,7 @@ void GenericEnginePlatform::executeCommand(QTcpSocket *socket, const QString &co
 
 void GenericEnginePlatform::executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << command << params;
 
@@ -1278,7 +1265,7 @@ void GenericEnginePlatform::executeAsyncCommand(QTcpSocket *socket, const QStrin
 
 void GenericEnginePlatform::performTouchCommand(QTcpSocket *socket, const QVariant &paramsArg)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << paramsArg;
 
@@ -1292,7 +1279,7 @@ void GenericEnginePlatform::performTouchCommand(QTcpSocket *socket, const QVaria
 
 void GenericEnginePlatform::performMultiActionCommand(QTcpSocket *socket, const QVariant &paramsArg)
 {
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << paramsArg;
 
@@ -1307,7 +1294,7 @@ void GenericEnginePlatform::performMultiActionCommand(QTcpSocket *socket, const 
 void GenericEnginePlatform::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
 {
     QObject *item = findItemByObjectName(selector, parentItem);
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << selector << multiple << item;
     elementReply(socket, {item}, multiple);
@@ -1321,7 +1308,7 @@ void GenericEnginePlatform::findStrategy_objectName(QTcpSocket *socket, const QS
 void GenericEnginePlatform::findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
 {
     QObjectList items = findItemsByClassName(selector, parentItem);
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << selector << multiple << items;
     elementReply(socket, items, multiple);
@@ -1330,7 +1317,7 @@ void GenericEnginePlatform::findStrategy_classname(QTcpSocket *socket, const QSt
 void GenericEnginePlatform::findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
 {
     QObjectList items = findItemsByText(selector, false, parentItem);
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << selector << multiple << items;
     elementReply(socket, items, multiple);
@@ -1347,7 +1334,7 @@ void GenericEnginePlatform::findStrategy_parent(QTcpSocket *socket, const QStrin
         pItem = getParent(pItem);
     }
     const QObjectList items = {pItem};
-    qDebug()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << selector << multiple << items;
     elementReply(socket, items, multiple);
@@ -1356,13 +1343,13 @@ void GenericEnginePlatform::findStrategy_parent(QTcpSocket *socket, const QStrin
 void GenericEnginePlatform::findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
 {
     QObjectList items = findItemsByXpath(selector, parentItem);
-    qDebug() << Q_FUNC_INFO << selector << multiple << items;
+    qCDebug(categoryGenericEnginePlatform) << Q_FUNC_INFO << selector << multiple << items;
     elementReply(socket, items, multiple);
 }
 
 void GenericEnginePlatform::executeCommand_app_dumpTree(QTcpSocket *socket)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket;
 
@@ -1372,7 +1359,7 @@ void GenericEnginePlatform::executeCommand_app_dumpTree(QTcpSocket *socket)
 
 void GenericEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QVariant &value)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << attribute << value;
 
@@ -1381,7 +1368,7 @@ void GenericEnginePlatform::executeCommand_app_setAttribute(QTcpSocket *socket, 
 
 void GenericEnginePlatform::executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout)
 {
-    qWarning()
+    qCDebug(categoryGenericEnginePlatform)
         << Q_FUNC_INFO
         << socket << elementId << propertyName << value << timeout;
 
