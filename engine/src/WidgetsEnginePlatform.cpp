@@ -68,14 +68,18 @@ void WidgetsEnginePlatform::initialize()
         return;
     }
 
-    if (qApp->activePopupWidget()) {
+    if (qApp->activePopupWidget() && qApp->activePopupWidget()->windowHandle() == m_rootWindow) {
         m_rootWidget = qApp->activePopupWidget();
-    } else if (qApp->activeModalWidget()) {
+    } else if (qApp->activeModalWidget() && qApp->activeModalWidget()->windowHandle() == m_rootWindow) {
         m_rootWidget = qApp->activeModalWidget();
-    } else {
+    } else if (qApp->focusWidget() && qApp->focusWidget()->windowHandle() == m_rootWindow) {
         m_rootWidget = qApp->focusWidget();
+    } else {
+        m_rootWidget = qApp->activeWindow();
     }
     m_rootObject = m_rootWidget;
+    qCDebug(categoryWidgetsEnginePlatform)
+        << Q_FUNC_INFO << m_rootObject;
 
     emit ready();
 }

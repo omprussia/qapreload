@@ -138,7 +138,7 @@ void QAEngine::onPlatformReady()
     qCDebug(categoryEngine)
         << Q_FUNC_INFO
         << "Process name:" << s_processName
-        << "platform:" << platform << platform->window();
+        << "platform:" << platform << platform->window() << platform->rootObject();
 
     if (!m_client) {
         m_client = new QAEngineSocketClient(this);
@@ -225,7 +225,7 @@ void QAEngine::removeItem(QObject *o)
         platform->removeItem(o);
     }
     if (s_lastFocusWindow == o) {
-        s_lastFocusWindow = qGuiApp->topLevelWindows().last();
+        s_lastFocusWindow = qGuiApp->topLevelWindows().first();
     }
 }
 
