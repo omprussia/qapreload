@@ -73,7 +73,7 @@ void WidgetsEnginePlatform::initialize()
     } else if (qApp->activeModalWidget()) {
         m_rootWidget = qApp->activeModalWidget();
     } else {
-        qApp->focusWidget();
+        m_rootWidget = qApp->focusWidget();
     }
     m_rootObject = m_rootWidget;
 
