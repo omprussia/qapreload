@@ -135,11 +135,12 @@ QObject *GenericEnginePlatform::findItemByObjectName(const QString &objectName, 
         parentItem = m_rootObject;
     }
 
+    if (parentItem->objectName() == objectName) {
+        return parentItem;
+    }
+
     QList<QObject*> childItems = childrenList(parentItem);
     for (QObject *child : childItems) {
-        if (child->objectName() == objectName) {
-            return child;
-        }
         QObject *item = findItemByObjectName(objectName, child);
         if (item) {
             return item;
@@ -160,10 +161,11 @@ QObjectList GenericEnginePlatform::findItemsByClassName(const QString &className
         parentItem = m_rootObject;
     }
 
+    if (getClassName(parentItem) == className) {
+        items.append(parentItem);
+    }
+
     for (QObject *child : childrenList(parentItem)) {
-        if (getClassName(child) == className) {
-            items.append(child);
-        }
         QObjectList recursiveItems = findItemsByClassName(className, child);
         items.append(recursiveItems);
     }
@@ -182,10 +184,11 @@ QObjectList GenericEnginePlatform::findItemsByProperty(const QString &propertyNa
         parentItem = m_rootObject;
     }
 
+    if (parentItem->property(propertyName.toLatin1().constData()) == propertyValue) {
+        items.append(parentItem);
+    }
+
     for (QObject *child : childrenList(parentItem)) {
-        if (child->property(propertyName.toLatin1().constData()) == propertyValue) {
-            items.append(child);
-        }
         QObjectList recursiveItems = findItemsByProperty(propertyName, propertyValue, child);
         items.append(recursiveItems);
     }
@@ -204,11 +207,12 @@ QObjectList GenericEnginePlatform::findItemsByText(const QString &text, bool par
         parentItem = m_rootObject;
     }
 
+    const QString &itemText = getText(parentItem);
+    if ((partial && itemText.contains(text)) || (!partial && itemText == text)) {
+        items.append(parentItem);
+    }
+
     for (QObject *child : childrenList(parentItem)) {
-        const QString &itemText = getText(child);
-        if ((partial && itemText.contains(text)) || (!partial && itemText == text)) {
-            items.append(child);
-        }
         QObjectList recursiveItems = findItemsByText(text, partial, child);
         items.append(recursiveItems);
     }
