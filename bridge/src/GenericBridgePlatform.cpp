@@ -620,6 +620,9 @@ void GenericBridgePlatform::socketReply(QTcpSocket *socket, const QVariant &valu
 void GenericBridgePlatform::forwardToApp(QTcpSocket *socket, const QByteArray &data)
 {
     if (!m_socketAppName.contains(socket)) {
+        qWarning()
+            << Q_FUNC_INFO
+            << "Unknown app:" << socket;
         return;
     }
 
@@ -634,6 +637,7 @@ void GenericBridgePlatform::forwardToApp(QTcpSocket *socket, const QString &appN
         qWarning()
             << Q_FUNC_INFO
             << "Unknown app:" << appName << socket;
+        socketReply(socket, QStringLiteral("unknown_app"), 1);
         return;
     }
 
