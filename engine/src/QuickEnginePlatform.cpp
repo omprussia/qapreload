@@ -26,7 +26,7 @@
 
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(categoryQuickEnginePlatform, "omp.qaengine.platform.quick", QtInfoMsg)
+Q_LOGGING_CATEGORY(categoryQuickEnginePlatform, "omp.qaengine.platform.quick", QtWarningMsg)
 
 QList<QObject *> QuickEnginePlatform::childrenList(QObject *parentItem)
 {

@@ -28,7 +28,7 @@
 
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(categoryWidgetsEnginePlatform, "omp.qaengine.platform.widgets", QtInfoMsg)
+Q_LOGGING_CATEGORY(categoryWidgetsEnginePlatform, "omp.qaengine.platform.widgets", QtWarningMsg)
 
 QList<QObject *> WidgetsEnginePlatform::childrenList(QObject *parentItem)
 {

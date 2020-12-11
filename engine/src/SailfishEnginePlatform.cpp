@@ -28,7 +28,7 @@
 
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(categorySailfishEnginePlatform, "omp.qaengine.platform.sailfish", QtInfoMsg)
+Q_LOGGING_CATEGORY(categorySailfishEnginePlatform, "omp.qaengine.platform.sailfish", QtWarningMsg)
 
 SailfishEnginePlatform::SailfishEnginePlatform(QWindow *window)
     : QuickEnginePlatform(window)

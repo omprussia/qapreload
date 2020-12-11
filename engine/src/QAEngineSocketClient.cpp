@@ -11,7 +11,7 @@
 
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(categorySocketClient, "omp.qaengine.socket", QtInfoMsg)
+Q_LOGGING_CATEGORY(categorySocketClient, "omp.qaengine.socket", QtWarningMsg)
 
 QAEngineSocketClient::QAEngineSocketClient(QObject *parent)
     : QObject(parent)
@@ -46,12 +46,15 @@ void QAEngineSocketClient::connectToBridge()
     root.insert(QStringLiteral("appConnect"), app);
 
     QByteArray data = QJsonDocument(root).toJson(QJsonDocument::Compact);
-
+    auto bytes = m_socket->write(data);
     qCDebug(categorySocketClient)
         << Q_FUNC_INFO
+        << "Bytes to write:"
+        << bytes;
+    auto success = m_socket->waitForBytesWritten();
+    qCDebug(categorySocketClient)
         << "Writing to bridge socket:"
-        << m_socket->write(data)
-        << m_socket->waitForBytesWritten();
+        << success;
 
     connect(m_socket, &QTcpSocket::readyRead, this, &QAEngineSocketClient::readSocket, Qt::UniqueConnection);
 }
@@ -59,10 +62,10 @@ void QAEngineSocketClient::connectToBridge()
 void QAEngineSocketClient::readSocket()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
-
+    auto bytes = socket->bytesAvailable();
     qCDebug(categorySocketClient)
         << Q_FUNC_INFO
-        << socket << socket->bytesAvailable();
+        << socket << bytes;
 
     emit commandReceived(socket, socket->readAll());
 }

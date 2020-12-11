@@ -651,10 +651,11 @@ void GenericBridgePlatform::forwardToApp(QTcpSocket *socket, const QString &appN
         << appReplyData;
 
     socket->write(appReplyData);
+    auto bytes = socket->waitForBytesWritten();
     qWarning()
         << Q_FUNC_INFO
         << "Writing to appium socket:"
-        << socket->waitForBytesWritten();
+        << bytes;
 }
 
 void GenericBridgePlatform::forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params)

@@ -17,7 +17,7 @@
 
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(categoryMouseEngine, "omp.qaengine.mouse", QtInfoMsg)
+Q_LOGGING_CATEGORY(categoryMouseEngine, "omp.qaengine.mouse", QtWarningMsg)
 
 QAMouseEngine::QAMouseEngine(QObject *parent)
     : QObject(parent)

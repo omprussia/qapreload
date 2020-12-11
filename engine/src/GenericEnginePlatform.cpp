@@ -22,7 +22,7 @@
 
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(categoryGenericEnginePlatform, "omp.qaengine.platform.generic", QtInfoMsg)
+Q_LOGGING_CATEGORY(categoryGenericEnginePlatform, "omp.qaengine.platform.generic", QtWarningMsg)
 
 GenericEnginePlatform::GenericEnginePlatform(QWindow *window)
     : IEnginePlatform(window)
