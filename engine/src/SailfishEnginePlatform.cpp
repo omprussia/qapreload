@@ -524,10 +524,7 @@ void SailfishEnginePlatform::goForward()
 void SailfishEnginePlatform::initialize()
 {
     qCDebug(categorySailfishEnginePlatform)
-        << Q_FUNC_INFO
-        << m_rootQuickItem;
-
-    QuickEnginePlatform::initialize();
+        << Q_FUNC_INFO;
 
     QDBusConnection::systemBus().connect(
         QString(),
@@ -551,6 +548,29 @@ void SailfishEnginePlatform::initialize()
             << m_blacklistedProperties;
     }
 
+    if (!m_rootWindow) {
+        qCDebug(categorySailfishEnginePlatform)
+            << Q_FUNC_INFO
+            << "No windows!";
+        return;
+    }
+
+    QQuickWindow *qWindow = qobject_cast<QQuickWindow*>(m_rootWindow);
+
+    if (!qWindow) {
+        qCWarning(categorySailfishEnginePlatform)
+            << Q_FUNC_INFO
+            << m_rootWindow << "is not QQuickWindow!";
+        return;
+    }
+    qCDebug(categorySailfishEnginePlatform)
+        << Q_FUNC_INFO
+        << qWindow;
+
+    m_rootQuickWindow = qWindow;
+    m_rootQuickItem = qWindow->contentItem();
+    m_rootObject = m_rootQuickItem;
+
     if (!m_rootQuickItem) {
         qCWarning(categorySailfishEnginePlatform)
             << Q_FUNC_INFO
@@ -568,6 +588,8 @@ void SailfishEnginePlatform::initialize()
             << "No childrens! Waiting for population...";
         connect(m_rootQuickItem, &QQuickItem::childrenChanged,
                 this, &SailfishEnginePlatform::onChildrenChanged); // let's wait for loading
+    } else {
+        emit ready();
     }
 }
 
