@@ -162,7 +162,7 @@ QAEngine::QAEngine(QObject *parent)
 {
     qRegisterMetaType<QTcpSocket*>();
 
-    if (QFileInfo::exists(QDir::home().filePath(QStringLiteral(".qapreload-logging")))) {
+    if (QDir::home().exists(QStringLiteral(".qapreload-logging"))) {
         QLoggingCategory::setFilterRules("omp.qaengine.*.debug=true");
     }
 }
