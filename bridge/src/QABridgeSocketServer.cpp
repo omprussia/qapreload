@@ -54,9 +54,10 @@ void QABridgeSocketServer::newConnection()
 void QABridgeSocketServer::readSocket()
 {
     QTcpSocket *socket = qobject_cast<QTcpSocket*>(sender());
+    auto bytes = socket->bytesAvailable();
     qDebug()
         << Q_FUNC_INFO
-        << socket << socket->bytesAvailable();
+        << socket << bytes;
 
     static QByteArray requestData;
     requestData.append(socket->readAll());

@@ -25,7 +25,7 @@
 
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(categoryEngine, "omp.qaengine.engine", QtInfoMsg)
+Q_LOGGING_CATEGORY(categoryEngine, "omp.qaengine.engine", QtWarningMsg)
 
 namespace {
 
@@ -164,6 +164,8 @@ QAEngine::QAEngine(QObject *parent)
 
     if (QDir::home().exists(QStringLiteral(".qapreload-logging"))) {
         QLoggingCategory::setFilterRules("omp.qaengine.*.debug=true");
+    } else {
+        QLoggingCategory::setFilterRules("omp.qaengine.*.warning=true");
     }
 }
 
