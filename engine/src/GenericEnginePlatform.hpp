@@ -137,6 +137,7 @@ private slots:
     virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
     virtual void performTouchCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
     virtual void performMultiActionCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
+    virtual void performActionsCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
 
     // findElement_%1 methods
     void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);

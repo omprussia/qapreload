@@ -1295,6 +1295,33 @@ void GenericEnginePlatform::performMultiActionCommand(QTcpSocket *socket, const 
     socketReply(socket, QString());
 }
 
+void GenericEnginePlatform::performActionsCommand(QTcpSocket *socket, const QVariant &paramsArg)
+{
+    qCDebug(categoryGenericEnginePlatform)
+        << Q_FUNC_INFO
+        << socket << paramsArg;
+
+    QVariantList pointerArgs;
+    QVariantList keyArgs;
+
+    for (const QVariant &paramsVar : paramsArg.toList()) {
+        const QVariantMap param = paramsVar.toMap();
+        if (param.value(QStringLiteral("type")).toString() == QLatin1String("pointer")) {
+            pointerArgs.append(param);
+        } else if (param.value(QStringLiteral("type")).toString() == QLatin1String("key")) {
+            keyArgs.append(param);
+        }
+    }
+
+    if (!pointerArgs.isEmpty()) {
+
+    }
+
+    if (!keyArgs.isEmpty()) {
+
+    }
+}
+
 void GenericEnginePlatform::findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
 {
     QObject *item = findItemByObjectName(selector, parentItem);
