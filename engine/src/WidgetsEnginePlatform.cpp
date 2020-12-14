@@ -30,6 +30,21 @@
 
 Q_LOGGING_CATEGORY(categoryWidgetsEnginePlatform, "omp.qaengine.platform.widgets", QtWarningMsg)
 
+namespace {
+
+QList<QAction*> s_actions;
+EventHandler *s_eventHandler = nullptr;
+
+static bool s_registerPlatform = []() {
+    if (!s_eventHandler) {
+        s_eventHandler = new EventHandler(qApp);
+        qApp->installEventFilter(s_eventHandler);
+    }
+    return true;
+}();
+
+}
+
 QList<QObject *> WidgetsEnginePlatform::childrenList(QObject *parentItem)
 {
     QList<QObject*> result;
@@ -236,8 +251,8 @@ void WidgetsEnginePlatform::executeCommand_app_triggerInMenu(QTcpSocket *socket,
         << Q_FUNC_INFO
         << socket << text;
 
-    for (QAction *a : m_rootWidget->findChildren<QAction*>()) {
-        if (a->text().contains(text)) {
+    for (QAction *a : s_actions) {
+        if (a->text().contains(text) || a->shortcut().toString() == text) {
             QTimer::singleShot(0, a, &QAction::trigger);
             socketReply(socket, a->text());
             return;
@@ -255,7 +270,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(QTcpSocket *socket)
 
     QStringList actions;
 
-    for (QAction *a : m_rootWidget->findChildren<QAction*>()) {
+    for (QAction *a : s_actions) {
         actions.append(a->text());
     }
 
@@ -653,4 +668,30 @@ void WidgetsEnginePlatform::pressAndHoldItem(QObject *qitem, int delay)
 
     const QPointF itemAbs = getAbsPosition(item);
     pressAndHold(itemAbs.x() + item->width() / 2, itemAbs.y() + item->height() / 2, delay);
+}
+
+EventHandler::EventHandler(QObject *parent)
+    : QObject(parent)
+{
+
+}
+
+bool EventHandler::eventFilter(QObject *watched, QEvent *event)
+{
+    switch (event->type()) {
+    case QEvent::ActionAdded: {
+        QActionEvent *ae = static_cast<QActionEvent*>(event);
+        s_actions.append(ae->action());
+        break;
+    }
+    case QEvent::ActionRemoved: {
+        QActionEvent *ae = static_cast<QActionEvent*>(event);
+        s_actions.removeAll(ae->action());
+        break;
+    }
+    default:
+        break;
+    }
+
+    return QObject::eventFilter(watched, event);
 }
