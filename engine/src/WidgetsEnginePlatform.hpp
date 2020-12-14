@@ -62,3 +62,11 @@ private:
     QStringList recursiveDumpModel(QAbstractItemModel *model, QModelIndex index);
 };
 
+class EventHandler : public QObject
+{
+    Q_OBJECT
+public:
+    explicit EventHandler(QObject *parent = nullptr);
+    bool eventFilter(QObject *watched, QEvent *event) override;
+};
+
