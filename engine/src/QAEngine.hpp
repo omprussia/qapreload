@@ -14,6 +14,7 @@ class QAEngine : public QObject
 public:
     static QAEngine *instance();
     static bool isLoaded();
+    static void objectCreated(QObject *o);
     static void objectRemoved(QObject *o);
     IEnginePlatform* getPlatform(bool silent = false);
 
@@ -22,6 +23,7 @@ public:
     static QString processName();
     static bool metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
 
+    void addItem(QObject *o);
     void removeItem(QObject *o);
 
 public slots:
