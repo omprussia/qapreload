@@ -30,6 +30,15 @@
 
 Q_LOGGING_CATEGORY(categorySailfishEnginePlatform, "omp.qaengine.platform.sailfish", QtWarningMsg)
 
+namespace {
+
+bool checkIsDeclarativeCache()
+{
+    return QFileInfo(qApp->arguments().first()).baseName().startsWith(QLatin1String("mdeclarativecache"));
+}
+
+}
+
 SailfishEnginePlatform::SailfishEnginePlatform(QWindow *window)
     : QuickEnginePlatform(window)
 {
@@ -107,7 +116,9 @@ void SailfishEnginePlatform::onChildrenChanged()
     disconnect(m_rootQuickItem, &QQuickItem::childrenChanged,
                this, &SailfishEnginePlatform::onChildrenChanged);
 
-    emit ready();
+    if (!checkIsDeclarativeCache()) {
+        emit ready();
+    }
 }
 
 void SailfishEnginePlatform::getScreenshotCoverCommand(QTcpSocket *socket)
@@ -133,7 +144,9 @@ void SailfishEnginePlatform::bridgeStatusChanged(const QString &interface, const
             << activeState;
 
         if (activeState == QLatin1String("active")) {
-            QTimer::singleShot(1000, this, &SailfishEnginePlatform::ready);
+            if (!checkIsDeclarativeCache()) {
+                QTimer::singleShot(1000, this, &SailfishEnginePlatform::ready);
+            }
         }
     }
 }
@@ -589,7 +602,9 @@ void SailfishEnginePlatform::initialize()
         connect(m_rootQuickItem, &QQuickItem::childrenChanged,
                 this, &SailfishEnginePlatform::onChildrenChanged); // let's wait for loading
     } else {
-        emit ready();
+        if (!checkIsDeclarativeCache()) {
+            emit ready();
+        }
     }
 }
 
