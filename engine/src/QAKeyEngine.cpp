@@ -131,23 +131,37 @@ QAPendingEvent *QAKeyEngine::pressKeys(const QString &keys)
 
 void QAKeyEngine::performChainActions(const QVariantList &actions)
 {
+    Qt::KeyboardModifiers mods;
     for (const QVariant &actionVar : actions.first().toMap().value(QStringLiteral("actions")).toList()) {
         const QVariantMap action = actionVar.toMap();
         QKeyEvent::Type eventType = QKeyEvent::KeyPress;
         const QString type = action.value(QStringLiteral("type")).toString();
-        if (type == QLatin1String("keyUp")) {
-            eventType = QKeyEvent::KeyRelease;
-        }
 
         QString value = action.value(QStringLiteral("value")).toString();
         const int key = seleniumKeyToQt(value.at(0).unicode());
+        bool keyUp = type == QLatin1String("keyUp");
         if (key) {
             value = QString();
+
+            if (key == Qt::Key_Control) {
+                mods ^= Qt::ControlModifier;
+            } else if (key == Qt::Key_Alt) {
+                mods ^= Qt::AltModifier;
+            } else if (key == Qt::Key_Shift) {
+                mods ^= Qt::ShiftModifier;
+            } else if (key == Qt::Key_Meta) {
+                mods ^= Qt::MetaModifier;
+            } else if (key >= Qt::Key_0 && key <= Qt::Key_9) {
+                mods ^= Qt::KeypadModifier;
+            }
+        }
+        if (keyUp) {
+            eventType = QKeyEvent::KeyRelease;
         }
 
         QKeyEvent event(eventType,
                         key,
-                        Qt::NoModifier,
+                        mods,
                         value);
 
         emit triggered(&event);
