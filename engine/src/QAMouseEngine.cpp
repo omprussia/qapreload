@@ -428,7 +428,7 @@ void EventWorker::start()
             if (options.contains(QStringLiteral("element"))) {
                 auto platform = QAEngine::instance()->getPlatform();
                 if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
-                    point = platform->getAbsPosition(item);
+                    point = platform->getAbsGeometry(item).center();
                 }
             }
 
@@ -447,7 +447,7 @@ void EventWorker::start()
             if (options.contains(QStringLiteral("element"))) {
                 auto platform = QAEngine::instance()->getPlatform();
                 if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
-                    point = platform->getAbsPosition(item);
+                    point = platform->getAbsGeometry(item).center();
                 }
             }
 
@@ -461,7 +461,7 @@ void EventWorker::start()
             if (options.contains(QStringLiteral("element"))) {
                 auto platform = QAEngine::instance()->getPlatform();
                 if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
-                    point = platform->getAbsPosition(item);
+                    point = platform->getAbsGeometry(item).center();
                 }
             }
 
@@ -481,7 +481,7 @@ void EventWorker::start()
             if (options.contains(QStringLiteral("element"))) {
                 auto platform = QAEngine::instance()->getPlatform();
                 if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
-                    point = platform->getAbsPosition(item);
+                    point = platform->getAbsGeometry(item).center();
                 }
             }
 
