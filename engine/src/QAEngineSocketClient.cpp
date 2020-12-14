@@ -28,6 +28,10 @@ void QAEngineSocketClient::connectToBridge()
         m_socket = new QTcpSocket(this);
     }
 
+    if (m_socket->isOpen()) {
+        return;
+    }
+
     m_socket->connectToHost(QHostAddress(QHostAddress::LocalHost), 8888);
     m_socket->waitForConnected();
     if (!m_socket->isOpen()) {
