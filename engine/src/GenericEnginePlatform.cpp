@@ -680,6 +680,14 @@ void GenericEnginePlatform::onTouchEvent(const QTouchEvent &event)
 
 void GenericEnginePlatform::onMouseEvent(const QMouseEvent &event)
 {
+    m_rootWindow->raise();
+    m_rootWindow->requestActivate();
+    m_rootWindow->setWindowState(Qt::WindowState::WindowActive);
+
+    QEventLoop loop;
+    QTimer::singleShot(100, &loop, &QEventLoop::quit);
+    loop.exec();
+
     QWindowSystemInterface::handleMouseEvent(
         m_rootWindow,
         event.timestamp(),
@@ -696,6 +704,14 @@ void GenericEnginePlatform::onMouseEvent(const QMouseEvent &event)
 
 void GenericEnginePlatform::onKeyEvent(QKeyEvent *event)
 {
+    m_rootWindow->raise();
+    m_rootWindow->requestActivate();
+    m_rootWindow->setWindowState(Qt::WindowState::WindowActive);
+
+    QEventLoop loop;
+    QTimer::singleShot(100, &loop, &QEventLoop::quit);
+    loop.exec();
+
     QWindowSystemInterface::handleKeyEvent(
         m_rootWindow,
         event->type(),
