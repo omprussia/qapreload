@@ -16,6 +16,8 @@ public:
     QAPendingEvent *pressBackspace(int count);
     QAPendingEvent *pressKeys(const QString &keys);
 
+    void performChainActions(const QVariantList &actions);
+
 signals:
     void triggered(QKeyEvent *event);
 
