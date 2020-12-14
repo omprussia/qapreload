@@ -19,6 +19,7 @@ public:
     virtual void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) = 0;
     virtual void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) = 0;
 
+    virtual void addItem(QObject *o) = 0;
     virtual void removeItem(QObject *o) = 0;
 
     virtual bool containsObject(const QString &elementId) = 0;

@@ -92,6 +92,11 @@ void GenericEnginePlatform::elementReply(QTcpSocket *socket, QObjectList element
     }
 }
 
+void GenericEnginePlatform::addItem(QObject *o)
+{
+
+}
+
 void GenericEnginePlatform::removeItem(QObject *o)
 {
     QHash<QString, QObject*>::iterator i = m_items.begin();
