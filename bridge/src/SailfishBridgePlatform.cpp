@@ -160,8 +160,6 @@ void SailfishBridgePlatform::lockCommand(QTcpSocket *socket, double seconds)
     } else {
         socketReply(socket, QString(), 1);
     }
-
-    socketReply(socket, QStringLiteral("not implemented"), 1);
 }
 
 void SailfishBridgePlatform::unlockCommand(QTcpSocket *socket)
