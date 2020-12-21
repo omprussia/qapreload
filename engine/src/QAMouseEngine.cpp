@@ -578,4 +578,5 @@ void EventWorker::sendMove(const QPointF &previousPoint, const QPointF &point, i
         timer.start(duration / moveSteps);
         loop.exec();
     }
+    sendMove(point);
 }
