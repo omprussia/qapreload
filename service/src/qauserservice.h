@@ -1,3 +1,4 @@
+// Copyright (c) 2019-2020 Open Mobile Platform LLC.
 #ifndef QAUSERSERVICE_H
 #define QAUSERSERVICE_H
 
@@ -14,6 +15,10 @@ public slots:
     void start();
 
     Q_SCRIPTABLE void launchApp(const QString &appName, const QStringList &arguments);
+
+private:
+    void launcherAction(const QString &appName, const QStringList &arguments);
+    void launchProcess(const QString &appName, const QStringList &arguments);
 };
 
 #endif // QAUSERSERVICE_H

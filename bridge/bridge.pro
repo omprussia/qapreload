@@ -1,43 +1,112 @@
-QT = core dbus network
+# Copyright (c) 2019-2020 Open Mobile Platform LLC.
+QT = core network
 CONFIG += link_pkgconfig
-PKGCONFIG += \
-    libsystemd-daemon \
-    libshadowutils \
-    packagekitqt5 \
-    connman-qt5 \
-    rpm
+
+isEmpty(PROJECT_PACKAGE_VERSION) {
+    QAPRELOAD_VERSION = "2.0.0-dev"
+} else {
+    QAPRELOAD_VERSION = $$PROJECT_PACKAGE_VERSION
+}
+
+message("QAPRELOAD_VERSION: $$QAPRELOAD_VERSION")
+DEFINES += QAPRELOAD_VERSION=\\\"$$QAPRELOAD_VERSION\\\"
+
+contains(DEFINES, USE_DBUS) {
+    message("Building bridge with dbus support")
+
+    QT += dbus
+
+    SOURCES += \
+        src/QAScreenRecorder.cpp
+
+    HEADERS += \
+        src/QAScreenRecorder.hpp
+}
+
+contains(DEFINES, USE_SYSTEMD) {
+    message("Building bridge with systemd support")
+    PKGCONFIG += libsystemd-daemon
+
+    message("SPEC_UNITDIR: $$SPEC_UNITDIR")
+
+    autostart.files = \
+        systemd/qabridge.service \
+        systemd/qabridge.socket
+    autostart.path = $$SPEC_UNITDIR
+    INSTALLS += autostart
+}
+
+contains(DEFINES, USE_PACKAGEKIT) {
+    message("Building bridge with packagekit support")
+    PKGCONFIG += packagekitqt5
+
+    INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
+}
+
+contains(DEFINES, USE_RPM) {
+    message("Building bridge with rpm support")
+    PKGCONFIG += rpm
+}
+
+contains(DEFINES, USE_CONNMAN) {
+    message("Building bridge with connman support")
+    PKGCONFIG += connman-qt5
+}
 
 TEMPLATE = app
 TARGET = qabridge
-TARGETPATH = /usr/bin
-target.path = $$TARGETPATH
-INSTALLS += target
-
-autostart.files = \
-    systemd/qabridge.service \
-    systemd/qabridge.socket
-autostart.path = /lib/systemd/system
-INSTALLS += autostart
-
-dbusService.files = dbus/ru.omprussia.qabridge.service
-dbusService.path = /usr/share/dbus-1/system-services/
-INSTALLS += dbusService
-
-dbusConf.files = dbus/ru.omprussia.qabridge.conf
-dbusConf.path = /etc/dbus-1/system.d/
-INSTALLS += dbusConf
 
 SOURCES += \
+    src/GenericBridgePlatform.cpp \
+    src/QABridgeSocketServer.cpp \
     src/main.cpp \
     src/QABridge.cpp
 
 HEADERS += \
-    src/QABridge.hpp
+    src/GenericBridgePlatform.hpp \
+    src/IBridgePlatform.hpp \
+    src/QABridge.hpp \
+    src/QABridgeSocketServer.hpp
 
-bridge_dbus_adaptor.files = ../dbus/ru.omprussia.qabridge.xml
-bridge_dbus_adaptor.source_flags = -c QABridgeAdaptor
-bridge_dbus_adaptor.header_flags = -c QABridgeAdaptor -i ../dbus/dbus_qabridge_include.h
-DBUS_ADAPTORS += bridge_dbus_adaptor
+win32 {
+    HEADERS += \
+        src/WinInjector.hpp \
+        src/WindowsBridgePlatform.hpp
 
-INCLUDEPATH += /usr/include
-INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
+    SOURCES += \
+        src/WinInjector.cpp \
+        src/WindowsBridgePlatform.cpp
+}
+
+linux {
+    SOURCES += \
+        src/LinuxBridgePlatform.cpp \
+
+    HEADERS += \
+        src/LinuxBridgePlatform.hpp
+}
+
+macx {
+    SOURCES += \
+        src/MacBridgePlatform.cpp
+
+    HEADERS += \
+        src/MacBridgePlatform.hpp
+}
+
+contains(DEFINES, Q_OS_SAILFISH) {
+    PKGCONFIG += libshadowutils
+
+    INCLUDEPATH += /usr/include/libshadowutils
+    INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
+
+    SOURCES += \
+        src/SailfishBridgePlatform.cpp \
+
+    HEADERS += \
+        src/SailfishBridgePlatform.hpp
+
+    TARGETPATH = /usr/bin
+    target.path = $$TARGETPATH
+    INSTALLS += target
+}

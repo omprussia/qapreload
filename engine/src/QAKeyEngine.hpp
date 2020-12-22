@@ -1,3 +1,4 @@
+// Copyright (c) 2019-2020 Open Mobile Platform LLC.
 #ifndef QAKEYENGINE_HPP
 #define QAKEYENGINE_HPP
 
@@ -14,6 +15,8 @@ public:
     QAPendingEvent *pressEnter(int count);
     QAPendingEvent *pressBackspace(int count);
     QAPendingEvent *pressKeys(const QString &keys);
+
+    void performChainActions(const QVariantList &actions);
 
 signals:
     void triggered(QKeyEvent *event);

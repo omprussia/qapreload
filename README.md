@@ -1,6 +1,50 @@
-# qapreload
+# qapreload - Library for automated testing Aurora OS, Sailfish OS, Qt widgets and Qt QML application using Appium framework
 
-## execute_script custom methods list
+Library implements common subset of commands to perform UI operations
+
+Library must be injected into application. bridge is responsible for injecting while launching applications via Appium framework. For Aurora OS and Sailfish OS bridge is installed via rpm package and automatically listening for incoming communications from Appium driver on 8888 port. On other platforms you should build project and run bridge target manually.
+
+## Run tests
+
+### Prerequisites
+
+- Build and run `appium-aurora` docker container
+
+### For Aurora OS and Sailfish OS targets
+
+- Build and install `qapreload` rpm to device
+
+### For Desktop targets
+
+- Build and run `bridge` from this project
+
+	Extra: if you running Linux-based distro, need to manually copy built `libqapreloadhook.so` and `libqaengine.so` to libdir (usually `/usr/lib` or `/usr/lib64`), otherwise bridge won't be able to automatically inject library to applciation.
+
+Note: your application and `qapreload` should be built with same Qt versions
+
+### Python example
+
+To initialize Appium driver use following example:
+
+```
+#!/usr/bin/env python3
+
+from appium import webdriver
+
+def get_driver(device = '192.168.1.248', app = '/usr/bin/aurora-test-example', auto_launch = True):
+    appium_socket = 'http://localhost:4723/wd/hub'
+    data = {
+        'platformName': 'Aurora',
+        'appPackage': app,
+        'deviceName': device,
+        'autoLaunch': auto_launch,
+    }
+    return webdriver.Remote(appium_socket, data)
+
+driver = get_driver()
+```
+
+## Aurora OS and Sailfish OS specific execute_script methods list
 
 ### app:pullDownTo
 
@@ -108,7 +152,7 @@ Usage:
 
 `driver.execute_script("app:enterCode", "12345#")`
 
-### touch:pressAndHold
+### touch:pressAndHold (deprecated, use TouchAction instead)
 
 perform press and hold touch action on choosen coordinates
 
@@ -116,7 +160,7 @@ Usage:
 
 `driver.execute_script("touch:pressAndHold", 20, 40)`
 
-### touch:mouseSwipe
+### touch:mouseSwipe (deprecated, use TouchAction instead)
 
 perform mouse swipe touch action from one point to another
 
@@ -124,7 +168,7 @@ Usage:
 
 `driver.execute_script("touch:mouseSwipe", 20, 40, 60, 80)`
 
-### touch:mouseDrag
+### touch:mouseDrag (deprecated, use TouchAction instead)
 
 perform mouse drag touch action from one point to another
 
@@ -186,7 +230,7 @@ dump current page items tree
 
 Usage:
 
-`driver.execute_script("app:dumpCurrentPage""`
+`driver.execute_script("app:dumpCurrentPage")`
 
 ### app:dumpTree
 
@@ -204,3 +248,123 @@ Usage:
 
 `driver.execute_script("system:shell", "ls", ["-la", "/"])`
 
+
+## Qt Widgets specific execute_script methods list
+
+### app:dumpInView
+
+List elements in view
+
+Usage:
+
+`driver.execute_script("app:dumpInView", "MyItem_0x12345678")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:posInView
+
+Returns center coordinates of element item in view
+
+Usage:
+
+`driver.execute_script("app:posInView", "MyItem_0x12345678", "ElementName")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:clickInView
+
+Click center coordinates of element item in view
+
+Usage:
+
+`driver.execute_script("app:clickInView", "MyItem_0x12345678", "ElementName")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:scrollInView
+
+Scroll view to show element
+
+Usage:
+
+`driver.execute_script("app:scrollInView", "MyItem_0x12345678", "ElementName")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:dumpInMenu
+
+List all menu elements
+
+Usage:
+
+`driver.execute_script("app:dumpInMenu")`
+
+### app:triggerInMenu
+
+Trigger menu item
+
+Usage:
+
+`driver.execute_script("app:triggerInMenu", "MenuItemName")`
+
+### app:dumpInComboBox
+
+List elements in ComboBox
+
+Usage:
+
+`driver.execute_script("app:dumpInComboBox", "MyItem_0x12345678")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:activateInComboBox
+
+Activates ComboBox element
+
+Usage:
+
+`driver.execute_script("app:activateInComboBox", "MyItem_0x12345678", "ElementName")`
+
+or by index (starts from 0)
+
+`driver.execute_script("app:activateInComboBox", "MyItem_0x12345678", 1)`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:dumpInTabBar
+
+List elements in TabBar
+
+Usage:
+
+`driver.execute_script("app:dumpInTabBar", "MyItem_0x12345678")`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:posInTabBar
+
+Returns center coordinates of element item in TabBar
+
+Usage:
+
+`driver.execute_script("app:posInTabBar", "MyItem_0x12345678", "ElementName")`
+
+or by index (starts from 0)
+
+`driver.execute_script("app:posInTabBar", "MyItem_0x12345678", 1`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method
+
+### app:activateInTabBar
+
+Activates TabBar element
+
+Usage:
+
+`driver.execute_script("app:activateInTabBar", "MyItem_0x12345678", "ElementName")`
+
+or by index (starts from 0)
+
+`driver.execute_script("app:activateInTabBar", "MyItem_0x12345678", 1)`
+
+`"MyItem_0x12345678"` is element.id, you should find element before using this method

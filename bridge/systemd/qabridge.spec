@@ -1,3 +1,4 @@
+# Copyright (c) 2019-2020 Open Mobile Platform LLC.
 %{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
 %{!?qtc_make:%define qtc_make make}
 

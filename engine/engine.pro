@@ -1,65 +1,77 @@
+# Copyright (c) 2019-2020 Open Mobile Platform LLC.
 TEMPLATE = lib
-QT = core dbus quick quick-private core-private xmlpatterns
+QT = core network quick quick-private core-private xmlpatterns
 CONFIG += plugin
 CONFIG += c++11
 CONFIG += link_pkgconfig
-PKGCONFIG += mlite5
+
+isEmpty(PROJECT_PACKAGE_VERSION) {
+    QAPRELOAD_VERSION = "2.0.0-dev"
+} else {
+    QAPRELOAD_VERSION = $$PROJECT_PACKAGE_VERSION
+}
+
+message("QAPRELOAD_VERSION: $$QAPRELOAD_VERSION")
+DEFINES += QAPRELOAD_VERSION=\\\"$$QAPRELOAD_VERSION\\\"
+
+contains(DEFINES, Q_OS_SAILFISH) {
+    message("Building for sailfish os")
+
+    SOURCES += \
+        src/SailfishEnginePlatform.cpp
+
+    HEADERS += \
+        src/SailfishEnginePlatform.hpp
+
+} else {
+    message("Building engine with widgets support")
+    QT += widgets widgets-private
+
+    SOURCES += \
+        src/WidgetsEnginePlatform.cpp
+
+    HEADERS += \
+        src/WidgetsEnginePlatform.hpp
+
+}
+
+contains(DEFINES, USE_MLITE5) {
+    message("Building engine with mlite5 support")
+    PKGCONFIG += mlite5
+}
+
+contains(DEFINES, USE_DBUS) {
+    message("Building engine with dbus support")
+    QT += dbus
+
+    qa_dbus_adaptor.files = dbus/ru.omprussia.qaservice.xml
+    qa_dbus_adaptor.source_flags = -c QAAdaptor
+    qa_dbus_adaptor.header_flags = -c QAAdaptor
+    DBUS_ADAPTORS += qa_dbus_adaptor
+}
 
 SOURCES += \
     src/engine.cpp \
-    src/QAPreloadEngine.cpp \
     src/QAEngine.cpp \
+    src/QAEngineSocketClient.cpp \
+    src/GenericEnginePlatform.cpp \
+    src/QuickEnginePlatform.cpp \
     src/QAMouseEngine.cpp \
     src/QAKeyEngine.cpp \
-    src/QAPendingEvent.cpp \
-    src/SailfishTest.cpp \
-    src/LipstickTestHelper.cpp \
-    src/plugin.cpp \
-    src/QADBusService.cpp \
-    src/QASocketService.cpp
+    src/QAPendingEvent.cpp
 
 HEADERS += \
-    src/QAPreloadEngine.hpp \
     src/QAEngine.hpp \
+    src/QAEngineSocketClient.hpp \
+    src/IEnginePlatform.hpp \
+    src/GenericEnginePlatform.hpp \
+    src/QuickEnginePlatform.hpp \
     src/QAMouseEngine.hpp \
     src/QAKeyEngine.hpp \
-    src/QAPendingEvent.hpp \
-    src/SailfishTest.hpp \
-    src/LipstickTestHelper.hpp \
-    src/QADBusService.hpp \
-    src/QASocketService.hpp
+    src/QAPendingEvent.hpp
 
 TARGET = qaengine
-target.path = /usr/lib
+TARGETPATH = $$[QT_INSTALL_LIBS]
+target.path = $$TARGETPATH
 
 INSTALLS = target
-
-qmlfiles.files = \
-    qml/TouchIndicator.qml
-qmlfiles.path = /usr/share/qapreload/qml
-INSTALLS += qmlfiles
-
-qa_dbus_adaptor.files = dbus/ru.omprussia.qaservice.xml
-qa_dbus_adaptor.source_flags = -c QAAdaptor
-qa_dbus_adaptor.header_flags = -c QAAdaptor
-DBUS_ADAPTORS += qa_dbus_adaptor
-
-bridge_dbus_interface.files = ../dbus/ru.omprussia.qabridge.xml
-bridge_dbus_interface.source_flags = -c QABridgeInterface
-bridge_dbus_interface.header_flags = -c QABridgeInterface -i ../dbus/dbus_qabridge_include.h
-DBUS_INTERFACES += bridge_dbus_interface
-
-qml.files = qmldir
-qml.path = /usr/lib/qt5/qml/ru/omprussia/sailfishtest
-INSTALLS += qml
-
-CONFIG += mer-qdoc-template
-MER_QDOC.project = qapreload
-MER_QDOC.config = doc/qapreload.qdocconf
-MER_QDOC.style = offline
-MER_QDOC.path = /usr/share/doc/qapreload
-
-OTHER_FILES += \
-    doc/src/index.qdoc
-
-

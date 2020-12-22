@@ -1,5 +1,8 @@
+// Copyright (c) 2019-2020 Open Mobile Platform LLC.
+#include "QAEngine.hpp"
 #include "QAMouseEngine.hpp"
 #include "QAPendingEvent.hpp"
+#include "IEnginePlatform.hpp"
 
 #include <QMouseEvent>
 #include <QTimer>
@@ -10,240 +13,516 @@
 #include <QElapsedTimer>
 
 #include <QDebug>
+#include <QThread>
+
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(categoryMouseEngine, "omp.qaengine.mouse", QtWarningMsg)
 
 QAMouseEngine::QAMouseEngine(QObject *parent)
     : QObject(parent)
     , m_eta(new QElapsedTimer())
-    , m_timer(new QTimer(this))
     , m_touchDevice(new QTouchDevice())
 {
     m_touchDevice->setCapabilities(QTouchDevice::Position | QTouchDevice::Area);
-    m_touchDevice->setMaximumTouchPoints(1);
+    m_touchDevice->setMaximumTouchPoints(10);
     m_touchDevice->setType(QTouchDevice::TouchScreen);
     m_touchDevice->setName(QStringLiteral("qainput"));
 
     QWindowSystemInterface::registerTouchDevice(m_touchDevice);
 
-    m_timer->setSingleShot(false);
-    connect(m_timer, &QTimer::timeout, this, &QAMouseEngine::onMoveTimer);
     m_eta->start();
 }
 
 bool QAMouseEngine::isRunning() const
 {
-    return m_timer->isActive();
+    return m_touchPoints.size() > 0;
 }
 
-QAPendingEvent *QAMouseEngine::press(const QPointF &point)
+QAMouseEngine::MouseMode QAMouseEngine::mode()
 {
-    QAPendingEvent *pending = new QAPendingEvent(this);
-
-    sendPress(point);
-
-    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
-    return pending;
+    return m_mode;
 }
 
-QAPendingEvent *QAMouseEngine::release(const QPointF &point)
+void QAMouseEngine::setMode(QAMouseEngine::MouseMode mode)
 {
-    QAPendingEvent *pending = new QAPendingEvent(this);
-
-    sendRelease(point);
-
-    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
-    return pending;
+    m_mode = mode;
 }
 
 QAPendingEvent *QAMouseEngine::click(const QPointF &point)
 {
-    QAPendingEvent *pending = new QAPendingEvent(this);
+    QVariantList action = {
+        QVariantMap{
+            {"action", "press"},
+            {"options",
+                QVariantMap{
+                    {"x", point.x()},
+                    {"y", point.y()},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "release"},
+        },
+    };
 
-    sendPress(point);
-    sendRelease(point);
-
-    QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
-    return pending;
+    return performTouchAction(action);
 }
 
 QAPendingEvent *QAMouseEngine::pressAndHold(const QPointF &point, int delay)
 {
-    QAPendingEvent *pending = new QAPendingEvent(this);
+    QVariantList action = {
+        QVariantMap{
+            {"action", "longPress"},
+            {"options",
+                QVariantMap{
+                    {"x", point.x()},
+                    {"y", point.y()},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "wait"},
+            {"options",
+                QVariantMap{
+                    {"ms", delay},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "release"},
+        },
+    };
 
-    sendPress(point);
-    QTimer::singleShot(delay, this, [this, point, pending]() {
-        sendRelease(point);
-        QMetaObject::invokeMethod(pending, "setCompleted", Qt::QueuedConnection);
-    });
-
-    return pending;
+    return performTouchAction(action);
 }
 
 QAPendingEvent *QAMouseEngine::drag(const QPointF &pointA, const QPointF &pointB, int delay, int duration, int moveSteps, int releaseDelay)
 {
-    if (m_pendingMove) {
-        qWarning() << Q_FUNC_INFO << "Have pendingMove:" << m_pendingMove;
-        return m_pendingMove;
-    }
-    m_pendingMove = new QAPendingEvent(this);
+    QVariantList action = {
+        QVariantMap{
+            {"action", "longPress"},
+            {"options",
+                QVariantMap{
+                    {"x", pointA.x()},
+                    {"y", pointA.y()},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "wait"},
+            {"options",
+                QVariantMap{
+                    {"ms", delay},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "moveTo"},
+            {"options",
+                QVariantMap{
+                    {"x", pointB.x()},
+                    {"y", pointB.y()},
+                    {"duration", duration},
+                    {"steps", moveSteps},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "wait"},
+            {"options",
+                QVariantMap{
+                    {"ms", releaseDelay},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "release"},
+        },
+    };
 
-    if (duration < 1 || moveSteps < 1) {
-        qWarning() << Q_FUNC_INFO << "QA ENGINEER IDIOT";
-    }
-
-    sendPress(pointA);
-
-    m_pointA = pointA;
-    m_pointB = pointB;
-    m_releaseAfterMoveDelay = releaseDelay;
-
-    const float stepX = qAbs(pointB.x() - pointA.x()) / moveSteps;
-    const float stepY = qAbs(pointB.y() - pointA.y()) / moveSteps;
-
-    if (stepX > 0 && stepX < m_moveStepSize) {
-        m_moveStepCount = qAbs(qRound(pointB.x() - pointA.x())) / m_moveStepSize;
-    } else if (stepY > 0 && stepY < m_moveStepSize) {
-        m_moveStepCount = qAbs(qRound(pointB.y() - pointA.y())) / m_moveStepSize;
-    } else {
-        m_moveStepCount = moveSteps;
-    }
-
-    m_currentMoveStep = 0;
-    m_timer->setInterval(duration / m_moveStepCount);
-
-    QTimer *delayTimer = new QTimer;
-    connect(delayTimer, &QTimer::timeout, m_timer, static_cast<void (QTimer::*)()>(&QTimer::start));
-    connect(delayTimer, &QTimer::timeout, delayTimer, &QObject::deleteLater);
-    delayTimer->setSingleShot(true);
-    delayTimer->start(delay);
-
-    return m_pendingMove;
+    return performTouchAction(action);
 }
 
 QAPendingEvent *QAMouseEngine::move(const QPointF &pointA, const QPointF &pointB, int duration, int moveSteps, int releaseDelay)
 {
-    if (m_pendingMove) {
-        qWarning() << Q_FUNC_INFO << "Have pendingMove:" << m_pendingMove;
-        return m_pendingMove;
-    }
-    m_pendingMove = new QAPendingEvent(this);
+    QVariantList action = {
+        QVariantMap{
+            {"action", "press"},
+            {"options",
+                QVariantMap{
+                    {"x", pointA.x()},
+                    {"y", pointA.y()},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "moveTo"},
+            {"options",
+                QVariantMap{
+                    {"x", pointB.x()},
+                    {"y", pointB.y()},
+                    {"duration", duration},
+                    {"steps", moveSteps},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "wait"},
+            {"options",
+                QVariantMap{
+                    {"ms", releaseDelay},
+                },
+            },
+        },
+        QVariantMap{
+            {"action", "release"},
+        },
+    };
 
-    if (duration < 1 || moveSteps < 1) {
-        qWarning() << Q_FUNC_INFO << "QA ENGINEER IDIOT";
-    }
-
-    sendPress(pointA);
-
-    m_pointA = pointA;
-    m_pointB = pointB;
-    m_releaseAfterMoveDelay = releaseDelay;
-
-    const float stepX = qAbs(pointB.x() - pointA.x()) / moveSteps;
-    const float stepY = qAbs(pointB.y() - pointA.y()) / moveSteps;
-
-    if (stepX > 0 && stepX < m_moveStepSize) {
-        m_moveStepCount = qAbs(qRound(pointB.x() - pointA.x())) / m_moveStepSize;
-    } else if (stepY > 0 && stepY < m_moveStepSize) {
-        m_moveStepCount = qAbs(qRound(pointB.y() - pointA.y())) / m_moveStepSize;
-    } else {
-        m_moveStepCount = moveSteps;
-    }
-
-    m_currentMoveStep = 0;
-
-    m_timer->start(duration / m_moveStepCount);
-
-    return m_pendingMove;
+    return performTouchAction(action);
 }
 
-void QAMouseEngine::onMoveTimer()
+QAPendingEvent *QAMouseEngine::performMultiAction(const QVariantList &multiActions)
 {
-    auto *interpolator = QVariantAnimationPrivate::getInterpolator(QMetaType::QPointF);
-    float progress = static_cast<float>(m_currentMoveStep) / m_moveStepCount;
+    QAPendingEvent *event = new QAPendingEvent(this);
+    event->setProperty("finishedCount", 0);
+    QReadWriteLock *lock = new QReadWriteLock();
 
-    QPointF pointMove = interpolator(&m_pointA, &m_pointB, progress).toPointF();
+    const int actionsSize = multiActions.size();
+    for (const QVariant &multiActionVar : multiActions) {
+        const QVariantList actions = multiActionVar.toList();
 
-    sendMove(pointMove);
-    if (m_currentMoveStep++ == m_moveStepCount) {
-        m_timer->stop();
+        EventWorker *worker = EventWorker::PerformTouchAction(actions, this);
+        connect(worker, &EventWorker::pressed, this, &QAMouseEngine::onPressed);
+        connect(worker, &EventWorker::moved, this, &QAMouseEngine::onMoved);
+        connect(worker, &EventWorker::released, this, &QAMouseEngine::onReleased);
+        connect(worker, &EventWorker::finished, event, [lock, event, actionsSize]() {
+            lock->lockForWrite();
+            int finishedCount = event->property("finishedCount").toInt();
+            event->setProperty("finishedCount", ++finishedCount);
+            lock->unlock();
+            if (finishedCount == actionsSize) {
+                QMetaObject::invokeMethod(event, "setCompleted", Qt::QueuedConnection);
+                event->deleteLater();
+                delete lock;
+            }
+        });
+    }
 
-        sendMove(m_pointB);
-        sendRelease(m_pointB, m_releaseAfterMoveDelay);
+    if (m_mode == TouchEventMode) {
+        m_touchPoints.clear();
+    }
 
-        if (m_pendingMove) {
-            QMetaObject::invokeMethod(m_pendingMove, "setCompleted", Qt::QueuedConnection);
-            m_pendingMove->deleteLater();
-            m_pendingMove = nullptr;
+    return event;
+}
+
+QAPendingEvent *QAMouseEngine::performTouchAction(const QVariantList &actions)
+{
+    QAPendingEvent *event = new QAPendingEvent(this);
+    EventWorker *worker = EventWorker::PerformTouchAction(actions, this);
+    connect(worker, &EventWorker::pressed, this, &QAMouseEngine::onPressed);
+    connect(worker, &EventWorker::moved, this, &QAMouseEngine::onMoved);
+    connect(worker, &EventWorker::released, this, &QAMouseEngine::onReleased);
+    connect(worker, &EventWorker::finished, event, [event]() {
+        QMetaObject::invokeMethod(event, "setCompleted", Qt::QueuedConnection);
+        event->deleteLater();
+    });
+
+    if (m_mode == TouchEventMode) {
+        m_touchPoints.clear();
+    }
+
+    return event;
+}
+
+int QAMouseEngine::getNextPointId()
+{
+    return ++m_tpId;
+}
+
+qint64 QAMouseEngine::getEta()
+{
+    return m_eta->elapsed();
+}
+
+QTouchDevice *QAMouseEngine::getTouchDevice()
+{
+    return m_touchDevice;
+}
+
+void QAMouseEngine::onPressed(const QPointF point)
+{
+    if (m_mode == TouchEventMode) {
+        int pointId = getNextPointId();
+
+        QTouchEvent::TouchPoint tp(pointId);
+        tp.setState(Qt::TouchPointPressed);
+
+        QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+        tp.setRect(rect);
+        tp.setSceneRect(rect);
+        tp.setScreenRect(rect);
+        tp.setLastPos(point);
+        tp.setStartPos(point);
+        tp.setPressure(1);
+        m_touchPoints.insert(sender(), tp);
+
+        Qt::TouchPointStates states = tp.state();
+        QEvent::Type type = QEvent::TouchBegin;
+        if (m_touchPoints.size() > 1) {
+            type = QEvent::TouchUpdate;
+            states |= Qt::TouchPointStationary;
+        }
+
+        QTouchEvent te(type,
+                       m_touchDevice,
+                       Qt::NoModifier,
+                       states,
+                       m_touchPoints.values());
+        te.setTimestamp(m_eta->elapsed());
+
+        tp.setState(Qt::TouchPointStationary);
+        m_touchPoints.insert(sender(), tp);
+
+        emit touchEvent(te);
+    } else {
+        QMouseEvent me(QEvent::MouseButtonPress,
+                       point,
+                       Qt::LeftButton,
+                       Qt::LeftButton,
+                       Qt::NoModifier);
+        emit mouseEvent(me);
+    }
+}
+
+void QAMouseEngine::onMoved(const QPointF point)
+{
+    if (m_mode == TouchEventMode) {
+        QTouchEvent::TouchPoint tp = m_touchPoints.value(sender());
+
+        tp.setState(Qt::TouchPointMoved);
+
+        QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+        tp.setRect(rect);
+        tp.setSceneRect(rect);
+        tp.setScreenRect(rect);
+        tp.setLastPos(tp.pos());
+        tp.setStartPos(point);
+        tp.setPressure(1);
+        m_touchPoints.insert(sender(), tp);
+
+        Qt::TouchPointStates states = tp.state();
+        QEvent::Type type = QEvent::TouchUpdate;
+        if (m_touchPoints.size() > 1) {
+            states |= Qt::TouchPointStationary;
+        }
+
+        QTouchEvent te(type,
+                       m_touchDevice,
+                       Qt::NoModifier,
+                       states,
+                       m_touchPoints.values());
+        te.setTimestamp(m_eta->elapsed());
+
+        tp.setState(Qt::TouchPointStationary);
+        m_touchPoints.insert(sender(), tp);
+
+        emit touchEvent(te);
+    } else {
+        QMouseEvent me(QEvent::MouseMove,
+                       point,
+                       Qt::LeftButton,
+                       Qt::LeftButton,
+                       Qt::NoModifier);
+        emit mouseEvent(me);
+    }
+}
+
+void QAMouseEngine::onReleased(const QPointF point)
+{
+    if (m_mode == TouchEventMode) {
+        QTouchEvent::TouchPoint tp = m_touchPoints.value(sender());
+
+        tp.setState(Qt::TouchPointReleased);
+
+        QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
+        tp.setRect(rect);
+        tp.setSceneRect(rect);
+        tp.setScreenRect(rect);
+        tp.setLastPos(tp.pos());
+        tp.setStartPos(point);
+        tp.setPressure(0);
+        m_touchPoints.insert(sender(), tp);
+
+        Qt::TouchPointStates states = tp.state();
+        QEvent::Type type = QEvent::TouchEnd;
+        if (m_touchPoints.size() > 1) {
+            type = QEvent::TouchUpdate;
+            states |= Qt::TouchPointStationary;
+        }
+
+        QTouchEvent te(type,
+                       m_touchDevice,
+                       Qt::NoModifier,
+                       states,
+                       m_touchPoints.values());
+        te.setTimestamp(m_eta->elapsed());
+
+        m_touchPoints.remove(sender());
+
+        emit touchEvent(te);
+    } else {
+        QMouseEvent me(QEvent::MouseButtonRelease,
+                       point,
+                       Qt::LeftButton,
+                       Qt::NoButton,
+                       Qt::NoModifier);
+        emit mouseEvent(me);
+    }
+}
+
+EventWorker::EventWorker(const QVariantList &actions, QAMouseEngine *engine)
+    : QObject(nullptr)
+    , m_actions(actions)
+    , m_engine(engine)
+{
+}
+
+EventWorker::~EventWorker()
+{
+}
+
+EventWorker* EventWorker::PerformTouchAction(const QVariantList &actions, QAMouseEngine *engine)
+{
+    EventWorker *worker = new EventWorker(actions, engine);
+    QThread *thread = new QThread;
+    connect(thread, &QThread::started, worker, &EventWorker::start);
+    connect(worker, &EventWorker::finished, thread, &QThread::quit);
+    connect(thread, &QThread::finished, worker, &EventWorker::deleteLater);
+    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+    worker->moveToThread(thread);
+    thread->start();
+    return worker;
+}
+
+void EventWorker::start()
+{
+    QPointF previousPoint;
+
+    for (const QVariant &actionVar : m_actions) {
+        const QVariantMap actionMap = actionVar.toMap();
+        const QString action = actionMap.value(QStringLiteral("action")).toString();
+        const QVariantMap options = actionMap.value(QStringLiteral("options")).toMap();
+
+        if (action == QLatin1String("wait")) {
+            const int delay = options.value(QStringLiteral("ms")).toInt();
+            QEventLoop loop;
+            QTimer::singleShot(delay, &loop, &QEventLoop::quit);
+            loop.exec();
+        } else if (action == QLatin1String("longPress")) {
+            const int posX = options.value(QStringLiteral("x")).toInt();
+            const int posY = options.value(QStringLiteral("y")).toInt();
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsGeometry(item).center();
+                }
+            }
+
+            sendPress(point);
+            previousPoint = point;
+
+            const int delay = options.value(QStringLiteral("duration")).toInt();
+            QEventLoop loop;
+            QTimer::singleShot(delay, &loop, &QEventLoop::quit);
+            loop.exec();
+        } else if (action == QLatin1String("press")) {
+            const int posX = options.value(QStringLiteral("x")).toInt();
+            const int posY = options.value(QStringLiteral("y")).toInt();
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsGeometry(item).center();
+                }
+            }
+
+            sendPress(point);
+            previousPoint = point;
+        } else if (action == QLatin1String("moveTo")) {
+            const int posX = options.value(QStringLiteral("x")).toInt();
+            const int posY = options.value(QStringLiteral("y")).toInt();
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsGeometry(item).center();
+                }
+            }
+
+            const int duration = options.value(QStringLiteral("duration"), 500).toInt();
+            const int steps = options.value(QStringLiteral("steps"), 20).toInt();
+
+            sendMove(previousPoint, point,  duration, steps);
+            previousPoint = point;
+
+        } else if (action == QLatin1String("release")) {
+            sendRelease(previousPoint);
+        } else if (action == QLatin1String("tap")) {
+            const int posX = options.value(QStringLiteral("x")).toInt();
+            const int posY = options.value(QStringLiteral("y")).toInt();
+            QPoint point(posX, posY);
+
+            if (options.contains(QStringLiteral("element"))) {
+                auto platform = QAEngine::instance()->getPlatform();
+                if (auto item = platform->getObject(options.value(QStringLiteral("element")).toString())) {
+                    point = platform->getAbsGeometry(item).center();
+                }
+            }
+
+            const int count = options.value(QStringLiteral("count")).toInt();
+            for (int i = 0; i < count; i++) {
+                sendPress(point);
+                sendRelease(point);
+            }
+            previousPoint = point;
         } else {
-            qWarning() << Q_FUNC_INFO << "Pending move is null!";
+            qCWarning(categoryMouseEngine)
+                << Q_FUNC_INFO
+                << "Unknown action:" << action;
         }
     }
+
+    emit finished();
 }
 
-void QAMouseEngine::sendPress(const QPointF &point)
+void EventWorker::sendPress(const QPointF &point)
 {
-    QTouchEvent::TouchPoint tp(++m_tpId);
-    tp.setState(Qt::TouchPointPressed);
+    qCDebug(categoryMouseEngine)
+        << Q_FUNC_INFO << point;
 
-    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
-    tp.setRect(rect);
-    tp.setSceneRect(rect);
-    tp.setScreenRect(rect);
-    tp.setLastPos(point);
-    tp.setStartPos(point);
-    tp.setPressure(1);
-
-    QTouchEvent te(QEvent::TouchBegin,
-                   m_touchDevice,
-                   Qt::NoModifier,
-                   Qt::TouchPointPressed,
-                   { tp });
-    const quint64 timestamp = m_eta->elapsed();
-    te.setTimestamp(timestamp);
-    m_previousEventTimestamp = timestamp;
-    m_previousPoint = point;
-    m_pressPoint = point;
-
-    emit touchEvent(te);
+    emit pressed(point);
 }
 
-void QAMouseEngine::sendRelease(const QPointF &point)
+void EventWorker::sendRelease(const QPointF &point)
 {
-    QTouchEvent::TouchPoint tp(m_tpId);
-    tp.setState(Qt::TouchPointReleased);
+    qCDebug(categoryMouseEngine)
+        << Q_FUNC_INFO << point;
 
-    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
-    tp.setRect(rect);
-    tp.setSceneRect(rect);
-    tp.setScreenRect(rect);
-    tp.setLastPos(m_previousPoint);
-    tp.setStartPos(m_pressPoint);
-    tp.setPressure(0);
-
-    const quint64 timestamp = m_eta->elapsed();
-    const quint64 timeDelta = timestamp - m_previousEventTimestamp;
-
-    if (timeDelta > 0) {
-        QVector2D velocity;
-        velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
-        velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
-
-        tp.setVelocity(velocity);
-    }
-
-    QTouchEvent te(QEvent::TouchEnd,
-                   m_touchDevice,
-                   Qt::NoModifier,
-                   Qt::TouchPointReleased,
-                   { tp });
-    te.setTimestamp(timestamp);
-    m_previousEventTimestamp = timestamp;
-    m_previousPoint = point;
-
-    emit touchEvent(te);
+    emit released(point);
 }
 
-void QAMouseEngine::sendRelease(const QPointF &point, int delay)
+void EventWorker::sendRelease(const QPointF &point, int delay)
 {
+    qCDebug(categoryMouseEngine)
+        << Q_FUNC_INFO
+        << point << delay;
+
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
@@ -255,38 +534,49 @@ void QAMouseEngine::sendRelease(const QPointF &point, int delay)
     loop.exec();
 }
 
-void QAMouseEngine::sendMove(const QPointF &point)
+void EventWorker::sendMove(const QPointF &point)
 {
-    QTouchEvent::TouchPoint tp(m_tpId);
-    tp.setState(Qt::TouchPointMoved);
+    qCDebug(categoryMouseEngine)
+        << Q_FUNC_INFO
+        << point;
 
-    QRectF rect(point.x() - 16, point.y() - 16, 32, 32);
-    tp.setRect(rect);
-    tp.setSceneRect(rect);
-    tp.setScreenRect(rect);
-    tp.setLastPos(m_previousPoint);
-    tp.setStartPos(m_pressPoint);
-    tp.setPressure(1);
+    emit moved(point);
+}
 
-    const quint64 timestamp = m_eta->elapsed();
-    const quint64 timeDelta = timestamp - m_previousEventTimestamp;
+void EventWorker::sendMove(const QPointF &previousPoint, const QPointF &point, int duration, int moveSteps)
+{
+    qCDebug(categoryMouseEngine)
+        << Q_FUNC_INFO
+        << previousPoint << point << duration << moveSteps;
 
-    if (timeDelta > 0) {
-        QVector2D velocity;
-        velocity.setX((point.x() - m_previousPoint.x()) / timeDelta * 1000);
-        velocity.setY((point.y() - m_previousPoint.y()) / timeDelta * 1000);
+    float stepSize = 5.0f;
 
-        tp.setVelocity(velocity);
+    const float stepX = qAbs(point.x() - previousPoint.x()) / moveSteps;
+    const float stepY = qAbs(point.y() - previousPoint.y()) / moveSteps;
+
+    if (stepX > 0 && stepX < stepSize) {
+        moveSteps = qAbs(qRound(point.x() - previousPoint.x())) / stepSize;
+    } else if (stepY > 0 && stepY < stepSize) {
+        moveSteps = qAbs(qRound(point.y() - previousPoint.y())) / stepSize;
     }
 
-    QTouchEvent te(QEvent::TouchUpdate,
-                   m_touchDevice,
-                   Qt::NoModifier,
-                   Qt::TouchPointPressed,
-                   { tp });
-    te.setTimestamp(timestamp);
-    m_previousEventTimestamp = timestamp;
-    m_previousPoint = point;
+    auto *interpolator = QVariantAnimationPrivate::getInterpolator(QMetaType::QPointF);
 
-    emit touchEvent(te);
+    QPointF pointA = previousPoint;
+    for (int currentMoveStep = 0; currentMoveStep < moveSteps; currentMoveStep++) {
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+        connect(&timer, &QTimer::timeout, this, [this, interpolator, &pointA, currentMoveStep, moveSteps, point, previousPoint]() {
+            float progress = static_cast<float>(currentMoveStep) / moveSteps;
+
+            QPointF pointB = interpolator(&previousPoint, &point, progress).toPointF();
+            sendMove(pointB);
+            pointA = pointB;
+        });
+        connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        timer.start(duration / moveSteps);
+        loop.exec();
+    }
+    sendMove(point);
 }

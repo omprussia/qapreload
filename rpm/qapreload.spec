@@ -1,14 +1,15 @@
+# Copyright (c) 2019-2020 Open Mobile Platform LLC.
 %{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
 %{!?qtc_make:%define qtc_make make}
 
 Name:       qapreload
 
 Summary:    Preload library for QA
-Version:    1.0.0
+Version:    2.0.0
 Release:    1
 Group:      Qt/Qt
 License:    LGPL3
-URL:        https://github.com/coderus/qapreload
+URL:        https://github.com/omprussia/qapreload
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5DBus)
@@ -27,11 +28,9 @@ BuildRequires:  pkgconfig(rpm)
 BuildRequires:  qt5-tools
 BuildRequires:  qt5-qtdeclarative-devel-tools
 BuildRequires:  qt5-plugin-platform-minimal
-BuildRequires:  mer-qdoc-template
 Obsoletes:      qtpreloadengine
 Obsoletes:      qtpreloadengine-ld
 Suggests:       qapreload-ld
-Suggests:       qapreload-indicator
 Suggests:       screenrecorder
 
 %description
@@ -46,59 +45,57 @@ Requires:   %{name}
 %description ld
 %{summary}.
 
-%package devel
-Summary:    Preload library for QA. plugin.qmltypes
-Group:      Qt/Qt
-BuildArch:  noarch
-
-%description devel
-%{summary}.
-
-%package doc
-Summary:    SailfishTest plugin documentation
-Group:      System/Libraries
-
-%description doc
-%{summary}.
-
-%package indicator
-Summary:    Touch indicator enabler
-Group:      System/Libraries
-Requires:   %{name}
-
-%description indicator
-%{summary}.
-
 %prep
 %setup -q -n %{name}-%{version}
 
 %build
 
-%qtc_qmake5
+%qtc_qmake5 \
+    "PROJECT_PACKAGE_VERSION=%{version}" \
+    SPEC_UNITDIR=%{_unitdir} \
+    DEFINES+=Q_OS_SAILFISH \
+    DEFINES+=USE_DBUS \
+    DEFINES+=USE_SYSTEMD \
+    DEFINES+=USE_PACKAGEKIT \
+    DEFINES+=USE_RPM \
+    DEFINES+=USE_CONNMAN \
+    DEFINES+=USE_MLITE5
 %qtc_make %{?_smp_mflags}
 
 %install
 rm -rf %{buildroot}
 
 %qmake5_install
-ln -s ../../../../../libqaengine.so %{buildroot}/usr/lib/qt5/qml/ru/omprussia/sailfishtest/libqaengine.so
 
-/usr/lib/qt5/bin/qmlplugindump -v -noinstantiate -nonrelocatable ru.omprussia.sailfishtest 1.0 %{buildroot}%{_libdir}/qt5/qml > %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugins.qmltypes |:
-sed -i 's#%{buildroot}##g' %{buildroot}%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugins.qmltypes |:
+%pre
+/usr/bin/env systemctl disable qabridge.service
 
-mkdir -p %{buildroot}%{_sysconfdir}
-touch %{buildroot}%{_sysconfdir}/qapreload-touch-indicator
+%post
+/usr/bin/env systemctl daemon-reload
+/usr/bin/env systemctl stop qabridge.service
+/usr/bin/env systemctl restart qabridge.socket
+/usr/bin/env systemctl enable qabridge.socket
+/usr/bin/env systemctl-user daemon-reload
+/usr/bin/env systemctl-user restart qaservice.service
 
-mkdir -p %{buildroot}/%{_docdir}/%{name}
-cp -R engine/html/* %{buildroot}/%{_docdir}/%{name}/
+/usr/bin/env systemctl-user restart booster-qt5.service
+/usr/bin/env systemctl-user restart booster-silica-qt5.service
+
+%pre ld
+/usr/bin/env systemctl disable qabridge.socket
 
 %post ld
 if grep libqapreloadhook /etc/ld.so.preload > /dev/null; then
     echo "Preload already exists"
 else
-    echo /usr/lib/libqapreloadhook.so >> /etc/ld.so.preload
+    echo %{_libdir}/libqapreloadhook.so >> /etc/ld.so.preload
 fi
 /sbin/ldconfig
+
+/usr/bin/env systemctl disable qabridge.socket
+/usr/bin/env systemctl stop qabridge.socket
+/usr/bin/env systemctl enable qabridge.service
+/usr/bin/env systemctl restart qabridge.service
 
 %preun ld
 if [ "$1" = "0" ]; then
@@ -107,47 +104,18 @@ sed -i "/libqapreloadhook/ d" /etc/ld.so.preload
 fi
 /sbin/ldconfig
 
-%post
-/bin/systemctl daemon-reload
-/bin/systemctl stop qabridge.service
-/bin/systemctl restart qabridge.socket
-/bin/systemctl enable qabridge.socket
-/bin/systemctl-user daemon-reload
-/bin/systemctl-user restart qaservice.service
-
-/bin/systemctl-user restart booster-qt5.service
-/bin/systemctl-user restart booster-silica-qt5.service
-
 %files
 %defattr(-,root,root,-)
 # hook files
 %{_libdir}/libqapreloadhook.so
 # library files
-%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir
-%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/libqaengine.so
 %{_libdir}/libqaengine.so
 # bridge files
 %{_bindir}/qabridge
 %{_bindir}/qabridge-user
-/lib/systemd/system/qabridge.service
-/lib/systemd/system/qabridge.socket
-%{_datadir}/dbus-1/interfaces/ru.omprussia.qabridge.xml
-%{_sysconfdir}/dbus-1/system.d/ru.omprussia.qabridge.conf
+%{_unitdir}/qabridge.service
+%{_unitdir}/qabridge.socket
 %{_libdir}/systemd/user/qaservice.service
 %{_datadir}/dbus-1/services/ru.omprussia.qaservice.service
-%{_datadir}/dbus-1/system-services/ru.omprussia.qabridge.service
-%{_datadir}/qapreload/qml/TouchIndicator.qml
 
 %files ld
-
-%files devel
-%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/qmldir
-%{_libdir}/qt5/qml/ru/omprussia/sailfishtest/plugins.qmltypes
-
-%files doc
-%defattr(-,root,root,-)
-%dir %{_datadir}/doc/qapreload
-%{_docdir}/qapreload/
-
-%files indicator
-%{_sysconfdir}/qapreload-touch-indicator
