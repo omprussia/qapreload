@@ -102,6 +102,17 @@ void QAEngine::initialize()
     if (!qGuiApp->topLevelWindows().isEmpty()) {
         onFocusWindowChanged(qGuiApp->topLevelWindows().first());
     }
+    if (!qGuiApp->focusWindow()) {
+        QTimer *t = new QTimer();
+        connect(t, &QTimer::timeout, [this, t]() {
+            if (!qGuiApp->focusWindow()) {
+                return;
+            }
+            onFocusWindowChanged(qGuiApp->focusWindow());
+            t->deleteLater();
+        });
+        t->start(1000);
+    }
 }
 
 void QAEngine::onFocusWindowChanged(QWindow *window)
