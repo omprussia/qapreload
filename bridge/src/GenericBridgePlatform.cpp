@@ -599,7 +599,7 @@ void GenericBridgePlatform::executeCommand_system_shell(QTcpSocket *socket, cons
     qDebug()
         << Q_FUNC_INFO
         << "stderr:" << stdErr;
-    socketReply(socket, stdOut);
+    socketReply(socket, stdOut, p.exitCode());
 }
 
 void GenericBridgePlatform::socketReply(QTcpSocket *socket, const QVariant &value, int status)
