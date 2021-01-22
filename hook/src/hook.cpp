@@ -36,7 +36,7 @@ static void my_startup_hook()
 __attribute__((constructor))
 static void libConstructor() {
 #ifdef Q_OS_SAILFISH
-    if (getuid() != user_uid()) {
+    if (getuid() < user_uid()) {
         return;
     }
     qtHookData[StartupHookIndex] = reinterpret_cast<StartupCallback>(&my_startup_hook);
