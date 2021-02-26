@@ -431,16 +431,47 @@ QJsonObject GenericEnginePlatform::recursiveDumpTree(QObject *rootItem, int dept
 
 void GenericEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QObject *rootItem, int depth)
 {
-    const QJsonObject object = dumpObject(rootItem, depth);
-    writer->writeStartElement(object.value(QStringLiteral("classname")).toString());
-    for (auto i = object.constBegin(), objEnd = object.constEnd(); i != objEnd; ++i) {
-        const QJsonValue& val = *i;
-        const QString &name = i.key();
+    const QString className = getClassName(rootItem);
+    writer->writeStartElement(className);
 
-        writer->writeAttribute(name, val.toVariant().toString());
-    }
-    if (object.contains(QStringLiteral("mainTextProperty"))) {
-        writer->writeCharacters(object.value(QStringLiteral("mainTextProperty")).toString());
+    const QString id = uniqueId(rootItem);
+    writer->writeAttribute(QStringLiteral("id"), id);
+
+    QStringList attributes;
+    auto mo = rootItem->metaObject();
+    do {
+        for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
+            const QString propertyName = QString::fromLatin1(mo->property(i).name());
+            if (!attributes.contains(propertyName)) {
+                attributes.append(propertyName);
+                QVariant value = mo->property(i).read(rootItem);
+                if (value.canConvert<QString>()) {
+                    writer->writeAttribute(propertyName, value.toString());
+                }
+            }
+        }
+    } while ((mo = mo->superClass()));
+
+    const QRect rect = getGeometry(rootItem);
+    writer->writeAttribute(QStringLiteral("width"), QString::number(rect.width()));
+    writer->writeAttribute(QStringLiteral("height"), QString::number(rect.height()));
+    writer->writeAttribute(QStringLiteral("x"), QString::number(rect.x()));
+    writer->writeAttribute(QStringLiteral("y"), QString::number(rect.y()));
+    writer->writeAttribute(QStringLiteral("depth"), QString::number(depth));
+
+    const QPoint abs = getAbsPosition(rootItem);
+    writer->writeAttribute(QStringLiteral("abs_x"), QString::number(abs.x()));
+    writer->writeAttribute(QStringLiteral("abs_y"), QString::number(abs.y()));
+
+    writer->writeAttribute(QStringLiteral("objectName"), rootItem->objectName());
+    writer->writeAttribute(QStringLiteral("enabled"), isItemEnabled(rootItem) ? QStringLiteral("true") : QStringLiteral("false"));
+    writer->writeAttribute(QStringLiteral("visible"), isItemVisible(rootItem) ? QStringLiteral("true") : QStringLiteral("false"));
+
+    QString text = getText(rootItem);
+    writer->writeAttribute(QStringLiteral("mainTextProperty"), text);
+
+    if (!text.isEmpty()) {
+        writer->writeCharacters(text);
     }
 
     int z = 0;
