@@ -5,6 +5,7 @@
 #include <winsock.h>
 
 #include <QDebug>
+#include <QProcess>
 
 WindowsBridgePlatform::WindowsBridgePlatform(QObject *parent)
     : GenericBridgePlatform(parent)
@@ -38,7 +39,7 @@ bool WindowsBridgePlatform::lauchAppStandalone(const QString &appName, const QSt
     qint64 pid = 0;
     const bool ret = process.startDetached(&pid);
     if (ret) {
-        Injector::injectDll(pid, QStringLiteral("qapreloadhook.dll"));
+        Injector::injectDll(pid, "qapreloadhook.dll");
     }
     return ret;
 }

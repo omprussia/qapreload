@@ -69,6 +69,7 @@ HEADERS += \
     src/QABridgeSocketServer.hpp
 
 win32 {
+    CONFIG += console
     HEADERS += \
         src/WinInjector.hpp \
         src/WindowsBridgePlatform.hpp
