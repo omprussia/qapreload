@@ -62,6 +62,14 @@ QAPendingEvent *QAMouseEngine::click(const QPointF &point)
             },
         },
         QVariantMap{
+            {"action", "wait"},
+            {"options",
+                QVariantMap{
+                    {"ms", 200},
+                },
+            },
+        },
+        QVariantMap{
             {"action", "release"},
         },
     };
@@ -488,6 +496,9 @@ void EventWorker::start()
             const int count = options.value(QStringLiteral("count")).toInt();
             for (int i = 0; i < count; i++) {
                 sendPress(point);
+                QEventLoop loop;
+                QTimer::singleShot(200, &loop, &QEventLoop::quit);
+                loop.exec();
                 sendRelease(point);
             }
             previousPoint = point;
