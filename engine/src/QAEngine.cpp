@@ -12,6 +12,7 @@
 #include <QTimer>
 #include <QQuickWindow>
 #include <QDir>
+#include <QDateTime>
 
 #if defined Q_OS_SAILFISH
 #include "SailfishEnginePlatform.hpp"
@@ -29,6 +30,13 @@ Q_LOGGING_CATEGORY(categoryEngine, "omp.qaengine.engine", QtWarningMsg)
 
 namespace {
 
+QAEngine *s_instance = nullptr;
+
+QString s_processName = "qaengine";
+
+QHash<QWindow*, IEnginePlatform*> s_windows;
+QWindow *s_lastFocusWindow = nullptr;
+
 inline QGenericArgument qVariantToArgument(const QVariant &variant) {
     if (variant.isValid() && !variant.isNull()) {
         return QGenericArgument(variant.typeName(), variant.constData());
@@ -36,12 +44,35 @@ inline QGenericArgument qVariantToArgument(const QVariant &variant) {
     return QGenericArgument();
 }
 
-QAEngine *s_instance = nullptr;
-
-QString s_processName;
-
-QHash<QWindow*, IEnginePlatform*> s_windows;
-QWindow *s_lastFocusWindow = nullptr;
+void fileOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    QFile logFile;
+    logFile.setFileName(s_processName + QLatin1String(".log"));
+    logFile.open(QFile::WriteOnly | QFile::Append);
+    if (!logFile.isOpen()) {
+        return;
+    }
+    QString log = QStringLiteral("%3 [%2]: %1\n")
+            .arg(msg)
+            .arg(QDateTime::currentDateTime().toString(QStringLiteral("hh:mm:ss")));
+    switch (type) {
+    case QtDebugMsg:
+        log = log.arg(QStringLiteral("D"));
+        break;
+    case QtInfoMsg:
+        log = log.arg(QStringLiteral("I"));
+        break;
+    case QtWarningMsg:
+        log = log.arg(QStringLiteral("W"));
+        break;
+    case QtCriticalMsg:
+        log = log.arg(QStringLiteral("C"));
+        break;
+    case QtFatalMsg:
+        log = log.arg(QStringLiteral("F"));
+    }
+    logFile.write(log.toUtf8());
+}
 
 }
 
@@ -143,6 +174,10 @@ void QAEngine::onFocusWindowChanged(QWindow *window)
         QTimer::singleShot(0, platform, &IEnginePlatform::initialize);
 
         s_windows.insert(window, platform);
+
+#ifdef Q_OS_WIN
+        qInstallMessageHandler(fileOutput);
+#endif
     }
 
     s_lastFocusWindow = window;
