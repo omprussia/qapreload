@@ -250,7 +250,8 @@ QObjectList GenericEnginePlatform::findItemsByXpath(const QString &xpath, QObjec
     if (!query.isValid()) {
         qCWarning(categoryGenericEnginePlatform)
             << Q_FUNC_INFO
-            << "Query not valid!";
+            << "Query not valid:"
+            << xpath;
         return items;
     }
     QString tempString;
@@ -268,7 +269,7 @@ QObjectList GenericEnginePlatform::findItemsByXpath(const QString &xpath, QObjec
         if (reader.isStartElement()) {
             const QString elementId = reader.attributes().value(QStringLiteral("id")).toString();
             const QString address = elementId.section(QChar(u'x'), -1);
-            const quintptr integer = address.toUInt(NULL, 16);
+            const qulonglong integer = address.toULongLong(NULL, 16);
             QObject *item = reinterpret_cast<QObject*>(integer);
             items.append(item);
             reader.skipCurrentElement();
@@ -452,20 +453,11 @@ void GenericEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QObject *
         }
     } while ((mo = mo->superClass()));
 
-    const QRect rect = getGeometry(rootItem);
-    writer->writeAttribute(QStringLiteral("width"), QString::number(rect.width()));
-    writer->writeAttribute(QStringLiteral("height"), QString::number(rect.height()));
-    writer->writeAttribute(QStringLiteral("x"), QString::number(rect.x()));
-    writer->writeAttribute(QStringLiteral("y"), QString::number(rect.y()));
     writer->writeAttribute(QStringLiteral("depth"), QString::number(depth));
 
     const QPoint abs = getAbsPosition(rootItem);
     writer->writeAttribute(QStringLiteral("abs_x"), QString::number(abs.x()));
     writer->writeAttribute(QStringLiteral("abs_y"), QString::number(abs.y()));
-
-    writer->writeAttribute(QStringLiteral("objectName"), rootItem->objectName());
-    writer->writeAttribute(QStringLiteral("enabled"), isItemEnabled(rootItem) ? QStringLiteral("true") : QStringLiteral("false"));
-    writer->writeAttribute(QStringLiteral("visible"), isItemVisible(rootItem) ? QStringLiteral("true") : QStringLiteral("false"));
 
     QString text = getText(rootItem);
     writer->writeAttribute(QStringLiteral("mainTextProperty"), text);
