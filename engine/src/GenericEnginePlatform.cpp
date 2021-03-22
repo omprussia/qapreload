@@ -764,9 +764,9 @@ void GenericEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString
         return;
     }
 
-    m_rootWindow->raise();
-    m_rootWindow->requestActivate();
-    m_rootWindow->setWindowState(Qt::WindowState::WindowActive);
+    QWindow *appWindow = qGuiApp->topLevelWindows().last();
+    appWindow->raise();
+    appWindow->requestActivate();
 
     socketReply(socket, QString());
 }
