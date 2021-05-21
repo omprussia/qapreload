@@ -25,7 +25,7 @@ contains(DEFINES, USE_DBUS) {
 
 contains(DEFINES, USE_SYSTEMD) {
     message("Building bridge with systemd support")
-    PKGCONFIG += libsystemd-daemon
+    PKGCONFIG += libsystemd
 
     message("SPEC_UNITDIR: $$SPEC_UNITDIR")
 
