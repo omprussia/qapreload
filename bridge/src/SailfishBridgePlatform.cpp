@@ -15,12 +15,14 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusReply>
 
 #include <QDebug>
+#include "sailfishinjector/injector.h"
 
 namespace {
 
@@ -51,7 +53,24 @@ SailfishBridgePlatform::SailfishBridgePlatform(QObject *parent)
     : LinuxBridgePlatform(parent)
 {
     qDebug()
-        << Q_FUNC_INFO;
+            << Q_FUNC_INFO;
+}
+
+pid_t SailfishBridgePlatform::findProcess(const char *appName)
+{
+    pid_t pid = -1;
+
+    QProcess process;
+    QString pgm("/sbin/pidof");
+    QStringList args = QStringList() << appName;
+    process.start(pgm, args);
+    process.waitForFinished();
+    QString stdout = QString::fromUtf8(process.readAllStandardOutput());
+    if (!stdout.isEmpty()) {
+        pid = stdout.toInt();
+    }
+
+    return pid;
 }
 
 void SailfishBridgePlatform::installAppCommand(QTcpSocket *socket, const QString &appPath)
@@ -425,11 +444,48 @@ bool SailfishBridgePlatform::lauchAppStandalone(const QString &appName, const QS
         << Q_FUNC_INFO
         << appName << arguments;
 
-    QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
-                                                         QStringLiteral("/ru/omprussia/qaservice"),
-                                                         QStringLiteral("ru.omprussia.qaservice"),
-                                                         QStringLiteral("launchApp"));
-    launch.setArguments({ appName, arguments });
-    return getSessionBus().send(launch);
+    if (findProcess(appName.toLocal8Bit()) == -1) {
+        QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
+                                                             QStringLiteral("/ru/omprussia/qaservice"),
+                                                             QStringLiteral("ru.omprussia.qaservice"),
+                                                             QStringLiteral("launchApp"));
+        launch.setArguments({ appName, arguments });
+        if(!getSessionBus().send(launch)) {
+            return false;
+        }
+    }
 
+    QEventLoop loop;
+    QTimer timer;
+    for (int i = 0; i < 10; i++) {
+        if (findProcess(appName.toLocal8Bit()) != -1) {
+            continue;
+        } else {
+            qDebug() << Q_FUNC_INFO << "Counter IS:" << i;
+            connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+            timer.start(1500);
+            loop.exec();
+        }
+    }
+
+   if (m_applicationSocket.value(appName, nullptr) == nullptr) {
+        injector_t *injector;
+        pid_t pid= findProcess(appName.toLocal8Bit());
+        qDebug() << Q_FUNC_INFO << "Start to attach injector to pid " << pid ;
+
+        if(injector_attach(&injector, pid) != 0) {
+            qDebug() << Q_FUNC_INFO << "Failed to attach injector";
+            return false;
+        }
+        if(injector_inject(injector, "/usr/lib/libqaengine.so", NULL) != 0) {
+            qDebug() << Q_FUNC_INFO << "Failed to inject injector";
+            return false;
+        }
+        if(injector_detach(injector) != 0) {
+            qDebug() << Q_FUNC_INFO << "Failed to Detach injector";
+            return false;
+        }
+    }
+
+    return true;
 }

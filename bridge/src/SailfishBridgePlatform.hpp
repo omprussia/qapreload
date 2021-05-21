@@ -8,6 +8,7 @@ class SailfishBridgePlatform : public LinuxBridgePlatform
     Q_OBJECT
 public:
     explicit SailfishBridgePlatform(QObject *parent);
+    static pid_t findProcess(const char *appName);
 
 private slots:
     void installAppCommand(QTcpSocket *socket, const QString &appPath) override;
