@@ -453,7 +453,7 @@ void GenericEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QObject *
         }
     } while ((mo = mo->superClass()));
 
-    writer->writeAttribute(QStringLiteral("depth"), QString::number(depth));
+    writer->writeAttribute(QStringLiteral("zDepth"), QString::number(depth));
 
     const QPoint abs = getAbsPosition(rootItem);
     writer->writeAttribute(QStringLiteral("abs_x"), QString::number(abs.x()));
