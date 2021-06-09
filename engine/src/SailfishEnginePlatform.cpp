@@ -547,7 +547,7 @@ void SailfishEnginePlatform::initialize()
         this,
         SLOT(bridgeStatusChanged(QString, QVariantMap, QStringList)));
 
-    QFile blacklist(QStringLiteral("/etc/qapreload-blacklist"));
+    QFile blacklist(QDir::home().absoluteFilePath(QStringLiteral("qapreload-blacklist")));
     if (blacklist.exists() && blacklist.open(QFile::ReadOnly)) {
         const QStringList list = QString::fromLatin1(blacklist.readAll().trimmed()).split(QChar(u'\n'));
         for (const QString &item : list) {
