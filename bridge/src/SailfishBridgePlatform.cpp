@@ -29,14 +29,16 @@ namespace {
 QDBusConnection getSessionBus(const QString &sessionName = QStringLiteral("qabridge-connection"))
 {
     qDebug() << Q_FUNC_INFO << sessionName;
+    QString busAddr = QString::fromLatin1(getenv("DBUS_SESSION_BUS_ADDRESS"));
+    qDebug() << Q_FUNC_INFO << busAddr;
 
-    QDBusConnection bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, sessionName);
+    QDBusConnection bus = QDBusConnection::connectToBus(busAddr, sessionName);
     if (!bus.isConnected()) {
         QEventLoop loop;
         QTimer timer;
-        QObject::connect(&timer, &QTimer::timeout, [&loop, &timer, sessionName, &bus](){
+        QObject::connect(&timer, &QTimer::timeout, [&loop, &timer, sessionName, &bus, busAddr](){
             QDBusConnection::disconnectFromBus(sessionName);
-            bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, sessionName);
+            bus = QDBusConnection::connectToBus(busAddr, sessionName);
             if (bus.isConnected()) {
                 timer.stop();
                 loop.quit();
