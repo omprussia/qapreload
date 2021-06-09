@@ -26,17 +26,18 @@
 
 namespace {
 
-QDBusConnection getSessionBus()
+QDBusConnection getSessionBus(const QString &sessionName = QStringLiteral("qabridge-connection"))
 {
-    static const QString s_sessionBusConnection = QStringLiteral("qabridge-connection");
-    static QDBusConnection s_bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, s_sessionBusConnection);
-    if (!s_bus.isConnected()) {
+    qDebug() << Q_FUNC_INFO << sessionName;
+
+    QDBusConnection bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, sessionName);
+    if (!bus.isConnected()) {
         QEventLoop loop;
         QTimer timer;
-        QObject::connect(&timer, &QTimer::timeout, [&loop, &timer](){
-            QDBusConnection::disconnectFromBus(s_sessionBusConnection);
-            s_bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, s_sessionBusConnection);
-            if (s_bus.isConnected()) {
+        QObject::connect(&timer, &QTimer::timeout, [&loop, &timer, sessionName, &bus](){
+            QDBusConnection::disconnectFromBus(sessionName);
+            bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, sessionName);
+            if (bus.isConnected()) {
                 timer.stop();
                 loop.quit();
             }
@@ -44,7 +45,10 @@ QDBusConnection getSessionBus()
         timer.start(1000);
         loop.exec();
     }
-    return s_bus;
+
+    qDebug() << Q_FUNC_INFO << bus.name() << bus.isConnected();
+
+    return bus;
 }
 
 }
@@ -450,7 +454,7 @@ bool SailfishBridgePlatform::lauchAppStandalone(const QString &appName, const QS
                                                              QStringLiteral("ru.omprussia.qaservice"),
                                                              QStringLiteral("launchApp"));
         launch.setArguments({ appName, arguments });
-        if(!getSessionBus().send(launch)) {
+        if(!getSessionBus(QStringLiteral("session-") + appName).send(launch)) {
             return false;
         }
     }
