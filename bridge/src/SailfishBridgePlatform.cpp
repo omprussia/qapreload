@@ -57,7 +57,37 @@ SailfishBridgePlatform::SailfishBridgePlatform(QObject *parent)
     : LinuxBridgePlatform(parent)
 {
     qDebug()
-            << Q_FUNC_INFO;
+        << Q_FUNC_INFO;
+
+    qRegisterMetaType<LoginUserData>();
+    qDBusRegisterMetaType<LoginUserData>();
+
+    qRegisterMetaType<QList<LoginUserData>>();
+    qDBusRegisterMetaType<QList<LoginUserData>>();
+
+    if (QDBusConnection::systemBus().interface()->isServiceRegistered(QStringLiteral("org.freedesktop.login1"))) {
+        QDBusMessage listUsers = QDBusMessage::createMethodCall(
+                    QStringLiteral("org.freedesktop.login1"),
+                    QStringLiteral("/org/freedesktop/login1"),
+                    QStringLiteral("org.freedesktop.login1.Manager"),
+                    QStringLiteral("ListUsers"));
+        QDBusReply<QList<LoginUserData>> reply = QDBusConnection::systemBus().call(listUsers);
+        if (reply.error().type() == QDBusError::NoError) {
+            auto user = reply.value().first();
+            qDebug() << Q_FUNC_INFO << user.id << user.name << user.path.path();
+            userNew(user.id, user.path);
+        } else {
+            qWarning() << Q_FUNC_INFO << "Error getting list of users:" << reply.error().message();
+        }
+
+        QDBusConnection::systemBus().connect(
+            QStringLiteral("org.freedesktop.login1"),
+            QStringLiteral("/org/freedesktop/login1"),
+            QStringLiteral("org.freedesktop.login1.Manager"),
+            QStringLiteral("UserNew"),
+            this,
+            SLOT(userNew(uint, QDBusObjectPath)));
+    }
 }
 
 pid_t SailfishBridgePlatform::findProcess(const char *appName)
@@ -442,6 +472,15 @@ void SailfishBridgePlatform::executeCommand_system_unlock(QTcpSocket *socket, co
     socketReply(socket, QString());
 }
 
+void SailfishBridgePlatform::userNew(uint userId, const QDBusObjectPath &userPath)
+{
+    qDebug()
+        << Q_FUNC_INFO << userId << userPath.path();
+
+    qputenv("XDG_RUNTIME_DIR", QStringLiteral("/run/user/%1").arg(userId).toUtf8());
+    qputenv("DBUS_SESSION_BUS_ADDRESS", QStringLiteral("unix:path=/run/user/%1/dbus/user_bus_socket").arg(userId).toUtf8());
+}
+
 bool SailfishBridgePlatform::lauchAppStandalone(const QString &appName, const QStringList &arguments)
 {
     qDebug()
@@ -492,4 +531,20 @@ bool SailfishBridgePlatform::lauchAppStandalone(const QString &appName, const QS
     }
 
     return true;
+}
+
+QDBusArgument &operator<<(QDBusArgument &argument, const LoginUserData &data)
+{
+    argument.beginStructure();
+    argument << data.id << data.name << data.path;
+    argument.endStructure();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, LoginUserData &data)
+{
+    argument.beginStructure();
+    argument >> data.id >> data.name >> data.path;
+    argument.endStructure();
+    return argument;
 }
