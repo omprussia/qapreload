@@ -75,9 +75,13 @@ SailfishBridgePlatform::SailfishBridgePlatform(QObject *parent)
                     QStringLiteral("ListUsers"));
         QDBusReply<QList<LoginUserData>> reply = QDBusConnection::systemBus().call(listUsers);
         if (reply.error().type() == QDBusError::NoError) {
-            auto user = reply.value().first();
-            qDebug() << Q_FUNC_INFO << user.id << user.name << user.path.path();
-            userNew(user.id, user.path);
+            if (reply.value().size() > 0) {
+                auto user = reply.value().first();
+                qDebug() << Q_FUNC_INFO << user.id << user.name << user.path.path();
+                userNew(user.id, user.path);
+            } else {
+                qWarning() << Q_FUNC_INFO << "Empty user list received";
+            }
         } else {
             qWarning() << Q_FUNC_INFO << "Error getting list of users:" << reply.error().message();
         }
