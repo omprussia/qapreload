@@ -67,19 +67,19 @@ rm -rf %{buildroot}
 
 %qmake5_install
 
+mkdir -p %{buildroot}%{_libdir}/systemd/user/user-session.target.wants
+ln -s ../qaservice.service %{buildroot}%{_libdir}/systemd/user/user-session.target.wants/
+
 %pre
 /usr/bin/env systemctl disable qabridge.service ||:
 
 %post
 /usr/bin/env systemctl daemon-reload
-/usr/bin/env systemctl stop qabridge.service
-/usr/bin/env systemctl restart qabridge.socket
-/usr/bin/env systemctl enable qabridge.socket
+/usr/bin/env systemctl restart qabridge.service
+/usr/bin/env systemctl enable qabridge.service
+
 /usr/bin/env systemctl-user daemon-reload
 /usr/bin/env systemctl-user restart qaservice.service
-
-/usr/bin/env systemctl-user restart booster-qt5.service
-/usr/bin/env systemctl-user restart booster-silica-qt5.service
 
 %pre ld
 /usr/bin/env systemctl disable qabridge.socket ||:
@@ -96,6 +96,9 @@ fi
 /usr/bin/env systemctl stop qabridge.socket
 /usr/bin/env systemctl enable qabridge.service
 /usr/bin/env systemctl restart qabridge.service
+
+/usr/bin/env systemctl-user restart booster-qt5.service
+/usr/bin/env systemctl-user restart booster-silica-qt5.service
 
 %preun ld
 if [ "$1" = "0" ]; then
@@ -115,7 +118,8 @@ fi
 %{_bindir}/qabridge-user
 %{_unitdir}/qabridge.service
 %{_unitdir}/qabridge.socket
-%{_libdir}/systemd/user/qaservice.service
+%{_userunitdir}/qaservice.service
+%{_userunitdir}/user-session.target.wants/qaservice.service
 %{_datadir}/dbus-1/services/ru.omprussia.qaservice.service
 
 %files ld

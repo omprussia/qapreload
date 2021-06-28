@@ -15,26 +15,31 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusReply>
 
 #include <QDebug>
+#include "sailfishinjector/injector.h"
 
 namespace {
 
-QDBusConnection getSessionBus()
+QDBusConnection getSessionBus(const QString &sessionName = QStringLiteral("qabridge-connection"))
 {
-    static const QString s_sessionBusConnection = QStringLiteral("qabridge-connection");
-    static QDBusConnection s_bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, s_sessionBusConnection);
-    if (!s_bus.isConnected()) {
+    qDebug() << Q_FUNC_INFO << sessionName;
+    QString busAddr = QString::fromLatin1(getenv("DBUS_SESSION_BUS_ADDRESS"));
+    qDebug() << Q_FUNC_INFO << busAddr;
+
+    QDBusConnection bus = QDBusConnection::connectToBus(busAddr, sessionName);
+    if (!bus.isConnected()) {
         QEventLoop loop;
         QTimer timer;
-        QObject::connect(&timer, &QTimer::timeout, [&loop, &timer](){
-            QDBusConnection::disconnectFromBus(s_sessionBusConnection);
-            s_bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, s_sessionBusConnection);
-            if (s_bus.isConnected()) {
+        QObject::connect(&timer, &QTimer::timeout, [&loop, &timer, sessionName, &bus, busAddr](){
+            QDBusConnection::disconnectFromBus(sessionName);
+            bus = QDBusConnection::connectToBus(busAddr, sessionName);
+            if (bus.isConnected()) {
                 timer.stop();
                 loop.quit();
             }
@@ -42,7 +47,10 @@ QDBusConnection getSessionBus()
         timer.start(1000);
         loop.exec();
     }
-    return s_bus;
+
+    qDebug() << Q_FUNC_INFO << bus.name() << bus.isConnected();
+
+    return bus;
 }
 
 }
@@ -52,6 +60,57 @@ SailfishBridgePlatform::SailfishBridgePlatform(QObject *parent)
 {
     qDebug()
         << Q_FUNC_INFO;
+
+    qRegisterMetaType<LoginUserData>();
+    qDBusRegisterMetaType<LoginUserData>();
+
+    qRegisterMetaType<QList<LoginUserData>>();
+    qDBusRegisterMetaType<QList<LoginUserData>>();
+
+    if (QDBusConnection::systemBus().interface()->isServiceRegistered(QStringLiteral("org.freedesktop.login1"))) {
+        QDBusMessage listUsers = QDBusMessage::createMethodCall(
+                    QStringLiteral("org.freedesktop.login1"),
+                    QStringLiteral("/org/freedesktop/login1"),
+                    QStringLiteral("org.freedesktop.login1.Manager"),
+                    QStringLiteral("ListUsers"));
+        QDBusReply<QList<LoginUserData>> reply = QDBusConnection::systemBus().call(listUsers);
+        if (reply.error().type() == QDBusError::NoError) {
+            if (reply.value().size() > 0) {
+                auto user = reply.value().first();
+                qDebug() << Q_FUNC_INFO << user.id << user.name << user.path.path();
+                userNew(user.id, user.path);
+            } else {
+                qWarning() << Q_FUNC_INFO << "Empty user list received";
+            }
+        } else {
+            qWarning() << Q_FUNC_INFO << "Error getting list of users:" << reply.error().message();
+        }
+
+        QDBusConnection::systemBus().connect(
+            QStringLiteral("org.freedesktop.login1"),
+            QStringLiteral("/org/freedesktop/login1"),
+            QStringLiteral("org.freedesktop.login1.Manager"),
+            QStringLiteral("UserNew"),
+            this,
+            SLOT(userNew(uint, QDBusObjectPath)));
+    }
+}
+
+pid_t SailfishBridgePlatform::findProcess(const char *appName)
+{
+    pid_t pid = -1;
+
+    QProcess process;
+    QString pgm("/sbin/pidof");
+    QStringList args = QStringList() << appName;
+    process.start(pgm, args);
+    process.waitForFinished();
+    QString stdout = QString::fromUtf8(process.readAllStandardOutput());
+    if (!stdout.isEmpty()) {
+        pid = stdout.toInt();
+    }
+
+    return pid;
 }
 
 void SailfishBridgePlatform::installAppCommand(QTcpSocket *socket, const QString &appPath)
@@ -419,17 +478,79 @@ void SailfishBridgePlatform::executeCommand_system_unlock(QTcpSocket *socket, co
     socketReply(socket, QString());
 }
 
+void SailfishBridgePlatform::userNew(uint userId, const QDBusObjectPath &userPath)
+{
+    qDebug()
+        << Q_FUNC_INFO << userId << userPath.path();
+
+    qputenv("XDG_RUNTIME_DIR", QStringLiteral("/run/user/%1").arg(userId).toUtf8());
+    qputenv("DBUS_SESSION_BUS_ADDRESS", QStringLiteral("unix:path=/run/user/%1/dbus/user_bus_socket").arg(userId).toUtf8());
+}
+
 bool SailfishBridgePlatform::lauchAppStandalone(const QString &appName, const QStringList &arguments)
 {
     qDebug()
         << Q_FUNC_INFO
         << appName << arguments;
 
-    QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
-                                                         QStringLiteral("/ru/omprussia/qaservice"),
-                                                         QStringLiteral("ru.omprussia.qaservice"),
-                                                         QStringLiteral("launchApp"));
-    launch.setArguments({ appName, arguments });
-    return getSessionBus().send(launch);
+    if (findProcess(appName.toLocal8Bit()) == -1) {
+        QDBusMessage launch = QDBusMessage::createMethodCall(QStringLiteral("ru.omprussia.qaservice"),
+                                                             QStringLiteral("/ru/omprussia/qaservice"),
+                                                             QStringLiteral("ru.omprussia.qaservice"),
+                                                             QStringLiteral("launchApp"));
+        launch.setArguments({ appName, arguments });
+        if(!getSessionBus(QStringLiteral("session-") + appName).send(launch)) {
+            return false;
+        }
+    }
 
+    QEventLoop loop;
+    QTimer timer;
+    for (int i = 0; i < 10; i++) {
+        if (findProcess(appName.toLocal8Bit()) != -1) {
+            continue;
+        } else {
+            qDebug() << Q_FUNC_INFO << "Counter IS:" << i;
+            connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+            timer.start(1500);
+            loop.exec();
+        }
+    }
+
+   if (m_applicationSocket.value(appName, nullptr) == nullptr) {
+        injector_t *injector;
+        pid_t pid= findProcess(appName.toLocal8Bit());
+        qDebug() << Q_FUNC_INFO << "Start to attach injector to pid " << pid ;
+
+        if(injector_attach(&injector, pid) != 0) {
+            qDebug() << Q_FUNC_INFO << "Failed to attach injector";
+            return false;
+        }
+        if(injector_inject(injector, "/usr/lib/libqaengine.so", NULL) != 0) {
+            qDebug() << Q_FUNC_INFO << "Failed to inject injector";
+            return false;
+        }
+        if(injector_detach(injector) != 0) {
+            qDebug() << Q_FUNC_INFO << "Failed to Detach injector";
+            return false;
+        }
+    }
+
+    return true;
+}
+
+QDBusArgument &operator<<(QDBusArgument &argument, const LoginUserData &data)
+{
+    argument.beginStructure();
+    argument << data.id << data.name << data.path;
+    argument.endStructure();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, LoginUserData &data)
+{
+    argument.beginStructure();
+    argument >> data.id >> data.name >> data.path;
+    argument.endStructure();
+    return argument;
 }

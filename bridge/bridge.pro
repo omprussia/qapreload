@@ -25,7 +25,7 @@ contains(DEFINES, USE_DBUS) {
 
 contains(DEFINES, USE_SYSTEMD) {
     message("Building bridge with systemd support")
-    PKGCONFIG += libsystemd-daemon
+    PKGCONFIG += libsystemd
 
     message("SPEC_UNITDIR: $$SPEC_UNITDIR")
 
@@ -103,9 +103,16 @@ contains(DEFINES, Q_OS_SAILFISH) {
 
     SOURCES += \
         src/SailfishBridgePlatform.cpp \
+        src/sailfishinjector/injector.c \
+        src/sailfishinjector/elf.c \
+        src/sailfishinjector/ptrace.c \
+        src/sailfishinjector/remote_call.c \
+        src/sailfishinjector/util.c
 
     HEADERS += \
-        src/SailfishBridgePlatform.hpp
+        src/SailfishBridgePlatform.hpp \
+        src/sailfishinjector/injector_internal.h \
+        src/sailfishinjector/injector.h
 
     TARGETPATH = /usr/bin
     target.path = $$TARGETPATH

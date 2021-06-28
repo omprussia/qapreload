@@ -400,7 +400,7 @@ QJsonObject GenericEnginePlatform::dumpObject(QObject *item, int depth)
     object.insert(QStringLiteral("height"), QJsonValue(rect.height()));
     object.insert(QStringLiteral("x"), QJsonValue(rect.x()));
     object.insert(QStringLiteral("y"), QJsonValue(rect.y()));
-    object.insert(QStringLiteral("depth"), QJsonValue(depth));
+    object.insert(QStringLiteral("zDepth"), QJsonValue(depth));
 
     const QPoint abs = getAbsPosition(item);
     object.insert(QStringLiteral("abs_x"), QJsonValue(abs.x()));
@@ -443,6 +443,13 @@ void GenericEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QObject *
     do {
         for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i) {
             const QString propertyName = QString::fromLatin1(mo->property(i).name());
+            if (m_blacklistedProperties.contains(className)
+                    && m_blacklistedProperties.value(className).contains(propertyName)) {
+                qCDebug(categoryGenericEnginePlatform)
+                    << "Found blacklisted:"
+                    << className << propertyName;
+                continue;
+            }
             if (!attributes.contains(propertyName)) {
                 attributes.append(propertyName);
                 QVariant value = mo->property(i).read(rootItem);
@@ -453,7 +460,7 @@ void GenericEnginePlatform::recursiveDumpXml(QXmlStreamWriter *writer, QObject *
         }
     } while ((mo = mo->superClass()));
 
-    writer->writeAttribute(QStringLiteral("depth"), QString::number(depth));
+    writer->writeAttribute(QStringLiteral("zDepth"), QString::number(depth));
 
     const QPoint abs = getAbsPosition(rootItem);
     writer->writeAttribute(QStringLiteral("abs_x"), QString::number(abs.x()));
