@@ -12,7 +12,7 @@ LinuxBridgePlatform::LinuxBridgePlatform(QObject *parent)
         << Q_FUNC_INFO;
 }
 
-bool LinuxBridgePlatform::lauchAppPlatform(QTcpSocket *socket)
+bool LinuxBridgePlatform::lauchAppPlatform(ITransportClient *socket)
 {
     QString appName = m_socketAppName.value(socket);
     if (m_clientFullPath.contains(socket)) {

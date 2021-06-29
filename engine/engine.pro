@@ -18,9 +18,11 @@ contains(DEFINES, Q_OS_SAILFISH) {
     message("Building for sailfish os")
 
     SOURCES += \
+        ../../common/src/LocalSocketClient.cpp \
         src/SailfishEnginePlatform.cpp
 
     HEADERS += \
+        ../../common/src/LocalSocketClient.hpp \
         src/SailfishEnginePlatform.hpp
 
 } else {
@@ -50,9 +52,12 @@ contains(DEFINES, USE_DBUS) {
     DBUS_ADAPTORS += qa_dbus_adaptor
 }
 
+INCLUDEPATH += ../../common/src
+
 SOURCES += \
     src/engine.cpp \
     src/QAEngine.cpp \
+    ../../common/src/TCPSocketClient.cpp \
     src/QAEngineSocketClient.cpp \
     src/GenericEnginePlatform.cpp \
     src/QuickEnginePlatform.cpp \
@@ -62,6 +67,8 @@ SOURCES += \
 
 HEADERS += \
     src/QAEngine.hpp \
+    ../../common/src/ITransportClient.hpp \
+    ../../common/src/TCPSocketClient.hpp \
     src/QAEngineSocketClient.hpp \
     src/IEnginePlatform.hpp \
     src/GenericEnginePlatform.hpp \

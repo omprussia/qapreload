@@ -3,6 +3,7 @@
 #include "QuickEnginePlatform.hpp"
 #include "QAMouseEngine.hpp"
 #include "QAKeyEngine.hpp"
+#include "ITransportClient.hpp"
 
 #include <QBuffer>
 #include <QDebug>
@@ -245,7 +246,7 @@ void QuickEnginePlatform::initialize()
     emit ready();
 }
 
-void QuickEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground)
+void QuickEnginePlatform::grabScreenshot(ITransportClient *socket, QObject *item, bool fillBackground)
 {
     qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
@@ -332,7 +333,7 @@ QQmlEngine *QuickEnginePlatform::getEngine(QQuickItem *item)
     return engine;
 }
 
-void QuickEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
+void QuickEnginePlatform::getPageSourceCommand(ITransportClient *socket)
 {
     qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
@@ -349,7 +350,7 @@ void QuickEnginePlatform::onKeyEvent(QKeyEvent *event)
     wp->deliverKeyEvent(event);
 }
 
-void QuickEnginePlatform::executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy)
+void QuickEnginePlatform::executeCommand_touch_pressAndHold(ITransportClient *socket, double posx, double posy)
 {
     qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
@@ -359,7 +360,7 @@ void QuickEnginePlatform::executeCommand_touch_pressAndHold(QTcpSocket *socket, 
     socketReply(socket, QString());
 }
 
-void QuickEnginePlatform::executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
+void QuickEnginePlatform::executeCommand_touch_mouseSwipe(ITransportClient *socket, double posx, double posy, double stopx, double stopy)
 {
     qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
@@ -369,7 +370,7 @@ void QuickEnginePlatform::executeCommand_touch_mouseSwipe(QTcpSocket *socket, do
     socketReply(socket, QString());
 }
 
-void QuickEnginePlatform::executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy)
+void QuickEnginePlatform::executeCommand_touch_mouseDrag(ITransportClient *socket, double posx, double posy, double stopx, double stopy)
 {
     qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
@@ -379,7 +380,7 @@ void QuickEnginePlatform::executeCommand_touch_mouseDrag(QTcpSocket *socket, dou
     socketReply(socket, QString());
 }
 
-void QuickEnginePlatform::executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params)
+void QuickEnginePlatform::executeCommand_app_method(ITransportClient *socket, const QString &elementId, const QString &method, const QVariantList &params)
 {
     qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO
@@ -415,7 +416,7 @@ void QuickEnginePlatform::executeCommand_app_method(QTcpSocket *socket, const QS
     socketReply(socket, reply);
 }
 
-void QuickEnginePlatform::executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode)
+void QuickEnginePlatform::executeCommand_app_js(ITransportClient *socket, const QString &elementId, const QString &jsCode)
 {
     qCDebug(categoryQuickEnginePlatform)
         << Q_FUNC_INFO

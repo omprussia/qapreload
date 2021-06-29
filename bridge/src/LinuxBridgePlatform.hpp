@@ -9,7 +9,7 @@ public:
     explicit LinuxBridgePlatform(QObject *parent);
 
 protected:
-    virtual bool lauchAppPlatform(QTcpSocket *socket) override;
+    virtual bool lauchAppPlatform(ITransportClient *socket) override;
     virtual bool lauchAppStandalone(const QString &appName, const QStringList &arguments = {}) override;
 };
 

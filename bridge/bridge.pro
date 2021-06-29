@@ -56,17 +56,26 @@ contains(DEFINES, USE_CONNMAN) {
 TEMPLATE = app
 TARGET = qabridge
 
+INCLUDEPATH += ./../common/src
+
 SOURCES += \
     src/GenericBridgePlatform.cpp \
-    src/QABridgeSocketServer.cpp \
+    ../../common/src/ITransportServer.cpp \
+    ../../common/src/TCPSocketServer.cpp \
+    ../../common/src/TCPSocketClient.cpp \
     src/main.cpp \
-    src/QABridge.cpp
+    src/QABridge.cpp \
+# SOURCES
 
 HEADERS += \
     src/GenericBridgePlatform.hpp \
     src/IBridgePlatform.hpp \
+    ../../common/src/ITransportClient.hpp \
+    ../../common/src/ITransportServer.hpp \
+    ../../common/src/TCPSocketClient.hpp \
+    ../../common/src/TCPSocketServer.hpp \
     src/QABridge.hpp \
-    src/QABridgeSocketServer.hpp
+# HEADERS
 
 win32 {
     CONFIG += console
@@ -102,6 +111,8 @@ contains(DEFINES, Q_OS_SAILFISH) {
     INCLUDEPATH += /usr/include/packagekitqt5/PackageKit
 
     SOURCES += \
+        ../../common/src/LocalSocketServer.cpp \
+        ../../common/src/LocalSocketClient.cpp \
         src/SailfishBridgePlatform.cpp \
         src/sailfishinjector/injector.c \
         src/sailfishinjector/elf.c \
@@ -110,6 +121,8 @@ contains(DEFINES, Q_OS_SAILFISH) {
         src/sailfishinjector/util.c
 
     HEADERS += \
+        ../../common/src/LocalSocketClient.hpp \
+        ../../common/src/LocalSocketServer.hpp \
         src/SailfishBridgePlatform.hpp \
         src/sailfishinjector/injector_internal.h \
         src/sailfishinjector/injector.h

@@ -11,11 +11,11 @@
 #else
 #include "GenericBridgePlatform.hpp"
 #endif
-#include "QABridgeSocketServer.hpp"
+
+#include "ITransportClient.hpp"
+#include "TCPSocketServer.hpp"
 
 #include <QDebug>
-#include <QTcpServer>
-#include <QTcpSocket>
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -51,7 +51,7 @@ QABridge::QABridge(QObject *parent)
 #else
     , m_platform(new GenericBridgePlatform(this))
 #endif
-    , m_socketServer(new QABridgeSocketServer(this))
+    , m_socketServer(new TCPSocketServer(8888, this))
 {
     qDebug()
         << "Version:"
@@ -61,15 +61,16 @@ QABridge::QABridge(QObject *parent)
         << QStringLiteral("2.0.0-dev");
 #endif
 
-    qRegisterMetaType<QTcpSocket*>();
+    qRegisterMetaType<ITransportClient*>();
+    qRegisterMetaType<ITransportServer*>();
 
-    connect(m_socketServer, &QABridgeSocketServer::commandReceived,
+    connect(m_socketServer, &ITransportServer::commandReceived,
             this, &QABridge::processCommand);
-    connect(m_socketServer, &QABridgeSocketServer::clientLost,
+    connect(m_socketServer, &ITransportServer::clientLost,
             this, &QABridge::removeClient);
 }
 
-bool QABridge::metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented)
+bool QABridge::metaInvoke(ITransportClient *client, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented)
 {
     auto mo = object->metaObject();
     do {
@@ -97,7 +98,7 @@ bool QABridge::metaInvoke(QTcpSocket *socket, QObject *object, const QString &me
                     object,
                     methodName.toLatin1().constData(),
                     Qt::DirectConnection,
-                    Q_ARG(QTcpSocket*, socket),
+                    Q_ARG(ITransportClient*, client),
                     arguments[0],
                     arguments[1],
                     arguments[2],
@@ -124,26 +125,28 @@ void QABridge::start()
     m_socketServer->start();
 }
 
-void QABridge::removeClient(QTcpSocket *socket)
+void QABridge::removeClient(ITransportClient *client)
 {
-    m_platform->removeClient(socket);
+    qDebug() << Q_FUNC_INFO << client;
+
+    m_platform->removeClient(client);
 }
 
-void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
+void QABridge::processCommand(ITransportClient *client, const QByteArray &cmd)
 {
     qDebug()
         << Q_FUNC_INFO
-        << socket << cmd;
+        << client << cmd;
 
     const QJsonObject object = QJsonDocument::fromJson(cmd).object();
     if (object.contains(QStringLiteral("status")) && object.contains(QStringLiteral("value"))) {
-        m_platform->appReply(socket, cmd);
+        m_platform->appReply(client, cmd);
         return;
     }
 
     if (object.contains(QStringLiteral("appConnect"))) {
         const QJsonObject app = object.value(QStringLiteral("appConnect")).toObject();
-        processAppConnectCommand(socket, app);
+        processAppConnectCommand(client, app);
         return;
     }
 
@@ -162,36 +165,36 @@ void QABridge::processCommand(QTcpSocket *socket, const QByteArray &cmd)
     const QString action = object.value(QStringLiteral("action")).toVariant().toString();
     const QVariantList params = object.value(QStringLiteral("params")).toVariant().toList();
 
-    if (!processAppiumCommand(socket, action, params)) {
+    if (!processAppiumCommand(client, action, params)) {
         qDebug()
             << Q_FUNC_INFO
-            << "Forwarding appium command to app:" << socket;
+            << "Forwarding appium command to app:" << client;
 
         QMetaObject::invokeMethod(
             m_platform,
             "forwardToApp",
             Qt::DirectConnection,
-            Q_ARG(QTcpSocket*, socket),
+            Q_ARG(ITransportClient*, client),
             Q_ARG(QByteArray, cmd));
     }
 }
 
-void QABridge::processAppConnectCommand(QTcpSocket *socket, const QJsonObject &app)
+void QABridge::processAppConnectCommand(ITransportClient *client, const QJsonObject &app)
 {
     qDebug()
         << Q_FUNC_INFO
-        << socket << app;
+        << client << app;
 
     const QString appName = app.value(QStringLiteral("appName")).toString();
-    m_platform->appConnect(socket, appName);
+    m_platform->appConnect(client, appName);
 }
 
-bool QABridge::processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params)
+bool QABridge::processAppiumCommand(ITransportClient *client, const QString &action, const QVariantList &params)
 {
     const QString methodName = QStringLiteral("%1Command").arg(action);
     qDebug()
         << Q_FUNC_INFO
-        << socket << methodName << params;
+        << client << methodName << params;
 
     auto mo = m_platform->metaObject();
     do {
@@ -215,7 +218,7 @@ bool QABridge::processAppiumCommand(QTcpSocket *socket, const QString &action, c
                     m_platform,
                     methodName.toLatin1().constData(),
                     Qt::DirectConnection,
-                    Q_ARG(QTcpSocket*, socket),
+                    Q_ARG(ITransportClient*, client),
                     arguments[0],
                     arguments[1],
                     arguments[2],

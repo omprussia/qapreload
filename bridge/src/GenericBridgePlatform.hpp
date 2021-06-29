@@ -2,8 +2,10 @@
 #pragma once
 
 #include "IBridgePlatform.hpp"
+#include "QABridge.hpp"
 #include <QObject>
 
+class QABridge;
 class QEventLoop;
 class GenericBridgePlatform : public IBridgePlatform
 {
@@ -11,69 +13,71 @@ class GenericBridgePlatform : public IBridgePlatform
 public:
     explicit GenericBridgePlatform(QObject *parent);
 
-    virtual void appConnect(QTcpSocket *socket, const QString &appName) override;
-    virtual void appReply(QTcpSocket *socket, const QByteArray &cmd) override;
+    virtual void appConnect(ITransportClient *client, const QString &appName) override;
+    virtual void appReply(ITransportClient *client, const QByteArray &cmd) override;
 
-    void removeClient(QTcpSocket *socket) override;
+    void removeClient(ITransportClient *client) override;
 
 private:
-    void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &paramsArg);
+    void execute(ITransportClient *client, const QString &methodName, const QVariantList &paramsArg);
 
 private slots:
-    virtual void initializeCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void appConnectCommand(QTcpSocket *socket) override;
-    virtual void appDisconnectCommand(QTcpSocket *socket, bool autoLaunch) override;
-    virtual void startActivityCommand(QTcpSocket *socket, const QString &appName, const QVariantList &params) override;
-    virtual void installAppCommand(QTcpSocket *socket, const QString &appPath) override;
-    virtual void activateAppCommand(QTcpSocket *socket, const QString &appId) override;
-    virtual void terminateAppCommand(QTcpSocket *socket, const QString &appId) override;
-    virtual void removeAppCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void isAppInstalledCommand(QTcpSocket *socket, const QString &rpmName) override;
-    virtual void queryAppStateCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void pushFileCommand(QTcpSocket *socket, const QString &path, const QString &data) override;
-    virtual void pullFileCommand(QTcpSocket *socket, const QString &path) override;
-    virtual void lockCommand(QTcpSocket *socket, double seconds) override;
-    virtual void unlockCommand(QTcpSocket *socket) override;
-    virtual void isLockedCommand(QTcpSocket *socket) override;
-    virtual void launchAppCommand(QTcpSocket *socket) override;
-    virtual void closeAppCommand(QTcpSocket *socket) override;
-    virtual void getCurrentContextCommand(QTcpSocket *socket) override;
-    virtual void getDeviceTimeCommand(QTcpSocket *socket, const QString &dateFormat) override;
-    virtual void setNetworkConnectionCommand(QTcpSocket *socket, double connectionType) override;
-    virtual void getNetworkConnectionCommand(QTcpSocket *socket) override;
-    virtual void resetCommand(QTcpSocket *socket) override;
-    virtual void mobileShakeCommand(QTcpSocket *socket) override;
-    virtual void getSettingsCommand(QTcpSocket *socket) override;
-    virtual void getContextsCommand(QTcpSocket *socket) override;
-    virtual void getCurrentPackageCommand(QTcpSocket *socket) override;
-    virtual void toggleLocationServicesCommand(QTcpSocket *socket) override;
-    virtual void openNotificationsCommand(QTcpSocket *socket) override;
-    virtual void getGeoLocationCommand(QTcpSocket *socket) override;
-    virtual void getLogTypesCommand(QTcpSocket *socket) override;
-    virtual void getLogCommand(QTcpSocket *socket, const QString &type) override;
-    virtual void setGeoLocationCommand(QTcpSocket *socket, const QVariant &location) override;
-    virtual void startRecordingScreenCommand(QTcpSocket *socket, const QVariant &arguments) override;
-    virtual void stopRecordingScreenCommand(QTcpSocket *socket, const QVariant &arguments) override;
-    virtual void executeCommand(QTcpSocket *socket, const QString &command, const QVariant &paramsArg) override;
-    virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariant &paramsArg) override;
+    virtual void initializeCommand(ITransportClient *client, const QString &appName) override;
+    virtual void appConnectCommand(ITransportClient *client) override;
+    virtual void appDisconnectCommand(ITransportClient *client, bool autoLaunch) override;
+    virtual void startActivityCommand(ITransportClient *client, const QString &appName, const QVariantList &params) override;
+    virtual void installAppCommand(ITransportClient *client, const QString &appPath) override;
+    virtual void activateAppCommand(ITransportClient *client, const QString &appId) override;
+    virtual void terminateAppCommand(ITransportClient *client, const QString &appId) override;
+    virtual void removeAppCommand(ITransportClient *client, const QString &appName) override;
+    virtual void isAppInstalledCommand(ITransportClient *client, const QString &rpmName) override;
+    virtual void queryAppStateCommand(ITransportClient *client, const QString &appName) override;
+    virtual void pushFileCommand(ITransportClient *client, const QString &path, const QString &data) override;
+    virtual void pullFileCommand(ITransportClient *client, const QString &path) override;
+    virtual void lockCommand(ITransportClient *client, double seconds) override;
+    virtual void unlockCommand(ITransportClient *client) override;
+    virtual void isLockedCommand(ITransportClient *client) override;
+    virtual void launchAppCommand(ITransportClient *client) override;
+    virtual void closeAppCommand(ITransportClient *client) override;
+    virtual void getCurrentContextCommand(ITransportClient *client) override;
+    virtual void getDeviceTimeCommand(ITransportClient *client, const QString &dateFormat) override;
+    virtual void setNetworkConnectionCommand(ITransportClient *client, double connectionType) override;
+    virtual void getNetworkConnectionCommand(ITransportClient *client) override;
+    virtual void resetCommand(ITransportClient *client) override;
+    virtual void mobileShakeCommand(ITransportClient *client) override;
+    virtual void getSettingsCommand(ITransportClient *client) override;
+    virtual void getContextsCommand(ITransportClient *client) override;
+    virtual void getCurrentPackageCommand(ITransportClient *client) override;
+    virtual void toggleLocationServicesCommand(ITransportClient *client) override;
+    virtual void openNotificationsCommand(ITransportClient *client) override;
+    virtual void getGeoLocationCommand(ITransportClient *client) override;
+    virtual void getLogTypesCommand(ITransportClient *client) override;
+    virtual void getLogCommand(ITransportClient *client, const QString &type) override;
+    virtual void setGeoLocationCommand(ITransportClient *client, const QVariant &location) override;
+    virtual void startRecordingScreenCommand(ITransportClient *client, const QVariant &arguments) override;
+    virtual void stopRecordingScreenCommand(ITransportClient *client, const QVariant &arguments) override;
+    virtual void executeCommand(ITransportClient *client, const QString &command, const QVariant &paramsArg) override;
+    virtual void executeAsyncCommand(ITransportClient *client, const QString &command, const QVariant &paramsArg) override;
 
 // GenericBridgePlatform slots
-    void executeCommand_system_shell(QTcpSocket *socket, const QVariant &executableArg, const QVariant &paramsArg);
+    void executeCommand_system_shell(ITransportClient *client, const QVariant &executableArg, const QVariant &paramsArg);
 
-    void forwardToApp(QTcpSocket *socket, const QByteArray &data);
-    void forwardToApp(QTcpSocket *socket, const QString &appName, const QByteArray &data);
-    void forwardToApp(QTcpSocket *socket, const QString &action, const QVariant &params);
+    void forwardToApp(ITransportClient *client, const QByteArray &data);
+    void forwardToApp(ITransportClient *client, const QString &appName, const QByteArray &data);
+    void forwardToApp(ITransportClient *client, const QString &action, const QVariant &params);
     QByteArray sendToAppSocket(const QString &appName, const QByteArray &data);
 
 protected:
-    virtual bool lauchAppPlatform(QTcpSocket *socket) = 0;
+    virtual bool lauchAppPlatform(ITransportClient *client) = 0;
     virtual bool lauchAppStandalone(const QString &appName, const QStringList &arguments = {}) = 0;
-    void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0);
+    void socketReply(ITransportClient *client, const QVariant &value, int status = 0);
     QByteArray actionData(const QString &action, const QVariant &params);
 
-    QHash<QTcpSocket*, QString> m_socketAppName;
-    QHash<QString, QTcpSocket*> m_applicationSocket;
-    QHash<QTcpSocket*, QString> m_clientFullPath;
+    QHash<ITransportClient*, QString> m_socketAppName;
+    QHash<QString, ITransportClient*> m_applicationSocket;
+    QHash<ITransportClient*, QString> m_clientFullPath;
     QEventLoop *m_connectLoop;
+
+    QABridge *m_bridge = nullptr;
 };
 

@@ -30,44 +30,44 @@ public slots:
 
 private slots:
     // IEnginePlatform interface
-    virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void queryAppStateCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void backCommand(QTcpSocket *socket) override;
-    virtual void forwardCommand(QTcpSocket *socket) override;
-    virtual void getOrientationCommand(QTcpSocket *socket) override;
-    virtual void setOrientationCommand(QTcpSocket *socket, const QString &orientation) override;
-    virtual void hideKeyboardCommand(QTcpSocket *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName) override;
-    virtual void isKeyboardShownCommand(QTcpSocket *socket) override;
-    virtual void activateIMEEngineCommand(QTcpSocket *socket, const QVariant &engine) override;
-    virtual void availableIMEEnginesCommand(QTcpSocket *socket) override;
-    virtual void getActiveIMEEngineCommand(QTcpSocket *socket) override;
-    virtual void deactivateIMEEngineCommand(QTcpSocket *socket) override;
-    virtual void isIMEActivatedCommand(QTcpSocket *socket) override;
+    virtual void activateAppCommand(ITransportClient *socket, const QString &appName) override;
+    virtual void queryAppStateCommand(ITransportClient *socket, const QString &appName) override;
+    virtual void backCommand(ITransportClient *socket) override;
+    virtual void forwardCommand(ITransportClient *socket) override;
+    virtual void getOrientationCommand(ITransportClient *socket) override;
+    virtual void setOrientationCommand(ITransportClient *socket, const QString &orientation) override;
+    virtual void hideKeyboardCommand(ITransportClient *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName) override;
+    virtual void isKeyboardShownCommand(ITransportClient *socket) override;
+    virtual void activateIMEEngineCommand(ITransportClient *socket, const QVariant &engine) override;
+    virtual void availableIMEEnginesCommand(ITransportClient *socket) override;
+    virtual void getActiveIMEEngineCommand(ITransportClient *socket) override;
+    virtual void deactivateIMEEngineCommand(ITransportClient *socket) override;
+    virtual void isIMEActivatedCommand(ITransportClient *socket) override;
 
     // execute_%1 methods
-    void executeCommand_app_pullDownTo(QTcpSocket *socket, const QString &destination);
-    void executeCommand_app_pullDownTo(QTcpSocket *socket, double destination);
-    void executeCommand_app_pushUpTo(QTcpSocket *socket, const QString &destination);
-    void executeCommand_app_pushUpTo(QTcpSocket *socket, double destination);
-    void executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, const QString &destination);
-    void executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, double destination);
-    void executeCommand_app_waitForPageChange(QTcpSocket *socket, double timeout = 3000);
-    void executeCommand_app_swipe(QTcpSocket *socket, const QString &directionString);
-    void executeCommand_app_peek(QTcpSocket *socket, const QString &directionString);
-    void executeCommand_app_goBack(QTcpSocket *socket);
-    void executeCommand_app_goForward(QTcpSocket *socket);
-    void executeCommand_app_enterCode(QTcpSocket *socket, const QString &code);
-    void executeCommand_app_scrollToItem(QTcpSocket *socket, const QString &elementId);
-    void executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName);
-    void executeCommand_app_dumpCurrentPage(QTcpSocket *socket);
-    void executeCommand_app_dumpCover(QTcpSocket *socket);
+    void executeCommand_app_pullDownTo(ITransportClient *socket, const QString &destination);
+    void executeCommand_app_pullDownTo(ITransportClient *socket, double destination);
+    void executeCommand_app_pushUpTo(ITransportClient *socket, const QString &destination);
+    void executeCommand_app_pushUpTo(ITransportClient *socket, double destination);
+    void executeCommand_app_clickContextMenuItem(ITransportClient *socket, const QString &elementId, const QString &destination);
+    void executeCommand_app_clickContextMenuItem(ITransportClient *socket, const QString &elementId, double destination);
+    void executeCommand_app_waitForPageChange(ITransportClient *socket, double timeout = 3000);
+    void executeCommand_app_swipe(ITransportClient *socket, const QString &directionString);
+    void executeCommand_app_peek(ITransportClient *socket, const QString &directionString);
+    void executeCommand_app_goBack(ITransportClient *socket);
+    void executeCommand_app_goForward(ITransportClient *socket);
+    void executeCommand_app_enterCode(ITransportClient *socket, const QString &code);
+    void executeCommand_app_scrollToItem(ITransportClient *socket, const QString &elementId);
+    void executeCommand_app_saveScreenshot(ITransportClient *socket, const QString &fileName);
+    void executeCommand_app_dumpCurrentPage(ITransportClient *socket);
+    void executeCommand_app_dumpCover(ITransportClient *socket);
 
     // findElement_%1 methods
-    void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_classname(ITransportClient *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
 
     // own methods
     void onChildrenChanged();
-    void getScreenshotCoverCommand(QTcpSocket *socket);
+    void getScreenshotCoverCommand(ITransportClient *socket);
 
     void bridgeStatusChanged(const QString &interface, const QVariantMap &properties, const QStringList &);
 

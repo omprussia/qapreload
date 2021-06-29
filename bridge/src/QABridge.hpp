@@ -6,28 +6,27 @@
 #include <QVariant>
 
 class IBridgePlatform;
-class QABridgeSocketServer;
-class QTcpSocket;
+class ITransportServer;
+class ITransportClient;
 class QABridge : public QObject
 {
     Q_OBJECT
 public:
     explicit QABridge(QObject *parent = nullptr);
-    static bool metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
+    static bool metaInvoke(ITransportClient *client, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
 
 public slots:
     void start();
 
-private slots:
-    void removeClient(QTcpSocket *socket);
+    void removeClient(ITransportClient *client);
 
-    void processCommand(QTcpSocket *socket, const QByteArray &cmd);
-    void processAppConnectCommand(QTcpSocket *socket, const QJsonObject &app);
-    bool processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params);
+    void processCommand(ITransportClient *client, const QByteArray &cmd);
+    void processAppConnectCommand(ITransportClient *client, const QJsonObject &app);
+    bool processAppiumCommand(ITransportClient *client, const QString &action, const QVariantList &params);
 
 private:
     IBridgePlatform *m_platform = nullptr;
-    QABridgeSocketServer *m_socketServer = nullptr;
+    ITransportServer *m_socketServer = nullptr;
 };
 
 #endif // QASERVICE_HPP

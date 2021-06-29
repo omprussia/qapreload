@@ -31,7 +31,7 @@ public slots:
 protected:
     QList<QObject*> childrenList(QObject *parentItem) override;
 
-    void grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground = false) override;
+    void grabScreenshot(ITransportClient *socket, QObject *item, bool fillBackground = false) override;
 
     void pressAndHoldItem(QObject *qitem, int delay = 800) override;
 
@@ -40,23 +40,23 @@ protected:
 
 private slots:
     // IEnginePlatform interface
-    virtual void getPageSourceCommand(QTcpSocket *socket) override;
+    virtual void getPageSourceCommand(ITransportClient *socket) override;
 
     // execute_%1 methods
-    void executeCommand_app_dumpInView(QTcpSocket *socket, const QString &elementId);
-    void executeCommand_app_posInView(QTcpSocket *socket, const QString &elementId, const QString &display);
-    void executeCommand_app_clickInView(QTcpSocket *socket, const QString &elementId, const QString &display);
-    void executeCommand_app_scrollInView(QTcpSocket *socket, const QString &elementId, const QString &display);
-    void executeCommand_app_triggerInMenu(QTcpSocket *socket, const QString &text);
-    void executeCommand_app_dumpInMenu(QTcpSocket *socket);
-    void executeCommand_app_dumpInComboBox(QTcpSocket *socket, const QString &elementId);
-    void executeCommand_app_activateInComboBox(QTcpSocket *socket, const QString &elementId, const QString &display);
-    void executeCommand_app_activateInComboBox(QTcpSocket *socket, const QString &elementId, double idx);
-    void executeCommand_app_dumpInTabBar(QTcpSocket *socket, const QString &elementId);
-    void executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display);
-    void executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, double idx);
-    void executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display);
-    void executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, double idx);
+    void executeCommand_app_dumpInView(ITransportClient *socket, const QString &elementId);
+    void executeCommand_app_posInView(ITransportClient *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_clickInView(ITransportClient *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_scrollInView(ITransportClient *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_triggerInMenu(ITransportClient *socket, const QString &text);
+    void executeCommand_app_dumpInMenu(ITransportClient *socket);
+    void executeCommand_app_dumpInComboBox(ITransportClient *socket, const QString &elementId);
+    void executeCommand_app_activateInComboBox(ITransportClient *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_activateInComboBox(ITransportClient *socket, const QString &elementId, double idx);
+    void executeCommand_app_dumpInTabBar(ITransportClient *socket, const QString &elementId);
+    void executeCommand_app_posInTabBar(ITransportClient *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_posInTabBar(ITransportClient *socket, const QString &elementId, double idx);
+    void executeCommand_app_activateInTabBar(ITransportClient *socket, const QString &elementId, const QString &display);
+    void executeCommand_app_activateInTabBar(ITransportClient *socket, const QString &elementId, double idx);
 private:
     QModelIndex recursiveFindModel(QAbstractItemModel *model, QModelIndex index, const QString &display, bool partial = false);
     QStringList recursiveDumpModel(QAbstractItemModel *model, QModelIndex index);
