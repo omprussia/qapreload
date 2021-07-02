@@ -67,8 +67,8 @@ rm -rf %{buildroot}
 
 %qmake5_install
 
-mkdir -p %{buildroot}%{_libdir}/systemd/user/user-session.target.wants
-ln -s ../qaservice.service %{buildroot}%{_libdir}/systemd/user/user-session.target.wants/
+mkdir -p %{buildroot}%{_userunitdir}/user-session.target.wants
+ln -s ../qaservice.service %{buildroot}%{_userunitdir}/user-session.target.wants/
 
 mkdir -p %{buildroot}%{_datadir}/qt5/qapreload
 touch %{buildroot}%{_datadir}/qt5/qapreload/.keep
