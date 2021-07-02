@@ -65,6 +65,8 @@ protected:
     void processTouchActionList(const QVariant &actionListArg);
     void waitForPropertyChange(QObject *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
 
+    bool checkMatch(const QString &pattern, const QString &value);
+
     QWindow *m_rootWindow = nullptr;
     QObject *m_rootObject = nullptr;
 

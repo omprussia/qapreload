@@ -140,7 +140,7 @@ QObject *GenericEnginePlatform::findItemByObjectName(const QString &objectName, 
         parentItem = m_rootObject;
     }
 
-    if (parentItem->objectName() == objectName) {
+    if (checkMatch(objectName, parentItem->objectName())) {
         return parentItem;
     }
 
@@ -166,7 +166,8 @@ QObjectList GenericEnginePlatform::findItemsByClassName(const QString &className
         parentItem = m_rootObject;
     }
 
-    if (getClassName(parentItem) == className) {
+
+    if (checkMatch(className, getClassName(parentItem))) {
         items.append(parentItem);
     }
 
@@ -664,6 +665,27 @@ void GenericEnginePlatform::waitForPropertyChange(QObject *item, const QString &
     timer.start(timeout);
     loop.exec();
     disconnect(item, prop.notifySignal(), this, propertyChanged);
+}
+
+bool GenericEnginePlatform::checkMatch(const QString &pattern, const QString &value)
+{
+    if (value.isEmpty()) {
+        return false;
+    }
+    if (pattern.startsWith('/')) {
+        QRegExp rx(pattern);
+        if (rx.exactMatch(value)) {
+            return true;
+        }
+    } else if (pattern.contains('*')) {
+        QRegExp rx(pattern);
+        rx.setPatternSyntax(QRegExp::Wildcard);
+        if (rx.exactMatch(value)) {
+            return true;
+        }
+    } else {
+        return value == pattern;
+    }
 }
 
 void GenericEnginePlatform::execute(ITransportClient *socket, const QString &methodName, const QVariantList &params)
