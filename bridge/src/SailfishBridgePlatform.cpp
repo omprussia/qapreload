@@ -124,6 +124,9 @@ pid_t SailfishBridgePlatform::findProcess(const QString &appName)
         return pid;
     }
     if (!sout.isEmpty()) {
+        if (sout.contains(' ')) {
+            sout = sout.split(' ').first();
+        }
         bool ok = false;
         pid = sout.toInt(&ok);
         if (!ok) {
@@ -545,16 +548,16 @@ bool SailfishBridgePlatform::lauchAppStandalone(const QString &appName, const QS
         injector_t *injector;
         qDebug() << Q_FUNC_INFO << "Start to attach injector to pid:" << pid ;
 
-        if(injector_attach(&injector, pid) != 0) {
-            qWarning() << Q_FUNC_INFO << "Failed to attach injector";
+        if (int err = injector_attach(&injector, pid)) {
+            qWarning() << Q_FUNC_INFO << "Failed to attach injector:" << err;
             return false;
         }
-        if(injector_inject(injector, "/usr/lib/libqaengine.so", NULL) != 0) {
-            qWarning() << Q_FUNC_INFO << "Failed to inject injector";
+        if (int err = injector_inject(injector, "/usr/lib/libqaengine.so", NULL)) {
+            qWarning() << Q_FUNC_INFO << "Failed to inject injector:" << err;
             return false;
         }
-        if(injector_detach(injector) != 0) {
-            qWarning() << Q_FUNC_INFO << "Failed to Detach injector";
+        if (int err = injector_detach(injector)) {
+            qWarning() << Q_FUNC_INFO << "Failed to Detach injector:" << err;
             return false;
         }
     }
