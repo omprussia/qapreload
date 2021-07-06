@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QTimer>
+#include <QDebug>
 
 #ifdef __cplusplus
     #define INITIALIZER(f) \
@@ -30,9 +31,16 @@
 
 INITIALIZER(libConstructor){
     QGuiApplication *gui = qobject_cast<QGuiApplication*>(qApp);
+    qDebug() << gui;
     if (!gui) {
         return;
     }
 
-    QTimer::singleShot(0, qApp, [](){ QAEngine::instance()->initialize(); });
+    QAEngine *engine = QAEngine::instance();
+    engine->setParent(gui);
+    engine->moveToThread(gui->thread());
+    QMetaObject::invokeMethod(
+        engine,
+        "initialize",
+        Qt::QueuedConnection);
 }

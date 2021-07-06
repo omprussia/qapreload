@@ -131,18 +131,17 @@ IEnginePlatform *QAEngine::getPlatform(bool silent)
 void QAEngine::initialize()
 {
     qCDebug(categoryEngine)
-        << Q_FUNC_INFO
-        << qApp->arguments().first();
+        << Q_FUNC_INFO << endl
+        << "name:" << qApp->arguments().first() << endl
+        << "pid:" << qApp->applicationPid();
 
     qCDebug(categoryEngine)
-        << "Version:"
+        << "QAPreload Version:"
 #ifdef QAPRELOAD_VERSION
         << QStringLiteral(QAPRELOAD_VERSION);
 #else
         << QStringLiteral("2.0.0-dev");
 #endif
-
-    setParent(qGuiApp);
 
     connect(qApp, &QCoreApplication::aboutToQuit, []() {
         qCDebug(categoryEngine)
