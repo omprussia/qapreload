@@ -84,9 +84,6 @@ touch %{buildroot}%{_datadir}/qt5/qapreload/.keep
 /usr/bin/env systemctl-user daemon-reload
 /usr/bin/env systemctl-user restart qaservice.service
 
-%pre ld
-/usr/bin/env systemctl disable qabridge.socket ||:
-
 %post ld
 if grep libqapreloadhook /etc/ld.so.preload > /dev/null; then
     echo "Preload already exists"
@@ -94,14 +91,6 @@ else
     echo %{_libdir}/libqapreloadhook.so >> /etc/ld.so.preload
 fi
 /sbin/ldconfig
-
-/usr/bin/env systemctl disable qabridge.socket
-/usr/bin/env systemctl stop qabridge.socket
-/usr/bin/env systemctl enable qabridge.service
-/usr/bin/env systemctl restart qabridge.service
-
-/usr/bin/env systemctl-user restart booster-qt5.service
-/usr/bin/env systemctl-user restart booster-silica-qt5.service
 
 %preun ld
 if [ "$1" = "0" ]; then
