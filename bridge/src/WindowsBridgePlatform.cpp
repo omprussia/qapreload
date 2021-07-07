@@ -13,7 +13,7 @@ WindowsBridgePlatform::WindowsBridgePlatform(QObject *parent)
 
 }
 
-bool WindowsBridgePlatform::lauchAppPlatform(QTcpSocket *socket)
+bool WindowsBridgePlatform::lauchAppPlatform(ITransportClient *socket)
 {
     QString appName = m_socketAppName.value(socket);
     if (m_clientFullPath.contains(socket)) {

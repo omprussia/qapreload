@@ -35,7 +35,7 @@ protected:
 
     QVariant executeJS(const QString &jsCode, QQuickItem *item);
 
-    void grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground = false) override;
+    void grabScreenshot(ITransportClient *socket, QObject *item, bool fillBackground = false) override;
 
     void pressAndHoldItem(QObject *qitem, int delay = 800) override;
     void clearFocus();
@@ -48,16 +48,16 @@ protected:
 
 private slots:
     // IEnginePlatform interface
-    virtual void getPageSourceCommand(QTcpSocket *socket) override;
+    virtual void getPageSourceCommand(ITransportClient *socket) override;
 
     // synthesized input events
     virtual void onKeyEvent(QKeyEvent *event) override;
 
     // execute_%1 methods
-    void executeCommand_touch_pressAndHold(QTcpSocket *socket, double posx, double posy);
-    void executeCommand_touch_mouseSwipe(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
-    void executeCommand_touch_mouseDrag(QTcpSocket *socket, double posx, double posy, double stopx, double stopy);
-    void executeCommand_app_method(QTcpSocket *socket, const QString &elementId, const QString &method, const QVariantList &params);
-    void executeCommand_app_js(QTcpSocket *socket, const QString &elementId, const QString &jsCode);
+    void executeCommand_touch_pressAndHold(ITransportClient *socket, double posx, double posy);
+    void executeCommand_touch_mouseSwipe(ITransportClient *socket, double posx, double posy, double stopx, double stopy);
+    void executeCommand_touch_mouseDrag(ITransportClient *socket, double posx, double posy, double stopx, double stopy);
+    void executeCommand_app_method(ITransportClient *socket, const QString &elementId, const QString &method, const QVariantList &params);
+    void executeCommand_app_js(ITransportClient *socket, const QString &elementId, const QString &jsCode);
 };
 

@@ -19,8 +19,8 @@ public:
     QWindow* window() override;
     QObject* rootObject() override;
 
-    void socketReply(QTcpSocket *socket, const QVariant &value, int status = 0) override;
-    void elementReply(QTcpSocket *socket, QObjectList elements, bool multiple = false) override;
+    void socketReply(ITransportClient *socket, const QVariant &value, int status = 0) override;
+    void elementReply(ITransportClient *socket, QObjectList elements, bool multiple = false) override;
 
     void addItem(QObject *o) override;
     void removeItem(QObject *o) override;
@@ -37,9 +37,9 @@ public:
 protected:
     friend class QAMouseEngine;
 
-    void findElement(QTcpSocket *socket, const QString &strategy, const QString &selector, bool multiple = false, QObject *item = nullptr);
-    void findByProperty(QTcpSocket *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QObject *parentItem = nullptr);
-    void setProperty(QTcpSocket *socket, const QString &property, const QVariant &value, const QString &elementId);
+    void findElement(ITransportClient *socket, const QString &strategy, const QString &selector, bool multiple = false, QObject *item = nullptr);
+    void findByProperty(ITransportClient *socket, const QString &propertyName, const QVariant &propertyValue, bool multiple = false, QObject *parentItem = nullptr);
+    void setProperty(ITransportClient *socket, const QString &property, const QVariant &value, const QString &elementId);
 
     virtual QList<QObject*> childrenList(QObject* parentItem) = 0;
     QObject *findItemByObjectName(const QString &objectName, QObject *parentItem = nullptr);
@@ -53,7 +53,7 @@ protected:
     QJsonObject recursiveDumpTree(QObject *rootItem, int depth = 0);
     void recursiveDumpXml(QXmlStreamWriter *writer, QObject *rootItem, int depth = 0);
 
-    virtual void grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground = false) = 0;
+    virtual void grabScreenshot(ITransportClient *socket, QObject *item, bool fillBackground = false) = 0;
     void clickItem(QObject *item);
 
     void clickPoint(int posx, int posy);
@@ -65,6 +65,8 @@ protected:
     void processTouchActionList(const QVariant &actionListArg);
     void waitForPropertyChange(QObject *item, const QString &propertyName, const QVariant &value, int timeout = 10000);
 
+    bool checkMatch(const QString &pattern, const QString &value);
+
     QWindow *m_rootWindow = nullptr;
     QObject *m_rootObject = nullptr;
 
@@ -75,7 +77,7 @@ protected:
     QHash<QString, QStringList> m_blacklistedProperties;
 
 private:
-    void execute(QTcpSocket *socket, const QString &methodName, const QVariantList &params);
+    void execute(ITransportClient *socket, const QString &methodName, const QVariantList &params);
 
 private slots:
     // own stuff
@@ -87,71 +89,71 @@ private slots:
     virtual void onKeyEvent(QKeyEvent *event);
 
     // IEnginePlatform interface
-    virtual void activateAppCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void closeAppCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void queryAppStateCommand(QTcpSocket *socket, const QString &appName) override;
-    virtual void backgroundCommand(QTcpSocket *socket, double seconds) override;
-    virtual void getClipboardCommand(QTcpSocket *socket) override;
-    virtual void setClipboardCommand(QTcpSocket *socket, const QString &content) override;
-    virtual void findElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector) override;
-    virtual void findElementsCommand(QTcpSocket *socket, const QString &strategy, const QString &selector) override;
-    virtual void findElementFromElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId) override;
-    virtual void findElementsFromElementCommand(QTcpSocket *socket, const QString &strategy, const QString &selector, const QString &elementId) override;
-    virtual void getLocationCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getLocationInViewCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getAttributeCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId) override;
-    virtual void getPropertyCommand(QTcpSocket *socket, const QString &attribute, const QString &elementId) override;
-    virtual void getTextCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getElementScreenshotCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getScreenshotCommand(QTcpSocket *socket) override;
-    virtual void getWindowRectCommand(QTcpSocket *socket) override;
-    virtual void elementEnabledCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void elementDisplayedCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void elementSelectedCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getSizeCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void setValueImmediateCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
-    virtual void replaceValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
-    virtual void setValueCommand(QTcpSocket *socket, const QVariantList &value, const QString &elementId) override;
-    virtual void clickCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void clearCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void submitCommand(QTcpSocket *socket, const QString &elementId) override;
-    virtual void getPageSourceCommand(QTcpSocket *socket) override;
-    virtual void backCommand(QTcpSocket *socket) override;
-    virtual void forwardCommand(QTcpSocket *socket) override;
-    virtual void getOrientationCommand(QTcpSocket *socket) override;
-    virtual void setOrientationCommand(QTcpSocket *socket, const QString &orientation) override;
-    virtual void hideKeyboardCommand(QTcpSocket *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName) override;
-    virtual void getCurrentActivityCommand(QTcpSocket *socket) override;
-    virtual void implicitWaitCommand(QTcpSocket *socket, double msecs) override;
-    virtual void activeCommand(QTcpSocket *socket) override;
-    virtual void getAlertTextCommand(QTcpSocket *socket) override;
-    virtual void isKeyboardShownCommand(QTcpSocket *socket) override;
-    virtual void activateIMEEngineCommand(QTcpSocket *socket, const QVariant &engine) override;
-    virtual void availableIMEEnginesCommand(QTcpSocket *socket) override;
-    virtual void getActiveIMEEngineCommand(QTcpSocket *socket) override;
-    virtual void deactivateIMEEngineCommand(QTcpSocket *socket) override;
-    virtual void isIMEActivatedCommand(QTcpSocket *socket) override;
-    virtual void keyeventCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &sessionIDArg, const QVariant &flagsArg) override;
-    virtual void longPressKeyCodeCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg) override;
-    virtual void pressKeyCodeCommand(QTcpSocket *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg) override;
-    virtual void executeCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
-    virtual void executeAsyncCommand(QTcpSocket *socket, const QString &command, const QVariantList &params) override;
-    virtual void performTouchCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
-    virtual void performMultiActionCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
-    virtual void performActionsCommand(QTcpSocket *socket, const QVariant &paramsArg) override;
+    virtual void activateAppCommand(ITransportClient *socket, const QString &appName) override;
+    virtual void closeAppCommand(ITransportClient *socket, const QString &appName) override;
+    virtual void queryAppStateCommand(ITransportClient *socket, const QString &appName) override;
+    virtual void backgroundCommand(ITransportClient *socket, double seconds) override;
+    virtual void getClipboardCommand(ITransportClient *socket) override;
+    virtual void setClipboardCommand(ITransportClient *socket, const QString &content) override;
+    virtual void findElementCommand(ITransportClient *socket, const QString &strategy, const QString &selector) override;
+    virtual void findElementsCommand(ITransportClient *socket, const QString &strategy, const QString &selector) override;
+    virtual void findElementFromElementCommand(ITransportClient *socket, const QString &strategy, const QString &selector, const QString &elementId) override;
+    virtual void findElementsFromElementCommand(ITransportClient *socket, const QString &strategy, const QString &selector, const QString &elementId) override;
+    virtual void getLocationCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void getLocationInViewCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void getAttributeCommand(ITransportClient *socket, const QString &attribute, const QString &elementId) override;
+    virtual void getPropertyCommand(ITransportClient *socket, const QString &attribute, const QString &elementId) override;
+    virtual void getTextCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void getElementScreenshotCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void getScreenshotCommand(ITransportClient *socket) override;
+    virtual void getWindowRectCommand(ITransportClient *socket) override;
+    virtual void elementEnabledCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void elementDisplayedCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void elementSelectedCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void getSizeCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void setValueImmediateCommand(ITransportClient *socket, const QVariantList &value, const QString &elementId) override;
+    virtual void replaceValueCommand(ITransportClient *socket, const QVariantList &value, const QString &elementId) override;
+    virtual void setValueCommand(ITransportClient *socket, const QVariantList &value, const QString &elementId) override;
+    virtual void clickCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void clearCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void submitCommand(ITransportClient *socket, const QString &elementId) override;
+    virtual void getPageSourceCommand(ITransportClient *socket) override;
+    virtual void backCommand(ITransportClient *socket) override;
+    virtual void forwardCommand(ITransportClient *socket) override;
+    virtual void getOrientationCommand(ITransportClient *socket) override;
+    virtual void setOrientationCommand(ITransportClient *socket, const QString &orientation) override;
+    virtual void hideKeyboardCommand(ITransportClient *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName) override;
+    virtual void getCurrentActivityCommand(ITransportClient *socket) override;
+    virtual void implicitWaitCommand(ITransportClient *socket, double msecs) override;
+    virtual void activeCommand(ITransportClient *socket) override;
+    virtual void getAlertTextCommand(ITransportClient *socket) override;
+    virtual void isKeyboardShownCommand(ITransportClient *socket) override;
+    virtual void activateIMEEngineCommand(ITransportClient *socket, const QVariant &engine) override;
+    virtual void availableIMEEnginesCommand(ITransportClient *socket) override;
+    virtual void getActiveIMEEngineCommand(ITransportClient *socket) override;
+    virtual void deactivateIMEEngineCommand(ITransportClient *socket) override;
+    virtual void isIMEActivatedCommand(ITransportClient *socket) override;
+    virtual void keyeventCommand(ITransportClient *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &sessionIDArg, const QVariant &flagsArg) override;
+    virtual void longPressKeyCodeCommand(ITransportClient *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg) override;
+    virtual void pressKeyCodeCommand(ITransportClient *socket, const QVariant &keycodeArg, const QVariant &metaState, const QVariant &flagsArg) override;
+    virtual void executeCommand(ITransportClient *socket, const QString &command, const QVariantList &params) override;
+    virtual void executeAsyncCommand(ITransportClient *socket, const QString &command, const QVariantList &params) override;
+    virtual void performTouchCommand(ITransportClient *socket, const QVariant &paramsArg) override;
+    virtual void performMultiActionCommand(ITransportClient *socket, const QVariant &paramsArg) override;
+    virtual void performActionsCommand(ITransportClient *socket, const QVariant &paramsArg) override;
 
     // findElement_%1 methods
-    void findStrategy_id(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
-    void findStrategy_objectName(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
-    void findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
-    void findStrategy_name(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
-    void findStrategy_parent(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
-    void findStrategy_xpath(QTcpSocket *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_id(ITransportClient *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_objectName(ITransportClient *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_classname(ITransportClient *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_name(ITransportClient *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_parent(ITransportClient *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
+    void findStrategy_xpath(ITransportClient *socket, const QString &selector, bool multiple = false, QObject *parentItem = nullptr);
 
     // execute_%1 methods
-    void executeCommand_app_dumpTree(QTcpSocket *socket);
-    void executeCommand_app_setAttribute(QTcpSocket *socket, const QString &elementId, const QString &attribute, const QVariant &value);
-    void executeCommand_app_waitForPropertyChange(QTcpSocket *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
+    void executeCommand_app_dumpTree(ITransportClient *socket);
+    void executeCommand_app_setAttribute(ITransportClient *socket, const QString &elementId, const QString &attribute, const QVariant &value);
+    void executeCommand_app_waitForPropertyChange(ITransportClient *socket, const QString &elementId, const QString &propertyName, const QVariant &value, double timeout = 3000);
 
 };
 

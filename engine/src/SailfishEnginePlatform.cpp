@@ -121,7 +121,7 @@ void SailfishEnginePlatform::onChildrenChanged()
     }
 }
 
-void SailfishEnginePlatform::getScreenshotCoverCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::getScreenshotCoverCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -608,7 +608,7 @@ void SailfishEnginePlatform::initialize()
     }
 }
 
-void SailfishEnginePlatform::activateAppCommand(QTcpSocket *socket, const QString &appName)
+void SailfishEnginePlatform::activateAppCommand(ITransportClient *socket, const QString &appName)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -650,7 +650,7 @@ void SailfishEnginePlatform::activateAppCommand(QTcpSocket *socket, const QStrin
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QString &appName)
+void SailfishEnginePlatform::queryAppStateCommand(ITransportClient *socket, const QString &appName)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -686,7 +686,7 @@ void SailfishEnginePlatform::queryAppStateCommand(QTcpSocket *socket, const QStr
     socketReply(socket, isAppActive ? QStringLiteral("RUNNING_IN_FOREGROUND") : QStringLiteral("RUNNING_IN_BACKGROUND"));
 }
 
-void SailfishEnginePlatform::backCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::backCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -696,7 +696,7 @@ void SailfishEnginePlatform::backCommand(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::forwardCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::forwardCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -706,7 +706,7 @@ void SailfishEnginePlatform::forwardCommand(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::getOrientationCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::getOrientationCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -717,7 +717,7 @@ void SailfishEnginePlatform::getOrientationCommand(QTcpSocket *socket)
     socketReply(socket, deviceOrientation == 2 || deviceOrientation == 8 ? QStringLiteral("LANDSCAPE") : QStringLiteral("PORTRAIT"));
 }
 
-void SailfishEnginePlatform::setOrientationCommand(QTcpSocket *socket, const QString &orientation)
+void SailfishEnginePlatform::setOrientationCommand(ITransportClient *socket, const QString &orientation)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -728,7 +728,7 @@ void SailfishEnginePlatform::setOrientationCommand(QTcpSocket *socket, const QSt
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::hideKeyboardCommand(QTcpSocket *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName)
+void SailfishEnginePlatform::hideKeyboardCommand(ITransportClient *socket, const QString &strategy, const QString &key, double keyCode, const QString &keyName)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -738,7 +738,7 @@ void SailfishEnginePlatform::hideKeyboardCommand(QTcpSocket *socket, const QStri
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::isKeyboardShownCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::isKeyboardShownCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -751,7 +751,7 @@ void SailfishEnginePlatform::isKeyboardShownCommand(QTcpSocket *socket)
     socketReply(socket, ime->isVisible());
 }
 
-void SailfishEnginePlatform::activateIMEEngineCommand(QTcpSocket *socket, const QVariant &engine)
+void SailfishEnginePlatform::activateIMEEngineCommand(ITransportClient *socket, const QVariant &engine)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -771,7 +771,7 @@ void SailfishEnginePlatform::activateIMEEngineCommand(QTcpSocket *socket, const 
     active.set(layout);
 }
 
-void SailfishEnginePlatform::availableIMEEnginesCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::availableIMEEnginesCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -781,14 +781,14 @@ void SailfishEnginePlatform::availableIMEEnginesCommand(QTcpSocket *socket)
     socketReply(socket, enabled.value().toStringList());
 }
 
-void SailfishEnginePlatform::getActiveIMEEngineCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::getActiveIMEEngineCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
         << socket;
 }
 
-void SailfishEnginePlatform::deactivateIMEEngineCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::deactivateIMEEngineCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -798,7 +798,7 @@ void SailfishEnginePlatform::deactivateIMEEngineCommand(QTcpSocket *socket)
     socketReply(socket, active.value().toString());
 }
 
-void SailfishEnginePlatform::isIMEActivatedCommand(QTcpSocket *socket)
+void SailfishEnginePlatform::isIMEActivatedCommand(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -807,7 +807,7 @@ void SailfishEnginePlatform::isIMEActivatedCommand(QTcpSocket *socket)
     socketReply(socket, qApp->inputMethod() ? true : false);
 }
 
-void SailfishEnginePlatform::executeCommand_app_pullDownTo(QTcpSocket *socket, const QString &destination)
+void SailfishEnginePlatform::executeCommand_app_pullDownTo(ITransportClient *socket, const QString &destination)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -817,7 +817,7 @@ void SailfishEnginePlatform::executeCommand_app_pullDownTo(QTcpSocket *socket, c
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_pullDownTo(QTcpSocket *socket, double destination)
+void SailfishEnginePlatform::executeCommand_app_pullDownTo(ITransportClient *socket, double destination)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -827,7 +827,7 @@ void SailfishEnginePlatform::executeCommand_app_pullDownTo(QTcpSocket *socket, d
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_pushUpTo(QTcpSocket *socket, const QString &destination)
+void SailfishEnginePlatform::executeCommand_app_pushUpTo(ITransportClient *socket, const QString &destination)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -837,7 +837,7 @@ void SailfishEnginePlatform::executeCommand_app_pushUpTo(QTcpSocket *socket, con
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_pushUpTo(QTcpSocket *socket, double destination)
+void SailfishEnginePlatform::executeCommand_app_pushUpTo(ITransportClient *socket, double destination)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -847,7 +847,7 @@ void SailfishEnginePlatform::executeCommand_app_pushUpTo(QTcpSocket *socket, dou
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, const QString &destination)
+void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(ITransportClient *socket, const QString &elementId, const QString &destination)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -860,7 +860,7 @@ void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket 
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket *socket, const QString &elementId, double destination)
+void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(ITransportClient *socket, const QString &elementId, double destination)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -873,7 +873,7 @@ void SailfishEnginePlatform::executeCommand_app_clickContextMenuItem(QTcpSocket 
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_waitForPageChange(QTcpSocket *socket, double timeout)
+void SailfishEnginePlatform::executeCommand_app_waitForPageChange(ITransportClient *socket, double timeout)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -883,7 +883,7 @@ void SailfishEnginePlatform::executeCommand_app_waitForPageChange(QTcpSocket *so
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_swipe(QTcpSocket *socket, const QString &directionString)
+void SailfishEnginePlatform::executeCommand_app_swipe(ITransportClient *socket, const QString &directionString)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -903,7 +903,7 @@ void SailfishEnginePlatform::executeCommand_app_swipe(QTcpSocket *socket, const 
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_peek(QTcpSocket *socket, const QString &directionString)
+void SailfishEnginePlatform::executeCommand_app_peek(ITransportClient *socket, const QString &directionString)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -923,7 +923,7 @@ void SailfishEnginePlatform::executeCommand_app_peek(QTcpSocket *socket, const Q
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_goBack(QTcpSocket *socket)
+void SailfishEnginePlatform::executeCommand_app_goBack(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -933,7 +933,7 @@ void SailfishEnginePlatform::executeCommand_app_goBack(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_goForward(QTcpSocket *socket)
+void SailfishEnginePlatform::executeCommand_app_goForward(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -943,7 +943,7 @@ void SailfishEnginePlatform::executeCommand_app_goForward(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_enterCode(QTcpSocket *socket, const QString &code)
+void SailfishEnginePlatform::executeCommand_app_enterCode(ITransportClient *socket, const QString &code)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -953,7 +953,7 @@ void SailfishEnginePlatform::executeCommand_app_enterCode(QTcpSocket *socket, co
     socketReply(socket, QString());
 }
 
-void SailfishEnginePlatform::executeCommand_app_scrollToItem(QTcpSocket *socket, const QString &elementId)
+void SailfishEnginePlatform::executeCommand_app_scrollToItem(ITransportClient *socket, const QString &elementId)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -967,7 +967,7 @@ void SailfishEnginePlatform::executeCommand_app_scrollToItem(QTcpSocket *socket,
 
 }
 
-void SailfishEnginePlatform::executeCommand_app_saveScreenshot(QTcpSocket *socket, const QString &fileName)
+void SailfishEnginePlatform::executeCommand_app_saveScreenshot(ITransportClient *socket, const QString &fileName)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -996,7 +996,7 @@ void SailfishEnginePlatform::executeCommand_app_saveScreenshot(QTcpSocket *socke
     }
 }
 
-void SailfishEnginePlatform::executeCommand_app_dumpCurrentPage(QTcpSocket *socket)
+void SailfishEnginePlatform::executeCommand_app_dumpCurrentPage(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -1011,7 +1011,7 @@ void SailfishEnginePlatform::executeCommand_app_dumpCurrentPage(QTcpSocket *sock
     socketReply(socket, QJsonDocument(reply).toJson(QJsonDocument::Compact));
 }
 
-void SailfishEnginePlatform::executeCommand_app_dumpCover(QTcpSocket *socket)
+void SailfishEnginePlatform::executeCommand_app_dumpCover(ITransportClient *socket)
 {
     qCDebug(categorySailfishEnginePlatform)
         << Q_FUNC_INFO
@@ -1026,7 +1026,7 @@ void SailfishEnginePlatform::executeCommand_app_dumpCover(QTcpSocket *socket)
     }
 }
 
-void SailfishEnginePlatform::findStrategy_classname(QTcpSocket *socket, const QString &selector, bool multiple, QObject *parentItem)
+void SailfishEnginePlatform::findStrategy_classname(ITransportClient *socket, const QString &selector, bool multiple, QObject *parentItem)
 {
     QObjectList items;
     if (selector == QLatin1String("DeclarativeCover")) {

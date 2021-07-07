@@ -5,7 +5,7 @@
 #include <QObject>
 
 class QAEngineSocketClient;
-class QTcpSocket;
+class ITransportClient;
 class IEnginePlatform;
 class QWindow;
 class QAEngine : public QObject
@@ -21,7 +21,7 @@ public:
     virtual ~QAEngine();
 
     static QString processName();
-    static bool metaInvoke(QTcpSocket *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
+    static bool metaInvoke(ITransportClient *socket, QObject *object, const QString &methodName, const QVariantList &params, bool *implemented = nullptr);
 
     void addItem(QObject *o);
     void removeItem(QObject *o);
@@ -31,8 +31,8 @@ public slots:
 
 private slots:
     void onFocusWindowChanged(QWindow *window);
-    void processCommand(QTcpSocket *socket, const QByteArray &cmd);
-    bool processAppiumCommand(QTcpSocket *socket, const QString &action, const QVariantList &params);
+    void processCommand(ITransportClient *socket, const QByteArray &cmd);
+    bool processAppiumCommand(ITransportClient *socket, const QString &action, const QVariantList &params);
     void onPlatformReady();
 
 private:

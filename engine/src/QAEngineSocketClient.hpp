@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class QTcpSocket;
+class ITransportClient;
 class QAEngineSocketClient : public QObject
 {
     Q_OBJECT
@@ -11,15 +11,16 @@ public:
     explicit QAEngineSocketClient(QObject *parent = nullptr);
 
 signals:
-    void commandReceived(QTcpSocket *socket, const QByteArray &cmd);
+    void commandReceived(ITransportClient *socket, const QByteArray &cmd);
 
 public slots:
     void connectToBridge();
 
 private slots:
-    void readSocket();
+    void readClient(ITransportClient *client);
+    void onConnected();
 
 private:
-    QTcpSocket *m_socket = nullptr;
+    ITransportClient *m_client = nullptr;
 };
 

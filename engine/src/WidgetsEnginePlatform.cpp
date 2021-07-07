@@ -99,7 +99,7 @@ void WidgetsEnginePlatform::initialize()
     emit ready();
 }
 
-void WidgetsEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
+void WidgetsEnginePlatform::getPageSourceCommand(ITransportClient *socket)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -110,7 +110,7 @@ void WidgetsEnginePlatform::getPageSourceCommand(QTcpSocket *socket)
     socketReply(socket, QString());
 }
 
-void WidgetsEnginePlatform::executeCommand_app_dumpInView(QTcpSocket *socket, const QString &elementId)
+void WidgetsEnginePlatform::executeCommand_app_dumpInView(ITransportClient *socket, const QString &elementId)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -141,7 +141,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInView(QTcpSocket *socket, co
     socketReply(socket, recursiveDumpModel(model, QModelIndex()));
 }
 
-void WidgetsEnginePlatform::executeCommand_app_posInView(QTcpSocket *socket, const QString &elementId, const QString &display)
+void WidgetsEnginePlatform::executeCommand_app_posInView(ITransportClient *socket, const QString &elementId, const QString &display)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -174,7 +174,7 @@ void WidgetsEnginePlatform::executeCommand_app_posInView(QTcpSocket *socket, con
     socketReply(socket, QStringList({QString::number(indexCenter.x()), QString::number(indexCenter.y())}));
 }
 
-void WidgetsEnginePlatform::executeCommand_app_clickInView(QTcpSocket *socket, const QString &elementId, const QString &display)
+void WidgetsEnginePlatform::executeCommand_app_clickInView(ITransportClient *socket, const QString &elementId, const QString &display)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -208,7 +208,7 @@ void WidgetsEnginePlatform::executeCommand_app_clickInView(QTcpSocket *socket, c
     socketReply(socket, QStringList({QString::number(indexCenter.x()), QString::number(indexCenter.y())}));
 }
 
-void WidgetsEnginePlatform::executeCommand_app_scrollInView(QTcpSocket *socket, const QString &elementId, const QString &display)
+void WidgetsEnginePlatform::executeCommand_app_scrollInView(ITransportClient *socket, const QString &elementId, const QString &display)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -245,7 +245,7 @@ void WidgetsEnginePlatform::executeCommand_app_scrollInView(QTcpSocket *socket, 
     socketReply(socket, QString());
 }
 
-void WidgetsEnginePlatform::executeCommand_app_triggerInMenu(QTcpSocket *socket, const QString &text)
+void WidgetsEnginePlatform::executeCommand_app_triggerInMenu(ITransportClient *socket, const QString &text)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -262,7 +262,7 @@ void WidgetsEnginePlatform::executeCommand_app_triggerInMenu(QTcpSocket *socket,
     socketReply(socket, QString());
 }
 
-void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(QTcpSocket *socket)
+void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(ITransportClient *socket)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -277,7 +277,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInMenu(QTcpSocket *socket)
     socketReply(socket, actions);
 }
 
-void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket, const QString &elementId)
+void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(ITransportClient *socket, const QString &elementId)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -308,7 +308,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInComboBox(QTcpSocket *socket
     socketReply(socket, recursiveDumpModel(model, QModelIndex()));
 }
 
-void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *socket, const QString &elementId, const QString &display)
+void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(ITransportClient *socket, const QString &elementId, const QString &display)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -336,7 +336,7 @@ void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *so
     socketReply(socket, QString());
 }
 
-void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *socket, const QString &elementId, double idx)
+void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(ITransportClient *socket, const QString &elementId, double idx)
 {
     const int index = idx;
 
@@ -365,7 +365,7 @@ void WidgetsEnginePlatform::executeCommand_app_activateInComboBox(QTcpSocket *so
     socketReply(socket, QString());
 }
 
-void WidgetsEnginePlatform::executeCommand_app_dumpInTabBar(QTcpSocket *socket, const QString &elementId)
+void WidgetsEnginePlatform::executeCommand_app_dumpInTabBar(ITransportClient *socket, const QString &elementId)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -392,7 +392,7 @@ void WidgetsEnginePlatform::executeCommand_app_dumpInTabBar(QTcpSocket *socket, 
     socketReply(socket, tabs);
 }
 
-void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display)
+void WidgetsEnginePlatform::executeCommand_app_posInTabBar(ITransportClient *socket, const QString &elementId, const QString &display)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -425,7 +425,7 @@ void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, c
     socketReply(socket, QString(), 11);
 }
 
-void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, const QString &elementId, double idx)
+void WidgetsEnginePlatform::executeCommand_app_posInTabBar(ITransportClient *socket, const QString &elementId, double idx)
 {
     const int index = idx;
 
@@ -458,7 +458,7 @@ void WidgetsEnginePlatform::executeCommand_app_posInTabBar(QTcpSocket *socket, c
     socketReply(socket, QStringList({QString::number(indexCenter.x()), QString::number(indexCenter.y())}));
 }
 
-void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, const QString &display)
+void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(ITransportClient *socket, const QString &elementId, const QString &display)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
@@ -487,7 +487,7 @@ void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(QTcpSocket *sock
     socketReply(socket, QString(), 1);
 }
 
-void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(QTcpSocket *socket, const QString &elementId, double idx)
+void WidgetsEnginePlatform::executeCommand_app_activateInTabBar(ITransportClient *socket, const QString &elementId, double idx)
 {
     const int index = idx;
 
@@ -624,7 +624,7 @@ bool WidgetsEnginePlatform::isItemVisible(QObject *item)
     return w->isVisible();
 }
 
-void WidgetsEnginePlatform::grabScreenshot(QTcpSocket *socket, QObject *item, bool fillBackground)
+void WidgetsEnginePlatform::grabScreenshot(ITransportClient *socket, QObject *item, bool fillBackground)
 {
     qCDebug(categoryWidgetsEnginePlatform)
         << Q_FUNC_INFO
